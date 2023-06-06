@@ -8,16 +8,18 @@ function donation_toolkit_shortcode($atts) {
 	}
 	$campaign_id = $campaign->ID;
 	$goal = floatval(str_replace(array('$', ','), '', get_field('donation_goal', $campaign_id)));
+	
 	ob_start();
 	createDonationPyramid($goal);
 	$donation_pyramid = ob_get_clean();
 
-	ob_start();
-	createDonationDashboard($goal);
-	$donation_dashboard = ob_get_clean();
-
+	//ob_start();
+	//createDonationDashboard($goal, $pendingAmount, $pledgedAmount);
+	//$donation_dashboard = ob_get_clean();
+	
 	?>
 	<script>
+
 
 	//TABS JS
 	function activateTab(){
@@ -52,6 +54,14 @@ function donation_toolkit_shortcode($atts) {
 
 //MOVES MANAGEMENT AND PP JS
 	function addRow() {
+		
+		let pendingAmount = 0;
+    	let pledgedAmount = 0;
+    	var pendingCount = 0;
+    	let pledgedCount = 0;
+    	let engagedCount = 0;
+    	let identifiedCount = 0;
+		
   		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
   		const tabContents = document.querySelectorAll('.tabbed-content .tab');
   		tabLinks.forEach(link => {
@@ -290,6 +300,7 @@ function donation_toolkit_shortcode($atts) {
     			break;
   			case 'identified':
     			donationColor = '#F78D2D';
+    			identifiedCount++;
     			break;
   	 		default:
     			console.log('Invalid value for pledge/pending column');
@@ -397,16 +408,33 @@ function donation_toolkit_shortcode($atts) {
     	if (pledgePendingValue === "pending") {
   			const tableBody = document.querySelector(".pending-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
+			pendingAmount += donationAmount;
+    		pendingCount++;
+			console.log(pendingAmount)
+			console.log(pendingCount)
 		}
 		if (pledgePendingValue === "engaged") {
   			const tableBody = document.querySelector(".pipeline-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);tableBody
+			engagedCount++;
+			console.log(engagedCount)
+			
 		} else if (pledgePendingValue === "pledge") {
   			const tableBody = document.querySelector(".pledges-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
+			pledgedAmount += donationAmount;
+    		pledgedCount++;
+			console.log(pledgedAmount)
+			console.log(pledgedCount)
 		}
-		const donationCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
-		const totalDonations = donationCells.reduce((acc, curr) => {
+		const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
+		const totalDonations = pledgesCells.reduce((acc, curr) => {
+  			const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+  			return isNaN(amount) ? acc : acc + amount;
+		}, 0);
+			
+		const pendingCells = Array.from(document.querySelectorAll(".pending-table tbody td:nth-child(2)"));
+		const pendingDonations = pendingCells.reduce((acc, curr) => {
   			const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
   			return isNaN(amount) ? acc : acc + amount;
 		}, 0);
@@ -422,6 +450,45 @@ function donation_toolkit_shortcode($atts) {
 		`;
 		const meterText = document.getElementById("donation-meter-text");
 		meterText.innerHTML = `$${totalDonations.toLocaleString()} Raised of $${goal.toLocaleString()} Goal <span class="percent">◄ ${percent.toFixed()}% OF GOAL ►</span>`;
+		
+		const formattedGoal = '$' + goal.toLocaleString();
+		const formattedPledged = '$' + totalDonations.toLocaleString();
+		const formattedPending = '$' + pendingDonations.toLocaleString();
+    	const meterFillStyle = "width: " + percent + "%";
+    	const meterFillContent = `<div class="fill" style="width: ${percent}%">${percent > 100 ? `<p>${Math.round(percent)}%</p>` : ''}</div>`;
+		const dashboard = document.getElementById("dashboard-html");
+		dashboard.innerHTML = `
+       	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
+            <div style="width: 100%; height: 140px; background-color: #77C4D5; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center;">
+                <!-- Campaign goal box -->
+                <h2 style="color: #FFFFFF; font-size: 52px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
+            </div>
+            <div style="width: 100%; height: 90px; background-color: #7866A1; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center; padding: 10px;">
+                <!-- Donation meter box -->
+                <div class="dashboard-meter">
+                    ${meterFillContent}
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 28px; align-items: center;">
+        		<div style="width: 49%; background-color: #00758D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pledged box -->
+            		<div>
+               	 		<h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPledged} Pledged</h3>
+            		</div>
+        		</div>
+        		<div style="width: 49%; background-color: #F78D2D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pending box -->
+            		<div>
+                		<h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
+            		</div>
+        		</div>
+    		</div>
+            <div style="width: 100%; height: 200px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
+                <!-- Bar graph chart -->
+                <h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">Bar Graph Chart</h3>
+            </div>
+        </div>
+    `;
 		}, 0);
 	}
 		
@@ -429,7 +496,46 @@ function donation_toolkit_shortcode($atts) {
   		const goal = <?php echo $goal; ?>;
   		const meterText = document.getElementById("donation-meter-text");
   		meterText.innerHTML = `$0 Raised of $${goal.toLocaleString()} Goal <span class="percent">◄ 0% OF GOAL ►</span>`;
+
+		const percent = 0;
+		const formattedGoal = '$' + goal.toLocaleString();
+    	const meterFillStyle = "width: " + percent + "%";
+    	const meterFillContent = `<div class="fill" style="width: ${percent}%">${percent > 100 ? `<p>${Math.round(percent)}%</p>` : ''}</div>`;
+		const dashboard = document.getElementById("dashboard-html");
+		dashboard.innerHTML = `
+       	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
+            <div style="width: 100%; height: 140px; background-color: #77C4D5; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center;">
+                <!-- Campaign goal box -->
+                <h2 style="color: #FFFFFF; font-size: 52px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
+            </div>
+            <div style="width: 100%; height: 90px; background-color: #7866A1; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center; padding: 10px;">
+                <!-- Donation meter box -->
+                <div class="dashboard-meter">
+                    ${meterFillContent}
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 28px; align-items: center;">
+        		<div style="width: 49%; background-color: #00758D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pledged box -->
+            		<div>
+               	 		<h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pledged</h3>
+            		</div>
+        		</div>
+        		<div style="width: 49%; background-color: #F78D2D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pending box -->
+            		<div>
+                		<h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pending</h3>
+            		</div>
+        		</div>
+    		</div>
+            <div style="width: 100%; height: 200px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
+                <!-- Bar graph chart -->
+                <h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">Bar Graph Chart</h3>
+            </div>
+        </div>
+    `;
 	});
+		
 
 	//SAVE AS PDF
 	function generatePDF() {
@@ -458,7 +564,8 @@ function donation_toolkit_shortcode($atts) {
    	 		pdfWindow.location.href = objectUrl;
   		});
 	}
-	
+
+
 	</script>
 	<?php
 	
@@ -466,6 +573,23 @@ function donation_toolkit_shortcode($atts) {
 $output = '
 <style>
 
+.tabbed-content .table-column h2 {
+  background-color: #00758D;
+  color: #fff;
+  text-align: center;
+  padding: 10px 0;
+  margin: 0;
+  border-radius: 10px 10px 0 0;
+}
+
+.tabbed-content table {
+  width: 100%;
+  padding: 10px;
+  border-radius: 0 0 10px 10px;
+  border-collapse: separate;
+  border-spacing: 0;
+  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.1);
+}
 	
 .logout-button {
   margin-top: 0;
@@ -654,9 +778,14 @@ from { opacity: 0; }
 to { opacity: 1; }
 }
 
+.donation-table thead{
+ border-radius: 10px;
+}
+
 #moves-management table {
   margin-left: 10px; /* Spacing from donation meter */
   border-collapse: collapse;
+  border-radius: 10px;
   margin-bottom: 150px; //this value should be changing
 }
 
@@ -703,6 +832,8 @@ to { opacity: 1; }
   
   .pledges-table,
   .pending-table {
+    padding: 10px;
+  border-radius: 10px;
   }
 
   @media (max-width: 767px) {
@@ -740,6 +871,7 @@ to { opacity: 1; }
 
 #pledges-pending table {
   width: 100%;
+  padding: 10px;
   border-collapse: collapse;
    margin-bottom: 77px; //this value should be changing
 }
@@ -869,8 +1001,50 @@ donation-pyramid::before {
   .donation-key-item .identified {
     background-color: #F78D2D;
   }
+	
+	  .dashboard-meter {
+                width: 97%;
+                height: 52px;
+                background: #FFFFFF;
+                position: relative;
+                overflow: hidden;
+                border-radius: 10px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 10px;
+                box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .dashboard-meter .fill {
+                transition: width 0.5s ease-out;
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                background: linear-gradient(to right,#F78D2D,#FFC897);
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                padding-right: 10px;
+                box-sizing: border-box;
+                animation: fillAnimation 2s ease-in-out;
+            }
+
+            .dashboard-meter .fill p {
+                color: #FFFFFF;
+                font-size: 18px;
+                font-weight: bold;
+                margin-right: 10px;
+            }
+
+            @keyframes fillAnimation {
+                0% { width: 0%; }
+                100% { width: ${percent}%; }
+            }
 
 </style>
+
 
 <div class="logout-button">
 	' . add_logout_button() . '
@@ -958,6 +1132,7 @@ donation-pyramid::before {
             <th>Recent Involvement</th>
             <th>Extra Notes</th>
 			<th>Documents</th>
+			<th></th>
           </tr>
         </thead>
         <tbody>
@@ -965,9 +1140,9 @@ donation-pyramid::before {
       </table>
     </div>
 <div class="tab" id="dashboard">
-      <h2>Dashboard</h2>
-	  ' . $donation_dashboard . '
-    </div>
+	<h2>Dashboard</h2>
+	<div class="fill" id="dashboard-html"></div>
+</div>
 
 <div class="tabbed-menu">
   <ul>
@@ -981,7 +1156,6 @@ donation-pyramid::before {
   </div>
 </div>
 ';
-
 // Return the output
 return $output;
 
@@ -994,8 +1168,4 @@ add_filter( 'the_title', function( $title ) {
     return $title;
 } );
 
-
-
-
 add_shortcode('campaign-toolkit', 'donation_toolkit_shortcode');
-
