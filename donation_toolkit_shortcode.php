@@ -20,7 +20,11 @@ function donation_toolkit_shortcode($atts) {
 	?>
 	<script>
 
-
+	var	pendingCount= 0; 
+	var pledgedCount = 0; 
+	var engagedCount = 0;
+	var identifiedCount = 0;
+		
 	//TABS JS
 	function activateTab(){
 		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
@@ -54,13 +58,6 @@ function donation_toolkit_shortcode($atts) {
 
 //MOVES MANAGEMENT AND PP JS
 	function addRow() {
-		
-		let pendingAmount = 0;
-    	let pledgedAmount = 0;
-    	var pendingCount = 0;
-    	let pledgedCount = 0;
-    	let engagedCount = 0;
-    	let identifiedCount = 0;
 		
   		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
   		const tabContents = document.querySelectorAll('.tabbed-content .tab');
@@ -300,7 +297,7 @@ function donation_toolkit_shortcode($atts) {
     			break;
   			case 'identified':
     			donationColor = '#F78D2D';
-    			identifiedCount++;
+				identifiedCount++;
     			break;
   	 		default:
     			console.log('Invalid value for pledge/pending column');
@@ -408,24 +405,18 @@ function donation_toolkit_shortcode($atts) {
     	if (pledgePendingValue === "pending") {
   			const tableBody = document.querySelector(".pending-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
-			pendingAmount += donationAmount;
-    		pendingCount++;
-			console.log(pendingAmount)
-			console.log(pendingCount)
+			pendingCount++;
+
 		}
 		if (pledgePendingValue === "engaged") {
   			const tableBody = document.querySelector(".pipeline-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);tableBody
-			engagedCount++;
-			console.log(engagedCount)
+ 			engagedCount++
 			
 		} else if (pledgePendingValue === "pledge") {
   			const tableBody = document.querySelector(".pledges-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
-			pledgedAmount += donationAmount;
-    		pledgedCount++;
-			console.log(pledgedAmount)
-			console.log(pledgedCount)
+			pledgedCount++
 		}
 		const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
 		const totalDonations = pledgesCells.reduce((acc, curr) => {
@@ -438,7 +429,7 @@ function donation_toolkit_shortcode($atts) {
   			const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
   			return isNaN(amount) ? acc : acc + amount;
 		}, 0);
-	  
+		
 		const goal = <?php echo $goal; ?>;
 		const percent = totalDonations / goal * 100;
 		const meterFill = document.getElementById("donation-meter-fill");
@@ -450,7 +441,15 @@ function donation_toolkit_shortcode($atts) {
 		`;
 		const meterText = document.getElementById("donation-meter-text");
 		meterText.innerHTML = `$${totalDonations.toLocaleString()} Raised of $${goal.toLocaleString()} Goal <span class="percent">◄ ${percent.toFixed()}% OF GOAL ►</span>`;
-		
+	
+			
+		const highestCount = Math.max(pendingCount, pledgedCount, engagedCount, identifiedCount);
+			
+        const pendingBar = ((pendingCount * 100)/(highestCount));
+		const pledgedBar = ((pledgedCount * 100)/(highestCount));
+		const engagedBar = ((engagedCount * 100)/(highestCount));
+		const identifiedBar = ((identifiedCount * 100)/(highestCount));
+			
 		const formattedGoal = '$' + goal.toLocaleString();
 		const formattedPledged = '$' + totalDonations.toLocaleString();
 		const formattedPending = '$' + pendingDonations.toLocaleString();
@@ -483,10 +482,31 @@ function donation_toolkit_shortcode($atts) {
             		</div>
         		</div>
     		</div>
-            <div style="width: 100%; height: 200px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
-                <!-- Bar graph chart -->
-                <h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">Bar Graph Chart</h3>
-            </div>
+			<div style="width: 100%; height: 225px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
+    <!-- Bar graph chart -->
+   <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
+    <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${pledgedBar}px; max-height: 100%; background-color: #7866A1;"></div>
+        <span style="margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Pledged Donations: ${pledgedCount}</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${pendingBar}px; max-height: 100%; background-color: #77C4D5;"></div>
+        <span style="margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Pending Donations: ${pendingCount}</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${engagedBar}px; max-height: 100%; background-color: #00758D;"></div>
+        <span style="margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Engaged Donations: ${engagedCount}</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${identifiedBar}px; max-height: 100%; background-color: #FF8C00;"></div>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Identified Donations: ${identifiedCount}</span>
+    </div>
+</div>
+
+</div>
+
+</div>
+
         </div>
     `;
 		}, 0);
@@ -528,10 +548,27 @@ function donation_toolkit_shortcode($atts) {
             		</div>
         		</div>
     		</div>
-            <div style="width: 100%; height: 200px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
+     
+ <div style="width: 100%; height: 225px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
                 <!-- Bar graph chart -->
-                <h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">Bar Graph Chart</h3>
-            </div>
+        <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
+    <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
+        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Pledged Donations: 0</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Pending Donations: 0</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Engaged Donations: 0</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Identified Donations: 0</span>
+    </div>
+    </div>
         </div>
     `;
 	});
