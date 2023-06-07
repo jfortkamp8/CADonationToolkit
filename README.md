@@ -26,3 +26,10 @@ Team Input Mtg. 5/17/23
 * Categories tab??
 * Client logo
 * Cramer branding on PDFS
+
+
+Abitity to edit Pyramid:
+Edit button on left side labels that will chnage values and auto populate rest of pyramid
+When donaiton row is full and another donation is added, asked user if they would like to add another donaiton of that amount,
+and if yes then add another and chnage pyramid based on that
+
