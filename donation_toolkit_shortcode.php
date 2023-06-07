@@ -9,17 +9,20 @@ function donation_toolkit_shortcode($atts) {
 	$campaign_id = $campaign->ID;
 	$goal = floatval(str_replace(array('$', ','), '', get_field('donation_goal', $campaign_id)));
 	
+	$imgurl = get_field('client_logo',$campaign_id);
+
+    if (filter_var($imgurl, FILTER_VALIDATE_URL) === FALSE)
+    {
+      $imgurl = wp_get_attachment_url($imgurl);
+    }
+
 	ob_start();
 	createDonationPyramid($goal);
 	$donation_pyramid = ob_get_clean();
 
-	//ob_start();
-	//createDonationDashboard($goal, $pendingAmount, $pledgedAmount);
-	//$donation_dashboard = ob_get_clean();
-	
 	?>
 	<script>
-
+	
 	var	pendingCount= 0; 
 	var pledgedCount = 0; 
 	var engagedCount = 0;
@@ -78,8 +81,8 @@ function donation_toolkit_shortcode($atts) {
   		const donationContainer = document.querySelector(".donation-container");
   		const movesManagementTable = document.querySelector("#moves-management table");
   		const pledgePendingTables = document.querySelector("#pledges-pending table");
-  		const remainingSpaceMM = donationContainer.getBoundingClientRect().bottom - movesManagementTable.getBoundingClientRect().bottom - 125;
-  		const remainingSpacePP = donationContainer.getBoundingClientRect().bottom - movesManagementTable.getBoundingClientRect().bottom - 127;
+  		const remainingSpaceMM = donationContainer.getBoundingClientRect().bottom - movesManagementTable.getBoundingClientRect().bottom - 95;
+  		const remainingSpacePP = donationContainer.getBoundingClientRect().bottom - movesManagementTable.getBoundingClientRect().bottom - 130;
   		// set margin-bottom of moves-management table to remaining space, or minimum of 15px
   		movesManagementTable.style.marginBottom = `${Math.max(remainingSpaceMM, 30)}px`;
   		pledgePendingTables.style.marginBottom = `${Math.max(remainingSpacePP, 20)}px`;
@@ -290,10 +293,10 @@ function donation_toolkit_shortcode($atts) {
     			donationColor = '#7866A1';
     			break;
   			case 'pending':
-    			donationColor = '#77C4D5';
+    			donationColor = '#5DABBC';
     			break;
   			case 'engaged':
-    			donationColor = '#00758D';
+    			donationColor = '#00728A';
     			break;
   			case 'identified':
     			donationColor = '#F78D2D';
@@ -601,7 +604,7 @@ function donation_toolkit_shortcode($atts) {
    	 		pdfWindow.location.href = objectUrl;
   		});
 	}
-
+		
 
 	</script>
 	<?php
@@ -820,10 +823,10 @@ to { opacity: 1; }
 }
 
 #moves-management table {
-  margin-left: 10px; /* Spacing from donation meter */
+  margin-left: 0px; /* Spacing from donation meter */
   border-collapse: collapse;
   border-radius: 10px;
-  margin-bottom: 150px; //this value should be changing
+  margin-bottom: 283px; //this value should be changing
 }
 
 #moves-management table th {
@@ -910,7 +913,7 @@ to { opacity: 1; }
   width: 100%;
   padding: 10px;
   border-collapse: collapse;
-   margin-bottom: 77px; //this value should be changing
+   margin-bottom: 210px; //this value should be changing
 }
 
 #pledges-pending th, #pledges-pending td {
@@ -950,24 +953,12 @@ donation-pyramid::before {
   justify-content: center;
 }
 
-.donation-box {
-  width: 90px; /* adjust the width as needed */
-  height: 38px; /* adjust the height as needed */
-  border-radius: 25px;
-  display: flex;
-  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.1);
-  justify-content: center;
-  align-items: center;
-  background-color: #d4d4d4; /* adjust the background color as needed */
-  margin: 7px; /* adjust the margin as needed */
-}
-
 .donation-row-label {
   position: absolute;
   left: 0;
   margin-top: 17px;
   margin-left: 75px;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 
@@ -1079,6 +1070,18 @@ donation-pyramid::before {
                 0% { width: 0%; }
                 100% { width: ${percent}%; }
             }
+			
+.donation-box {
+  width: 90px; /* adjust the width as needed */
+  height: 38px; /* adjust the height as needed */
+  border-radius: 25px;
+  display: flex;
+  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  align-items: center;
+  background-color: #d4d4d4; /* adjust the background color as needed */
+  margin: 7px; /* adjust the margin as needed */
+}
 
 </style>
 
@@ -1098,6 +1101,9 @@ donation-pyramid::before {
   <div class="donation-buttons" style="text-align:center">
     <button id="add-donation-button" style="width:100%" onclick="addRow()">ADD NEW DONATION</button>
     <button id="pdf-button" style="width:100%" onclick="generatePDF()">SAVE AS PDF FILE</button>
+  </div>
+  <div class="logo-container" style="text-align:center; margin-top: 30px;">
+    <img src="' . $imgurl . '" alt="Client Logo" style="width: 70%; display: block; margin: 0 auto;">
   </div>
 </div>
 
