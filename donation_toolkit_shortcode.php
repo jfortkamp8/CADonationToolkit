@@ -22,11 +22,6 @@ function donation_toolkit_shortcode($atts) {
 
 	?>
 	<script>
-	
-	var	pendingCount= 0; 
-	var pledgedCount = 0; 
-	var engagedCount = 0;
-	var identifiedCount = 0;
 		
 	//TABS JS
 	function activateTab(){
@@ -58,8 +53,20 @@ function donation_toolkit_shortcode($atts) {
 	}
 		
 	document.addEventListener('DOMContentLoaded', activateTab);
+		
+	function addCircleCheckbox() {
+  		const checkbox = document.createElement("input");
+  		checkbox.type = "checkbox";
+  		checkbox.className = "circle-checkbox";
+  		checkbox.style.width = "12px";
+  		checkbox.style.height = "12px";
+  		checkbox.style.borderRadius = "50%";
+  		checkbox.style.marginRight = "5px";
+  		checkbox.style.verticalAlign = "middle";
+  		return checkbox;
+	}
 
-//MOVES MANAGEMENT AND PP JS
+	//MOVES MANAGEMENT AND PP JS
 	function addRow() {
 		
   		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
@@ -98,33 +105,54 @@ function donation_toolkit_shortcode($atts) {
   			<option value="denied">Declined</option>
   		`;
   		pledgePendingSelect.style.fontSize = "10px";
-  		const displayNameSelect = document.createElement("select");
-  		displayNameSelect.innerHTML = `
-  			<option value="org">Org</option>
-  			<option value="first-last">Name</option>
+		const donationTypeSelect = document.createElement("select");
+		donationTypeSelect.className = "donation-type-select";
+  		donationTypeSelect.innerHTML = `
+  			<option value="individual">Individual</option>
+  			<option value="foundation">Foundation</option>
+			<option value="corporation">Corporation</option>
+			<option value="public">Public</option>
   		`;
-  		displayNameSelect.style.fontSize = "10px";
+  		donationTypeSelect.style.fontSize = "10px";
 		cells[0].style.textAlign = "center";
 		cells[0].style.verticalAlign = "middle";
 		cells[0].appendChild(pledgePendingSelect);
 		cells[1].style.textAlign = "center";
 		cells[1].style.verticalAlign = "middle";
-		cells[1].appendChild(displayNameSelect);
-  		cells[0].width = '13%';
-  		cells[1].width = '10.5%';
-  		cells[2].width = '15%';
-  		cells[3].width = '10%';
-  		cells[4].width = '12%';
-  		cells[5].width = '9%';
-  		cells[6].width = '9%';
-  		cells[7].width = '9%';
-  		cells[1].style.verticalAlign = 'middle';
-  		cells[2].style.verticalAlign = 'middle';
-  		cells[3].style.verticalAlign = 'middle';
-  		cells[4].style.verticalAlign = 'middle';
-  		cells[5].style.verticalAlign = 'middle';
-  		cells[6].style.verticalAlign = 'middle';
-  		cells[7].style.verticalAlign = 'middle';
+		cells[1].appendChild(donationTypeSelect);
+  		cells[0].width = '12%';
+  		cells[1].width = '12%';
+		const fullNameCheckbox = addCircleCheckbox();
+		const orgNameCheckbox = addCircleCheckbox();
+
+		const fullNameContainer = document.createElement("div");
+		fullNameContainer.style.display = "flex";
+		fullNameContainer.style.alignItems = "center";
+
+		const orgNameContainer = document.createElement("div");
+		orgNameContainer.style.display = "flex";
+		orgNameContainer.style.alignItems = "center";
+
+		cells[2].innerHTML = "";
+		cells[2].appendChild(fullNameContainer);
+
+		cells[3].innerHTML = "";
+		cells[3].appendChild(orgNameContainer);
+
+		cells[2].width = '14%';
+		cells[3].width = '12%';
+		cells[4].width = '11%';
+		cells[5].width = '9%';
+		cells[6].width = '9%';
+		cells[7].width = '9%';
+		cells[1].style.verticalAlign = 'middle';
+		cells[2].style.verticalAlign = 'middle';
+		cells[3].style.verticalAlign = 'middle';
+		cells[4].style.verticalAlign = 'middle';
+		cells[5].style.verticalAlign = 'middle';
+		cells[6].style.verticalAlign = 'middle';
+		cells[7].style.verticalAlign = 'middle';
+		
 		const docIndex = Array.from(cells).indexOf(cells[8]);
 		const inputs = cells.slice(2, 9).map(cell => {
     		const input = document.createElement("input");
@@ -135,6 +163,30 @@ function donation_toolkit_shortcode($atts) {
     		cell.appendChild(input);
     		return input;
  		});
+		
+		fullNameContainer.appendChild(fullNameCheckbox);
+		fullNameContainer.appendChild(inputs[0]);
+
+		orgNameContainer.appendChild(orgNameCheckbox);
+		orgNameContainer.appendChild(inputs[1]);
+		
+		let displayName = "";
+		
+		fullNameCheckbox.addEventListener("change", function () {
+  			if (fullNameCheckbox.checked) {
+    			orgNameCheckbox.checked = false;
+    			displayName = inputs[0].value;
+  			}
+		});
+
+		orgNameCheckbox.addEventListener("change", function () {
+  			if (orgNameCheckbox.checked) {
+    			fullNameCheckbox.checked = false;
+    			displayName = inputs[1].value;
+  			}
+		});
+				
+		
   		// Add column to attach files to donation
 		const attachFiles = document.createElement("td");
 		attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
@@ -187,19 +239,20 @@ function donation_toolkit_shortcode($atts) {
   		cells[9].appendChild(saveButton);
   		cells[9].style.textAlign = "center";
   		cells[9].style.verticalAlign = "middle";
-
+		
   		cells.forEach(cell => newRow.appendChild(cell));
 
   		const tableBody = document.querySelector("#moves-management table tbody");
   		tableBody.insertBefore(newRow, tableBody.firstChild);
-
+	
   		saveButton.addEventListener("click", function handleSaveButtonClick() {
+			
     		const values = inputs.map(input => input.value);
 
     		cells.slice(2, 8).forEach((cell, index) => {
       			cell.innerHTML = values[index];
    			});
-
+  
     		const editButton = document.createElement("button");
     		editButton.className = "edit-button";
     		editButton.innerText = "Edit";
@@ -209,17 +262,115 @@ function donation_toolkit_shortcode($atts) {
     		cells[9].style.verticalAlign = "middle";
 
     		editButton.addEventListener("click", function handleEditButtonClick() {
+		
+    			// Remove the donation from the donation pyramid
+    			const pyramidRows = document.querySelectorAll('.donation-row');
+    			pyramidRows.forEach(row => {
+        		const box = row.querySelector('.donation-box');
+        		const boxDisplayName = box.innerHTML.trim().replace(/<br>/g, ' ');
+        			if (boxDisplayName === displayName) {
+           				box.innerHTML = ''; // Remove the donation from the box
+					 	box.style.backgroundColor = ''; // Reset the box color
+            			box.style.color = ''; // Reset the text color
+            			box.style.fontWeight = ''; // Reset the font weight
+            			box.style.textAlign = ''; // Reset the text alignment
+            			box.style.display = ''; // Reset the display property
+            			box.style.justifyContent = ''; // Reset the justify content property
+            			box.style.alignItems = ''; // Reset the align items property
+            			box.style.fontSize = ''; // Reset the font size
+            			box.style.padding = ''; // Reset the padding
+        			}
+    			});
+
+    			// Remove the donation from the pledges table
+    			const pledgesTable = document.querySelector(".pledges-table tbody");
+    			const pledgesRows = pledgesTable.querySelectorAll("tr");
+    			pledgesRows.forEach(row => {
+        			const donationCell = row.querySelector("td:nth-child(1)");
+        			if (donationCell.innerHTML.trim() === displayName) {
+            			row.remove(); // Remove the row from the table
+        			}
+    			});
+
+    			// Remove the donation from the pending table
+    			const pendingTable = document.querySelector(".pending-table tbody");
+    			const pendingRows = pendingTable.querySelectorAll("tr");
+    			pendingRows.forEach(row => {
+        			const donationCell = row.querySelector("td:nth-child(1)");
+        			if (donationCell.innerHTML.trim() === displayName) {
+            			row.remove(); // Remove the row from the table
+        			}
+	    		});
+				
+				// Remove the donation from the pipeline table
+    			const pipelineTable = document.querySelector(".pipeline-table tbody");
+    			const pipelineRows = pipelineTable.querySelectorAll("tr");
+    			pendingRows.forEach(row => {
+        			const donationCell = row.querySelector("td:nth-child(1)");
+        			if (donationCell.innerHTML.trim() === displayName) {
+            			row.remove(); // Remove the row from the table
+        			}
+	    		});
+			
 				pledgePendingSelect.disabled = false;
-    			displayNameSelect.disabled = false;
+				donationTypeSelect.disabled = false;
+
       			inputs.forEach((input, index) => {
   					if (index !== 6) {
    						const value = cells[index + 2].innerHTML;
-    					cells[index + 2].innerHTML = "";
+						cells[index + 2].innerHTML = "";
     					cells[index + 2].appendChild(input);
-    					input.value = value;
+      					input.value = value;
   					}
 				});
+				
+				// Recreate and append the checkboxes
+    			const fullNameCheckbox = addCircleCheckbox();
+    			const orgNameCheckbox = addCircleCheckbox();
 
+    			const fullNameContainer = document.createElement("div");
+    			fullNameContainer.style.display = "flex";
+    			fullNameContainer.style.alignItems = "center";
+
+    			const orgNameContainer = document.createElement("div");
+    			orgNameContainer.style.display = "flex";
+    			orgNameContainer.style.alignItems = "center";
+
+    			cells[2].innerHTML = "";
+    			cells[2].appendChild(fullNameContainer);
+
+    			cells[3].innerHTML = "";
+   				cells[3].appendChild(orgNameContainer);
+
+    			fullNameContainer.appendChild(fullNameCheckbox);
+    			fullNameContainer.appendChild(inputs[0]);
+
+    			orgNameContainer.appendChild(orgNameCheckbox);
+    			orgNameContainer.appendChild(inputs[1]);
+			
+    			fullNameCheckbox.addEventListener("change", function () {
+        			if (fullNameCheckbox.checked) {
+            			orgNameCheckbox.checked = false;
+						displayName = inputs[0].value;
+        			}
+    			});
+
+    			orgNameCheckbox.addEventListener("change", function () {
+        			if (orgNameCheckbox.checked) {
+            			fullNameCheckbox.checked = false;
+						displayName = inputs[1].value;
+        			}
+    			});
+				
+				// Set the initial state of the checkboxes
+    			if (displayName === inputs[0].value) {
+        			fullNameCheckbox.checked = true;
+        			orgNameCheckbox.checked = false;
+    			} else if (displayName === inputs[1].value) {
+        			fullNameCheckbox.checked = false;
+        			orgNameCheckbox.checked = true;
+    			}
+				
       			const saveButton = document.createElement("button");
       			saveButton.className = "save-button";
       			saveButton.innerText = "Save";
@@ -227,12 +378,18 @@ function donation_toolkit_shortcode($atts) {
       			cells[9].appendChild(saveButton);
       			cells[9].style.textAlign = "center";
       			cells[9].style.verticalAlign = "middle";
-
+				
       			saveButton.addEventListener("click", handleSaveButtonClick);
+				
+				if (fullNameCheckbox.checked) {
+            		displayName = inputs[0].value;
+        		} else if (orgNameCheckbox.checked) {
+            		displayName = inputs[1].value;
+        		}
     		});
-
+			
     		pledgePendingSelect.disabled = true;
-    		displayNameSelect.disabled = true;
+			donationTypeSelect.disabled = true;
 			
   		// Set font size for saved values
   		cells.slice(2, 8).forEach(cell => {
@@ -246,12 +403,6 @@ function donation_toolkit_shortcode($atts) {
   		});
 			
 		const pledgePendingValue = pledgePendingSelect.value;
-		let displayName = "";
-		if (displayNameSelect.value === "first-last") {
-  			displayName = inputs[0].value;
-		} else {
-  			displayName = inputs[1].value;
-		}
 		const targetTable = document.querySelector(`.${pledgePendingValue}-table tbody`);
 		const targetRow = document.createElement("tr");
 		const targetCells = [
@@ -300,7 +451,6 @@ function donation_toolkit_shortcode($atts) {
     			break;
   			case 'identified':
     			donationColor = '#F78D2D';
-				identifiedCount++;
     			break;
   	 		default:
     			console.log('Invalid value for pledge/pending column');
@@ -408,18 +558,13 @@ function donation_toolkit_shortcode($atts) {
     	if (pledgePendingValue === "pending") {
   			const tableBody = document.querySelector(".pending-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
-			pendingCount++;
-
 		}
 		if (pledgePendingValue === "engaged") {
   			const tableBody = document.querySelector(".pipeline-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);tableBody
- 			engagedCount++
-			
 		} else if (pledgePendingValue === "pledge") {
   			const tableBody = document.querySelector(".pledges-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
-			pledgedCount++
 		}
 		const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
 		const totalDonations = pledgesCells.reduce((acc, curr) => {
@@ -444,14 +589,45 @@ function donation_toolkit_shortcode($atts) {
 		`;
 		const meterText = document.getElementById("donation-meter-text");
 		meterText.innerHTML = `$${totalDonations.toLocaleString()} Raised of $${goal.toLocaleString()} Goal <span class="percent">◄ ${percent.toFixed()}% OF GOAL ►</span>`;
+			
+		// Initialize count variables for each donation type
+		let individualCount = 0;
+		let foundationCount = 0;
+		let corporationCount = 0;
+		let publicCount = 0;
+
+		// Select all the rows in the moves management table
+		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
+
+		// Iterate over each row and update the count variables
+		rowsType.forEach(row => {
+  			const donationTypeSelect = row.querySelector('.donation-type-select');
+ 			const donationTypeValue = donationTypeSelect.value;
+
+  			// Update the count variables based on the donation type value
+  			if (donationTypeValue === "individual") {
+    			individualCount++;
+  			} else if (donationTypeValue === "foundation") {
+    			foundationCount++;
+  			} else if (donationTypeValue === "corporation") {
+    			corporationCount++;
+  			} else if (donationTypeValue === "public") {
+    			publicCount++;
+  			}
+		});
+
+		// Output the counts
+		console.log("Individual Count:", individualCount);
+		console.log("Foundation Count:", foundationCount);
+		console.log("Corporation Count:", corporationCount);
+		console.log("Public Count:", publicCount);
 	
+		const highestCount = Math.max(individualCount, foundationCount, corporationCount, publicCount);
 			
-		const highestCount = Math.max(pendingCount, pledgedCount, engagedCount, identifiedCount);
-			
-        const pendingBar = ((pendingCount * 100)/(highestCount));
-		const pledgedBar = ((pledgedCount * 100)/(highestCount));
-		const engagedBar = ((engagedCount * 100)/(highestCount));
-		const identifiedBar = ((identifiedCount * 100)/(highestCount));
+        const individualBar = ((individualCount * 100)/(highestCount));
+		const foundationBar = ((foundationCount * 100)/(highestCount));
+		const corporationBar = ((corporationCount * 100)/(highestCount));
+		const publicBar = ((publicCount * 100)/(highestCount));
 			
 		const formattedGoal = '$' + goal.toLocaleString();
 		const formattedPledged = '$' + totalDonations.toLocaleString();
@@ -463,7 +639,7 @@ function donation_toolkit_shortcode($atts) {
        	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
             <div style="width: 100%; height: 140px; background-color: #77C4D5; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center;">
                 <!-- Campaign goal box -->
-                <h2 style="color: #FFFFFF; font-size: 52px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
+                <h2 style="color: #FFFFFF; font-size: 40px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
             </div>
             <div style="width: 100%; height: 90px; background-color: #7866A1; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center; padding: 10px;">
                 <!-- Donation meter box -->
@@ -475,13 +651,13 @@ function donation_toolkit_shortcode($atts) {
         		<div style="width: 49%; background-color: #00758D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pledged box -->
             		<div>
-               	 		<h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPledged} Pledged</h3>
+               	 		<h3 style="color: #FFFFFF; font-size: 30px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPledged} Pledged</h3>
             		</div>
         		</div>
         		<div style="width: 49%; background-color: #F78D2D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pending box -->
             		<div>
-                		<h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
+                		<h3 style="color: #FFFFFF; font-size: 30px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
             		</div>
         		</div>
     		</div>
@@ -489,20 +665,20 @@ function donation_toolkit_shortcode($atts) {
     <!-- Bar graph chart -->
    <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
     <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${pledgedBar}px; max-height: 100%; background-color: #7866A1;"></div>
-        <span style="margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Pledged Donations: ${pledgedCount}</span>
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #7866A1;"></div>
+        <span style="margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individual Donations: ${individualCount}</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${pendingBar}px; max-height: 100%; background-color: #77C4D5;"></div>
-        <span style="margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Pending Donations: ${pendingCount}</span>
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #77C4D5;"></div>
+        <span style="margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundation Donations: ${foundationCount}</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${engagedBar}px; max-height: 100%; background-color: #00758D;"></div>
-        <span style="margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Engaged Donations: ${engagedCount}</span>
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #00758D;"></div>
+        <span style="margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporation Donations: ${corporationCount}</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${identifiedBar}px; max-height: 100%; background-color: #FF8C00;"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Identified Donations: ${identifiedCount}</span>
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #FF8C00;"></div>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public Donations: ${publicCount}</span>
     </div>
 </div>
 
@@ -557,19 +733,19 @@ function donation_toolkit_shortcode($atts) {
         <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
     <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Pledged Donations: 0</span>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individual Donations: 0</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Pending Donations: 0</span>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundation Donations: 0</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Engaged Donations: 0</span>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporation Donations: 0</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Identified Donations: 0</span>
+        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public Donations: 0</span>
     </div>
     </div>
         </div>
@@ -1167,7 +1343,7 @@ donation-pyramid::before {
         <thead>
           <tr>
 		  	<th>Donation Status</th>
-            <th>Display Name</th>
+            <th>Donation Type</th>
             <th>Full Name</th>
             <th>Organization</th>
             <th>Gift Request</th>
