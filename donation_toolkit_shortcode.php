@@ -461,24 +461,15 @@ function donation_toolkit_shortcode($atts) {
 
 		const rows = document.querySelectorAll('.donation-row');
 
-		// Create an array that maps donation amounts to row indexes
-		const amountsToRows = {
-  			5000: 0,
-  			10000: 1,
-  			25000: 2,
-  			50000: 3,
-  			75000: 4,
-  			100000: 5,
-  			250000: 6,
-  			500000: 7,
-  			1250000: 8,
-  			2500000: 9,
-  			5000000: 10,
-		};
+		// Create an array of donation amounts
+		const donationAmounts = [5000, 10000, 25000, 50000, 75000, 100000, 250000, 500000, 1250000, 2500000, 5000000];
 
-		// Find the row index for the donation
-		const rowIndex = 'row' + amountsToRows[donationAmount];
+		// Find the closest donation amount
+		const closestAmount = donationAmounts.reduce((prev, curr) => Math.abs(curr - donationAmount) < Math.abs(prev - donationAmount) ? curr : prev);
 
+		// Find the row index for the closest donation amount FIX BUG WHEN FEILD IS BLANK
+		const rowIndex = 'row' + donationAmounts.indexOf(closestAmount);
+	
 		// Get the boxes in the correct row
 		console.log("rowIndex:", rowIndex);
 		const boxes = document.querySelectorAll('.donation-box[data-row="' + rowIndex + '"]');
