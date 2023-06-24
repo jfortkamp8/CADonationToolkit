@@ -7,7 +7,14 @@ Color Codes:
   Teal: #00758D
   Purple: #7866A1
   Light Blue: #77C4D5
-  
+
+Dynamic Pyramid Imple:
+
+When a new donaiton is added and there is not room for it in the pyramid, it will prompt the user:
+Would you like to adding this donation and automatticly repopulate the pyrmid, or would you like to edit it manually
+There will be the ablity for the pyramid to dynamiclly change based on a donaiton, but also for the user to 
+edit the pyramid themselves whenever they want with an edit button
+
 Team Input Mtg. 5/17/23
 
 * Pipeline
