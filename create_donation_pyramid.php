@@ -81,7 +81,7 @@ function createDonationPyramid($goal) {
 
   foreach ($rows as $row) {
     echo '<div class="donation-row">';
-echo '<div class="donation-row-label" onclick="editNumBoxes(this)" style="position: relative;">' . $row['num_boxes'] . ' x $' . number_format($row['amount']) . '</div>';
+	echo '<div class="donation-row-label" onclick="editNumBoxes(this)">' . $row['num_boxes'] . ' x $' . number_format($row['amount']) . '</div>';
     echo '<div class="donation-row-line"></div>';
     for ($i = 0; $i < $row['num_boxes']; $i++) {
   echo '<div class="donation-box" data-amount="' . $row['amount'] . '">';
