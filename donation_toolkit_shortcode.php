@@ -60,9 +60,9 @@ function donation_toolkit_shortcode($atts) {
   		checkbox.className = "circle-checkbox";
   		checkbox.style.width = "12px";
   		checkbox.style.height = "12px";
-  		checkbox.style.borderRadius = "50%";
   		checkbox.style.marginRight = "5px";
   		checkbox.style.verticalAlign = "middle";
+		checkbox.style.backgroundColor = "#F78D2D";
   		return checkbox;
 	}
 
@@ -228,11 +228,6 @@ function donation_toolkit_shortcode($atts) {
 			fileInput.click();
   		});
 
-  		// Download button click event listener
-  		downloadButton.addEventListener("click", function handleDownloadButtonClick() {
-    		console.log("Download button clicked");
-  		});
-
 		const saveButton = document.createElement("button");
   		saveButton.className = "save-button";
   		saveButton.innerText = "Save";
@@ -263,10 +258,11 @@ function donation_toolkit_shortcode($atts) {
 
     		editButton.addEventListener("click", function handleEditButtonClick() {
 		
-    			// Remove the donation from the donation pyramid
+    			//Remove the donation from the donation pyramid
     			const pyramidRows = document.querySelectorAll('.donation-row');
     			pyramidRows.forEach(row => {
         		const box = row.querySelector('.donation-box');
+			
         		const boxDisplayName = box.innerHTML.trim().replace(/<br>/g, ' ');
         			if (boxDisplayName === displayName) {
            				box.innerHTML = ''; // Remove the donation from the box
@@ -434,117 +430,120 @@ function donation_toolkit_shortcode($atts) {
 		targetRow.appendChild(targetCells[1]);
 		targetRow.appendChild(targetCells[2]);
 
+const donationName = values[1];
+const donationAmount = parseInt(values[2].replace(/[^0-9.-]+/g, ""));
+let donationColor = '';
+switch (pledgePendingValue) {
+  case 'pledge':
+    donationColor = '#7866A1';
+    break;
+  case 'pending':
+    donationColor = '#5DABBC';
+    break;
+  case 'engaged':
+    donationColor = '#00728A';
+    break;
+  case 'identified':
+    donationColor = '#F78D2D';
+    break;
+  default:
+    console.log('Invalid value for pledge/pending column');
+    return;
+}
 
-		//add box to pyramid
-		const donationName = values[1];
-		const donationAmount = parseInt(values[2].replace(/[^0-9.-]+/g,""));
-		let donationColor = '';
-		switch (pledgePendingValue) {
-  			case 'pledge':
-    			donationColor = '#7866A1';
-    			break;
-  			case 'pending':
-    			donationColor = '#5DABBC';
-    			break;
-  			case 'engaged':
-    			donationColor = '#00728A';
-    			break;
-  			case 'identified':
-    			donationColor = '#F78D2D';
-    			break;
-  	 		default:
-    			console.log('Invalid value for pledge/pending column');
-    			return;
-		}
+const boxesToFill = 1;
 
-		const boxesToFill = 1;
+const rows = document.querySelectorAll('.donation-row');
 
-		const rows = document.querySelectorAll('.donation-row');
+// Create an array of donation amounts
+const donationAmounts = [5000, 10000, 25000, 50000, 75000, 100000, 250000, 500000, 1250000, 2500000, 5000000];
 
-		// Create an array of donation amounts
-		const donationAmounts = [5000, 10000, 25000, 50000, 75000, 100000, 250000, 500000, 1250000, 2500000, 5000000];
+// Find the closest donation amount
+const closestAmount = donationAmounts.reduce((prev, curr) => Math.abs(curr - donationAmount) < Math.abs(prev - donationAmount) ? curr : prev);
 
-		// Find the closest donation amount
-		const closestAmount = donationAmounts.reduce((prev, curr) => Math.abs(curr - donationAmount) < Math.abs(prev - donationAmount) ? curr : prev);
+// Find the row index for the closest donation amount FIX BUG WHEN FEILD IS BLANK
+const rowIndex = 'row' + donationAmounts.indexOf(closestAmount);
 
-		// Find the row index for the closest donation amount FIX BUG WHEN FEILD IS BLANK
-		const rowIndex = 'row' + donationAmounts.indexOf(closestAmount);
-	
-		// Get the boxes in the correct row
-		console.log("rowIndex:", rowIndex);
-		const boxes = document.querySelectorAll('.donation-box[data-row="' + rowIndex + '"]');
-		console.log(boxes);
+// Get the boxes in the correct row
+const boxes = document.querySelectorAll('.donation-box-front[data-row="' + rowIndex + '"]');
 
-		// Keep track of which boxes have already been filled in this row
-		const filledBoxes = [];
-		boxes.forEach((box, index) => {
-  			if (box.innerHTML.trim() !== "") {
-    			filledBoxes.push(index);
-  			}
-		});
+// Keep track of which boxes have already been filled in this row
+const filledBoxes = [];
+boxes.forEach((box, index) => {
+  if (box.innerHTML.trim() !== "") {
+    filledBoxes.push(index);
+  }
+});
 
-		// Find the first empty box in the row
-		let emptyIndex = -1;
-		for (let i = 0; i < boxes.length; i++) {
-  			if (!filledBoxes.includes(i)) {
-    			emptyIndex = i;
-    			break;
-  			}
-		}
+// Find the first empty box in the row
+let emptyIndex = -1;
+for (let i = 0; i < boxes.length; i++) {
+  if (!filledBoxes.includes(i)) {
+    emptyIndex = i;
+    break;
+  }
+}
 
-		if (emptyIndex !== -1) {
-  			const box = boxes[emptyIndex];
-  			box.style.backgroundColor = donationColor;
-  			box.style.color = "#fff";
-  			box.style.fontWeight = "500";
-  			box.style.textAlign = "center";
-  			box.style.display = "flex";
-  			box.style.justifyContent = "center";
-  			box.style.alignItems = "center";
+if (emptyIndex !== -1) {
+  const box = boxes[emptyIndex];
+  box.style.backgroundColor = donationColor;
+  box.style.color = "#fff";
+  box.style.fontWeight = "500";
+  box.style.textAlign = "center";
+  box.style.display = "flex";
+  box.style.justifyContent = "center";
+  box.style.alignItems = "center";
 
-  			// Check if the display name has two words
-  			const words = displayName.split(" ");
-  			if (words.length === 2) {
-    			displayName = words.join("<br>");
-  			}
+  // Check if the display name has two words
+  const words = displayName.split(" ");
+  if (words.length === 2) {
+    displayName = words.join("<br>");
+  }
 
-  			// Adjust font size if display name is too big for the box
-  			const boxWidth = 80;
-  			const boxHeight = 38; 
+  // Adjust font size if display name is too big for the box
+  const boxWidth = 80;
+  const boxHeight = 38;
 
-  			// Create a temporary span element to measure the text size
-  			const span = document.createElement("span");
-  			span.innerHTML = displayName;
+  // Create a temporary span element to measure the text size
+  const span = document.createElement("span");
+  span.innerHTML = displayName;
 
-  			// Append the temporary span to the document body
-  			document.body.appendChild(span);
+  // Append the temporary span to the document body
+  document.body.appendChild(span);
 
-  			// Start with the initial font size and gradually reduce until it fits vertically
-  			let fontSize = 18;
+  // Start with the initial font size and gradually reduce until it fits vertically
+  let fontSize = 18;
 
-  			// Check if the text overflows the box vertically
-  			while (span.offsetHeight > boxHeight) {
-    			fontSize--; // Reduce the font size
-    			span.style.fontSize = fontSize + "px";
-  			}
+  // Check if the text overflows the box vertically
+  while (span.offsetHeight > boxHeight) {
+    fontSize--; // Reduce the font size
+    span.style.fontSize = fontSize + "px";
+  }
 
-  			// Adjust font size if the text overflows the box horizontally
-	  		while (span.offsetWidth > boxWidth) {
-    			fontSize--; // Reduce the font size
-    			span.style.fontSize = fontSize + "px";
-  			}
+  // Adjust font size if the text overflows the box horizontally
+  while (span.offsetWidth > boxWidth) {
+    fontSize--; // Reduce the font size
+    span.style.fontSize = fontSize + "px";
+  }
 
-  			// Apply the final font size and padding
-  			box.style.fontSize = fontSize + "px";
-  			box.style.padding = "10px";
+  // Apply the final font size and padding
+  box.style.fontSize = fontSize + "px";
+  box.style.padding = "10px";
 
-  			// Set the display name as the innerHTML of the box
-  			box.innerHTML = displayName;
+  // Set the display name as the innerHTML of the box
+  box.innerHTML = displayName;
 
-  			// Remove the temporary span from the document body
- 			document.body.removeChild(span);
-		}
+  // Remove the temporary span from the document body
+  document.body.removeChild(span);
 
+  // Add the donation to the box
+  const donationBox = box.parentElement;
+  const donationBoxAmount = parseInt(donationBox.getAttribute('data-amount'));
+  const donationValue = donationAmount < donationBoxAmount ? donationAmount : donationBoxAmount;
+  const donationLabel = document.createElement('div');
+  donationLabel.className = 'donation-label';
+  box.appendChild(donationLabel);
+}
 
     	if (pledgePendingValue === "pending") {
   			const tableBody = document.querySelector(".pending-table tbody");
@@ -589,7 +588,8 @@ function donation_toolkit_shortcode($atts) {
 
 		// Select all the rows in the moves management table
 		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
-
+		
+			
 		// Iterate over each row and update the count variables
 		rowsType.forEach(row => {
   			const donationTypeSelect = row.querySelector('.donation-type-select');
@@ -627,28 +627,28 @@ function donation_toolkit_shortcode($atts) {
     	const meterFillContent = `<div class="fill" style="width: ${percent}%">${percent > 100 ? `<p>${Math.round(percent)}%</p>` : ''}</div>`;
 		const dashboard = document.getElementById("dashboard-html");
 		dashboard.innerHTML = `
-       	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
-            <div style="width: 100%; height: 140px; background-color: #77C4D5; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center;">
+       	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0C1; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
+            <div style="width: 100%; height: 100px; background-color: #77C4D5; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
                 <!-- Campaign goal box -->
-                <h2 style="color: #FFFFFF; font-size: 40px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
+                <h2 style="color: #FFFFFF; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
             </div>
-            <div style="width: 100%; height: 90px; background-color: #7866A1; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center; padding: 10px;">
+            <div style="width: 100%; height: 90px; background-color: #7866A1; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; padding: 10px;">
                 <!-- Donation meter box -->
                 <div class="dashboard-meter">
                     ${meterFillContent}
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 28px; align-items: center;">
-        		<div style="width: 49%; background-color: #00758D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">
+        		<div style="width: 49%; background-color: #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pledged box -->
             		<div>
-               	 		<h3 style="color: #FFFFFF; font-size: 30px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPledged} Pledged</h3>
+               	 		<h3 style="color: #FFFFFF; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPledged} Pledged</h3>
             		</div>
         		</div>
-        		<div style="width: 49%; background-color: #F78D2D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+        		<div style="width: 49%; background-color: #F78D2D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pending box -->
             		<div>
-                		<h3 style="color: #FFFFFF; font-size: 30px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
+                		<h3 style="color: #FFFFFF; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
             		</div>
         		</div>
     		</div>
@@ -657,19 +657,19 @@ function donation_toolkit_shortcode($atts) {
    <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
     <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
         <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #7866A1;"></div>
-        <span style="margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individual Donations: ${individualCount}</span>
+        <span style="font-size: 13px; margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individual Donations: ${individualCount}</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #77C4D5;"></div>
-        <span style="margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundation Donations: ${foundationCount}</span>
+        <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundation Donations: ${foundationCount}</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #00758D;"></div>
-        <span style="margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporation Donations: ${corporationCount}</span>
+        <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporation Donations: ${corporationCount}</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #FF8C00;"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public Donations: ${publicCount}</span>
+        <span style="font-size: 13px;margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public Donations: ${publicCount}</span>
     </div>
 </div>
 
@@ -679,8 +679,25 @@ function donation_toolkit_shortcode($atts) {
 
         </div>
     `;
+
+const donationBoxes = document.querySelectorAll(".donation-box");
+
+  donationBoxes.forEach(function (box) {
+    box.addEventListener("click", function () {
+      if (!box.classList.contains("flipped") && box.innerHTML.trim() !== "") {
+        box.classList.add("flipped");
+      } else {
+        box.classList.remove("flipped");
+      }
+    });
+    const backElement = box.querySelector(".donation-box-back");
+    backElement.innerHTML = "$" + donationAmount.toLocaleString();
+  }); 
+
 		}, 0);
+		
 	}
+
 		
 	document.addEventListener("DOMContentLoaded", function() {
   		const goal = <?php echo $goal; ?>;
@@ -694,27 +711,27 @@ function donation_toolkit_shortcode($atts) {
 		const dashboard = document.getElementById("dashboard-html");
 		dashboard.innerHTML = `
        	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
-            <div style="width: 100%; height: 140px; background-color: #77C4D5; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center;">
+            <div style="width: 100%; height: 100px; background-color: #77C4D5; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
                 <!-- Campaign goal box -->
-                <h2 style="color: #FFFFFF; font-size: 52px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
+                <h2 style="color: #FFFFFF; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
             </div>
-            <div style="width: 100%; height: 90px; background-color: #7866A1; border-radius: 10px; margin-bottom: 28px; display: flex; justify-content: center; align-items: center; padding: 10px;">
+            <div style="width: 100%; height: 90px; background-color: #7866A1; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; padding: 10px;">
                 <!-- Donation meter box -->
                 <div class="dashboard-meter">
                     ${meterFillContent}
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 28px; align-items: center;">
-        		<div style="width: 49%; background-color: #00758D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">
+        		<div style="width: 49%; background-color: #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pledged box -->
             		<div>
-               	 		<h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pledged</h3>
+               	 		<h3 style="color: #FFFFFF; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pledged</h3>
             		</div>
         		</div>
-        		<div style="width: 49%; background-color: #F78D2D; height: 80px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+        		<div style="width: 49%; background-color: #F78D2D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pending box -->
             		<div>
-                		<h3 style="color: #FFFFFF; font-size: 36px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pending</h3>
+                		<h3 style="color: #FFFFFF; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pending</h3>
             		</div>
         		</div>
     		</div>
@@ -724,23 +741,24 @@ function donation_toolkit_shortcode($atts) {
         <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
     <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individual Donations: 0</span>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individual Donations: 0</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundation Donations: 0</span>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundation Donations: 0</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporation Donations: 0</span>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporation Donations: 0</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public Donations: 0</span>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public Donations: 0</span>
     </div>
     </div>
         </div>
     `;
+
 	});
 		
 
@@ -772,6 +790,103 @@ function donation_toolkit_shortcode($atts) {
   		});
 	}
 		
+function editNumBoxes(element) {
+	
+  const rowLabel = element;
+  const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+  const newRowLabel = prompt('Enter the new number of boxes:', numBoxes);
+  if (newRowLabel !== null) {
+    const newNumBoxes = parseInt(newRowLabel);
+    if (!isNaN(newNumBoxes) && newNumBoxes > 0) {
+      const row = rowLabel.parentElement;
+      const currentNumBoxes = row.querySelectorAll('.donation-box').length;
+      const filledBoxes = row.querySelectorAll('.donation-box-front:not(:empty)');
+
+      if (filledBoxes.length > 0 && newNumBoxes < currentNumBoxes) {
+        alert('Error: Cannot reduce the number of boxes to less than the amount of boxes already filled.');
+        return;
+      }
+      if (newNumBoxes > 8) {
+        alert('Error: Maximum number of boxes in each row is 8.');
+        return;
+      }
+
+      rowLabel.innerText = newNumBoxes + ' x ' + rowLabel.innerText.split(' ')[2];
+      const existingBox = row.querySelector('.donation-box-front');
+      const rowId = existingBox ? existingBox.getAttribute('data-row') : '';
+
+      if (newNumBoxes > currentNumBoxes) {
+        const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+        const boxesToAdd = newNumBoxes - currentNumBoxes;
+
+        for (let i = 0; i < boxesToAdd; i++) {
+          const box = document.createElement('div');
+          box.className = 'donation-box';
+          box.setAttribute('data-amount', amount);
+
+          const boxInner = document.createElement('div');
+          boxInner.className = 'donation-box-inner';
+
+          const boxFront = document.createElement('div');
+          boxFront.className = 'donation-box-front';
+          boxFront.setAttribute('data-row', rowId);
+
+          const boxBack = document.createElement('div');
+          boxBack.className = 'donation-box-back';
+
+          boxInner.appendChild(boxFront);
+          boxInner.appendChild(boxBack);
+          box.appendChild(boxInner);
+          row.appendChild(box);
+        }
+      } else if (newNumBoxes < currentNumBoxes) {
+        const boxesToRemove = currentNumBoxes - newNumBoxes;
+        const boxes = row.querySelectorAll('.donation-box');
+
+        for (let i = 0; i < boxesToRemove; i++) {
+          row.removeChild(boxes[boxes.length - 1]);
+        }
+      }
+
+      // Update the total donations amount
+      const totalDonationsLabel = document.querySelector('.donation-row-label b');
+      const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
+      totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
+      rowLabel.classList.add('button-pressed');
+rowLabel.classList.add('flash-animation');
+setTimeout(() => {
+  rowLabel.classList.remove('button-pressed');
+  setTimeout(() => {
+    rowLabel.classList.remove('flash-animation');
+  }, 300);
+}, 200);
+    } else {
+      alert('Invalid input. Please enter a positive number.');
+    }
+  }
+}
+		
+function calculateTotalDonations() {
+  const rows = document.querySelectorAll('.donation-row');
+  let totalDonations = 0;
+
+rows.forEach(row => {
+  const rowLabel = row.querySelector('.donation-row-label');
+  const isTotalRow = rowLabel.innerHTML.includes('Total:');
+  if (!isTotalRow) {
+    const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+    const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+    totalDonations += numBoxes * amount;
+  }
+});
+
+  return totalDonations;
+	
+}
+
+function numberWithCommas(number) {
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
 
 	</script>
 	<?php
@@ -779,6 +894,44 @@ function donation_toolkit_shortcode($atts) {
 // Define the HTML and CSS output
 $output = '
 <style>
+
+.donation-row-label {
+  transition: background-color 0.3s;
+  position: relative;
+}
+
+.donation-row-label::after {
+  content: "";
+  position: absolute;
+  top: -10%; /* Adjust the positioning to center the flash animation */
+  left: -10%; /* Adjust the positioning to center the flash animation */
+  width: 120%;
+  height: 120%;
+  border-radius: 15px;
+  background-color: rgba(0,0,0,0.09); /* Adjust the color as needed */
+  opacity: 0;
+  transition: opacity 0.2s, background-color 0.2s;
+  pointer-events: none;
+}
+
+.donation-row-label:active::after {
+  opacity: 1;
+}
+
+@keyframes flash-effect {
+  0% {
+    transform: scale(0.95); /* Adjust the scale factor as needed */
+  }
+  100% {
+    transform: scale(1); /* Adjust the scale factor as needed */
+  }
+}
+
+.flash-animation {
+  animation: flash-effect 0.2s linear;
+}
+
+
 
 .tabbed-content .table-column h2 {
   background-color: #00758D;
@@ -1237,18 +1390,68 @@ donation-pyramid::before {
                 0% { width: 0%; }
                 100% { width: ${percent}%; }
             }
-			
+
 .donation-box {
-  width: 90px; /* adjust the width as needed */
-  height: 38px; /* adjust the height as needed */
+  position: relative;
+  width: 90px;
+  height: 38px;
   border-radius: 25px;
-  display: flex;
-  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.1);
+  margin: 7px;
+  overflow: hidden;
+  cursor: pointer;
   justify-content: center;
   align-items: center;
-  background-color: #d4d4d4; /* adjust the background color as needed */
-  margin: 7px; /* adjust the margin as needed */
+  text-align: center;
+  display: flex;
 }
+
+.donation-box-inner {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.5s;
+}
+
+.donation-box-front,
+.donation-box-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+}
+
+.donation-box-front {
+  background-color: #d4d4d4;
+  display: flex;
+  border-radius: 25px;
+  justify-content: center;
+  align-items: center;
+  font-weight: 500;
+  text-align: center;
+  font-size: 18px;
+  padding: 10px;
+  color: #000;
+}
+
+.donation-box-back {
+  background-color: #939393;
+  display: flex;
+  border-radius: 25px;
+  justify-content: center;
+  align-items: center;
+  font-weight: 500;
+  text-align: center;
+  font-size: 18px;
+  padding: 10px;
+  color: #fff;
+  transform: rotateX(180deg);
+}
+
+.flipped .donation-box-inner {
+  transform: rotateX(180deg);
+}
+
 
 </style>
 
