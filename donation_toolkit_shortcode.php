@@ -108,10 +108,12 @@ function donation_toolkit_shortcode($atts) {
 		const donationTypeSelect = document.createElement("select");
 		donationTypeSelect.className = "donation-type-select";
   		donationTypeSelect.innerHTML = `
-  			<option value="individual">Individual</option>
-  			<option value="foundation">Foundation</option>
-			<option value="corporation">Corporation</option>
+  			<option value="individual">Individuals</option>
+  			<option value="foundation">Foundations</option>
+			<option value="corporation">Corporations</option>
 			<option value="public">Public</option>
+			<option value="board">Board</option>
+			<option value="other">Other</option>
   		`;
   		donationTypeSelect.style.fontSize = "10px";
 		cells[0].style.textAlign = "center";
@@ -549,9 +551,9 @@ if (emptyIndex !== -1) {
   			const tableBody = document.querySelector(".pending-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
 		}
-		if (pledgePendingValue === "engaged") {
+		if (pledgePendingValue === "engaged" || pledgePendingValue === "identified") {
   			const tableBody = document.querySelector(".pipeline-table tbody");
-  			tableBody.insertBefore(targetRow, tableBody.firstChild);tableBody
+  			tableBody.insertBefore(targetRow, tableBody.firstChild);
 		} else if (pledgePendingValue === "pledge") {
   			const tableBody = document.querySelector(".pledges-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
@@ -578,13 +580,17 @@ if (emptyIndex !== -1) {
   			</div>
 		`;
 		const meterText = document.getElementById("donation-meter-text");
-		meterText.innerHTML = `$${totalDonations.toLocaleString()} Raised of $${goal.toLocaleString()} Goal <span class="percent">◄ ${percent.toFixed()}% OF GOAL ►</span>`;
+	    const meterTexthead = document.getElementById("donation-meter-head");
+		meterTexthead.innerHTML = `$${totalDonations.toLocaleString()} Raised To-Date (${percent.toFixed()}%)`;
+		meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
 			
 		// Initialize count variables for each donation type
 		let individualCount = 0;
 		let foundationCount = 0;
 		let corporationCount = 0;
 		let publicCount = 0;
+		let boardCount = 0;
+		let otherCount = 0;
 
 		// Select all the rows in the moves management table
 		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
@@ -604,21 +610,22 @@ if (emptyIndex !== -1) {
     			corporationCount++;
   			} else if (donationTypeValue === "public") {
     			publicCount++;
+  			} else if (donationTypeValue === "board") {
+    			boardCount++;
+  			} else if (donationTypeValue === "other") {
+    			otherCount++;
   			}
 		});
 
-		// Output the counts
-		console.log("Individual Count:", individualCount);
-		console.log("Foundation Count:", foundationCount);
-		console.log("Corporation Count:", corporationCount);
-		console.log("Public Count:", publicCount);
 	
-		const highestCount = Math.max(individualCount, foundationCount, corporationCount, publicCount);
+		const highestCount = Math.max(individualCount, foundationCount, corporationCount, publicCount, boardCount, otherCount);
 			
         const individualBar = ((individualCount * 100)/(highestCount));
 		const foundationBar = ((foundationCount * 100)/(highestCount));
 		const corporationBar = ((corporationCount * 100)/(highestCount));
 		const publicBar = ((publicCount * 100)/(highestCount));
+		const boardBar = ((boardCount * 100)/(highestCount));
+		const otherBar = ((otherCount * 100)/(highestCount));
 			
 		const formattedGoal = '$' + goal.toLocaleString();
 		const formattedPledged = '$' + totalDonations.toLocaleString();
@@ -657,19 +664,27 @@ if (emptyIndex !== -1) {
    <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
     <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
         <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #7866A1;"></div>
-        <span style="font-size: 13px; margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individual Donations: ${individualCount}</span>
+        <span style="font-size: 13px; margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: ${individualCount}</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #77C4D5;"></div>
-        <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundation Donations: ${foundationCount}</span>
+        <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: ${foundationCount}</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #00758D;"></div>
-        <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporation Donations: ${corporationCount}</span>
+        <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: ${corporationCount}</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #FF8C00;"></div>
-        <span style="font-size: 13px;margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public Donations: ${publicCount}</span>
+        <span style="font-size: 13px;margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: ${publicCount}</span>
+    </div>
+   <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${boardBar}px; max-height: 100%; background-color: #FFEB3B;"></div>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: ${boardCount}</span>
+    </div>
+	<div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${otherBar}px; max-height: 100%; background-color: #4CAF50;"></div>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: ${otherCount}</span>
     </div>
 </div>
 
@@ -701,8 +716,11 @@ const donationBoxes = document.querySelectorAll(".donation-box");
 		
 	document.addEventListener("DOMContentLoaded", function() {
   		const goal = <?php echo $goal; ?>;
-  		const meterText = document.getElementById("donation-meter-text");
-  		meterText.innerHTML = `$0 Raised of $${goal.toLocaleString()} Goal <span class="percent">◄ 0% OF GOAL ►</span>`;
+  		
+		const meterText = document.getElementById("donation-meter-text");
+		 const meterTexthead = document.getElementById("donation-meter-head");
+		meterTexthead.innerHTML = `$0 Raised To-Date (0%)`;
+  		meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
 
 		const percent = 0;
 		const formattedGoal = '$' + goal.toLocaleString();
@@ -741,19 +759,27 @@ const donationBoxes = document.querySelectorAll(".donation-box");
         <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
     <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individual Donations: 0</span>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: 0</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundation Donations: 0</span>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: 0</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporation Donations: 0</span>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: 0</span>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public Donations: 0</span>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: 0</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: 0</span>
+    </div>
+	<div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: 0</span>
     </div>
     </div>
         </div>
@@ -1140,6 +1166,7 @@ to { opacity: 1; }
 
 .donation-table thead{
  border-radius: 10px;
+ 
 }
 
 #moves-management table {
@@ -1154,7 +1181,9 @@ to { opacity: 1; }
   font-size: 12px;
   color: white;
   padding: 7px;
-  text-align: left;
+  text-align: center;
+  vertical-align: middle;
+  
 }
 
 #moves-management table td {
@@ -1462,15 +1491,15 @@ donation-pyramid::before {
 
 <div class="donation-container">
   <div class="donation-meter">
-    <h2>Donation Meter</h2>
+    <h2 id="donation-meter-head"></h2>
     <p id="donation-meter-text"></p>
     <div class="meter">
       <div class="fill" id="donation-meter-fill"></div>
     </div>
   </div>
   <div class="donation-buttons" style="text-align:center">
-    <button id="add-donation-button" style="width:100%" onclick="addRow()">ADD NEW DONATION</button>
-    <button id="pdf-button" style="width:100%" onclick="generatePDF()">SAVE AS PDF FILE</button>
+    <button id="add-donation-button" style="width:100%" onclick="addRow()">ADD NEW DONOR</button>
+    <button id="pdf-button" style="width:100%" onclick="generatePDF()">SAVE AS PDF</button>
   </div>
   <div class="logo-container" style="text-align:center; margin-top: 30px;">
     <img src="' . $imgurl . '" alt="Client Logo" style="width: 70%; display: block; margin: 0 auto;">
@@ -1481,11 +1510,11 @@ donation-pyramid::before {
 <div class="tabbed-container">
   <div class="tabbed-content">
 	<div class="tab active" id="donation-pyramid">
-      <h2>Donation Pyramid</h2>
+      <h2>Gift Pyramid</h2>
       ' . $donation_pyramid . '
     </div>
     <div class="tab" id="pledges-pending">
-      <h2>Pledges and Pending</h2>
+      <h2>Pledges, Pending, & Pipeline</h2>
       <div class="table-container">
         <div class="table-column">
           <h2>Pledges</h2>
@@ -1536,14 +1565,14 @@ donation-pyramid::before {
       <table id="donation-table">
         <thead>
           <tr>
-		  	<th>Donation Status</th>
-            <th>Donation Type</th>
+		  	<th>Status</th>
+            <th>Type</th>
             <th>Full Name</th>
             <th>Organization</th>
             <th>Gift Request</th>
             <th>Next Step</th>
             <th>Recent Involvement</th>
-            <th>Extra Notes</th>
+            <th>Notes</th>
 			<th>Documents</th>
 			<th></th>
           </tr>
@@ -1553,14 +1582,14 @@ donation-pyramid::before {
       </table>
     </div>
 <div class="tab" id="dashboard">
-	<h2>Dashboard</h2>
+	<h2>Campaign Dashboard</h2>
 	<div class="fill" id="dashboard-html"></div>
 </div>
 
 <div class="tabbed-menu">
   <ul>
-    <li class="tab-link active" data-tab="donation-pyramid" onclick="activateTab()">Donation Pyramid</li>
-    <li class="tab-link" data-tab="pledges-pending" onclick="activateTab()">Pledges, Pending, Pipeline</li>
+    <li class="tab-link active" data-tab="donation-pyramid" onclick="activateTab()">Gift Pyramid</li>
+    <li class="tab-link" data-tab="pledges-pending" onclick="activateTab()">Pledges, Pending, & Pipeline</li>
     <li class="tab-link" data-tab="moves-management" onclick="activateTab()">Moves Management</li>
 	<li class="tab-link" data-tab="dashboard" onclick="activateTab()">Campaign Dashboard</li>
   </ul>
