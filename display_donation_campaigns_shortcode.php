@@ -156,8 +156,7 @@ echo '<div class="col-md-4 col-sm-6 donation-campaign-box">';
                 echo '<div class="campaign-info">';
                     echo '<ul>';
                         echo '<li>' . get_field('campaign_description') . '</li>';
-                        echo '<li>Lead Gift: ' . get_field('lead_gift') . '</li>';
-                        echo '<li>Status: ' . get_field('campaign_status') . '</li>';
+                        //echo '<li>Location: ' . get_field('campaign_location') . '</li>';
                     echo '<ul>';
                 echo '</div>';
                 $campaign_id = get_the_ID();
@@ -184,7 +183,7 @@ echo '<div class="col-md-4 col-sm-6 donation-campaign-box">';
                         $campaign_button_url = get_permalink($campaign_page->ID);
                     }
 
-                    echo '<a href="' . $campaign_button_url . '" class="campaign-button">Go To Campaign</a>';
+                    echo '<a href="' . $campaign_button_url . '" style="font-size: 13px; font-style: bold;" class="campaign-button">Launch Campaign Toolkit</a>';
                 echo '</div>';
             echo '</div>';
         }
