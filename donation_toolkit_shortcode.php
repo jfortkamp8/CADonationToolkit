@@ -913,7 +913,30 @@ rows.forEach(row => {
 function numberWithCommas(number) {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
+		
+// JavaScript function to toggle the settings menu
+function toggleSettingsMenu() {
+  const popupContainer = document.getElementById("settingsPopup");
+  if (popupContainer.style.display === "none" || popupContainer.style.display === '') {
+    popupContainer.style.display = "block";
+  } else {
+    popupContainer.style.display = "none";
+  }
+}
 
+// You may also want to close the settings menu if the user clicks outside of it
+document.addEventListener("click", function (event) {
+  const popupContainer = document.getElementById("settingsPopup");
+  const settingsButton = document.querySelector(".settings-button");
+  if (!event.target.closest(".settings-button") && !event.target.closest(".settings-popup")) {
+    popupContainer.style.display = "none";
+  }
+});
+
+
+
+
+		
 	</script>
 	<?php
 	
@@ -984,7 +1007,6 @@ $output = '
   right: 40px;
   display: flex;
   align-items: center;
-  width: 100%;
   justify-content: flex-end;
 }
 
@@ -1481,9 +1503,72 @@ donation-pyramid::before {
   transform: rotateX(180deg);
 }
 
+/* Style for the popup settings menu */
+.popup-container {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+}
+
+.settings-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 10000; /* Make sure the popup is on top of other elements */
+}
+
+.settings-popup h2 {
+  margin-top: 0;
+}
+
+.settings-popup button {
+  margin-top: 10px;
+}
+/* Additional style for the settings button */
+.settings-button {
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  position: absolute;
+  top: 165px;
+  right: 160px;
+  width: 41px; 
+  height: 41px;
+  background-color: #B2B2B2; /* Added background color to match the original style */
+  cursor: pointer;
+}
+
+.settings-button:hover {
+	background-color: #707070;
+	transition: background-color 0.3s;
+}
+
 
 </style>
 
+<div class="settings-button" onclick="toggleSettingsMenu()">
+  <img src="https://icon-library.com/images/white-gear-icon/white-gear-icon-6.jpg" alt="Settings" style="width: 20px; height: 20px; align-items: center;  justify-content: center; align-items: center;">
+</div>
+
+<!-- Placeholder for the popup settings menu -->
+<div class="popup-container" id="settingsPopup">
+  <div class="settings-popup">
+    <h2>Settings</h2>
+    <p>Placeholder for settings options</p>
+    <button onclick="toggleSettingsMenu()">Close</button>
+  </div>
+</div>
 
 <div class="logout-button">
 	' . add_logout_button() . '
