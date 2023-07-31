@@ -261,25 +261,39 @@ function donation_toolkit_shortcode($atts) {
 
     		editButton.addEventListener("click", function handleEditButtonClick() {
 		
-    			//Remove the donation from the donation pyramid
-    			const pyramidRows = document.querySelectorAll('.donation-row');
-    			pyramidRows.forEach(row => {
-        		const box = row.querySelector('.donation-box');
-			
-        		const boxDisplayName = box.innerHTML.trim().replace(/<br>/g, ' ');
-        			if (boxDisplayName === displayName) {
-           				box.innerHTML = ''; // Remove the donation from the box
-					 	box.style.backgroundColor = ''; // Reset the box color
-            			box.style.color = ''; // Reset the text color
-            			box.style.fontWeight = ''; // Reset the font weight
-            			box.style.textAlign = ''; // Reset the text alignment
-            			box.style.display = ''; // Reset the display property
-            			box.style.justifyContent = ''; // Reset the justify content property
-            			box.style.alignItems = ''; // Reset the align items property
-            			box.style.fontSize = ''; // Reset the font size
-            			box.style.padding = ''; // Reset the padding
-        			}
-    			});
+//Remove the donation from the donation pyramid
+const pyramidRows = document.querySelectorAll('.donation-row');
+pyramidRows.forEach(row => {
+    const boxInner = row.querySelector('.donation-box-inner');
+    const frontElement = row.querySelector('.donation-box-front');
+    const backElement = row.querySelector('.donation-box-back');
+
+    if (boxInner) {
+        const boxDisplayName = boxInner.innerText.trim().replace(/\s+/g, ' ');
+        if (boxDisplayName === displayName) {
+            // Clear the inner text of the front and back elements
+            if (frontElement) {
+                frontElement.innerText = '';
+				frontElement.style.backgroundColor = "#d4d4d4";
+            frontElement.style.color = '';
+            frontElement.style.fontWeight = '';
+            frontElement.style.textAlign = '';
+          frontElement.style.display = '';
+            frontElement.style.justifyContent = '';
+            }
+            if (backElement) {
+                backElement.innerText = '';
+				backElement.style.backgroundColor = "#939393;";
+            backElement.style.color = '';
+           backElement.style.fontWeight = '';
+            backElement.style.textAlign = '';
+         backElement.style.display = '';
+            backElement.style.justifyContent = '';
+            }
+        }
+    }
+});
+
 
     			// Remove the donation from the pledges table
     			const pledgesTable = document.querySelector(".pledges-table tbody");
@@ -524,35 +538,33 @@ if (emptyIndex !== -1) {
   donationLabel.className = 'donation-label';
   box.appendChild(donationLabel);
 } else {
-	const repopulate = confirm("Do you want to automatically repopulate the donation pyramid?"); // Adding a prompt
-	if (repopulate) {
-		// Get the boxes in the row corresponding to the donation amount
-const rowBoxes = document.querySelectorAll('.donation-box-front[data-row="' + rowIndex + '"]');
+  const repopulate = confirm("This row is already full. Would you like to add an additional donator box and automatically repopulate the Gift Pyramid?"); // Adding a prompt
+  if (repopulate) {
+    // Get the boxes in the row corresponding to the donation amount
+    const rowBoxes = document.querySelectorAll('.donation-box-front[data-row="' + rowIndex + '"]');
 
-let filledRowBoxes = 0;
-rowBoxes.forEach((box) => {
-  if (box.innerHTML.trim() !== "") {
-    filledRowBoxes++;
-  }
-});
+    let filledRowBoxes = 0;
+    rowBoxes.forEach((box) => {
+      if (box.innerHTML.trim() !== "") {
+        filledRowBoxes++;
+      }
+    });
 
-// If all boxes are filled in the current row, then create a new donation box
-if (filledRowBoxes === rowBoxes.length) {
-  // Find the row in the DOM
-  const row = rowBoxes[0] ? rowBoxes[0].closest('.donation-row') : null;
-  
-  if (row) {
-    // Create and add a new donation box to this row
-    // Note: You'll need to define addDonationBox yourself based on how your HTML is structured
-    addDonationBox(row, donationName, donationAmount, donationColor);
+    // If all boxes are filled in the current row, then create a new donation box
+    if (filledRowBoxes === rowBoxes.length) {
+      // Find the row in the DOM
+      const row = rowBoxes[0] ? rowBoxes[0].closest('.donation-row') : null;
+      
+      if (row) {
+        // Create and add a new donation box to this row
+        // Note: You'll need to define addDonationBox yourself based on how your HTML is structured
+        addDonationBox(row, rowIndex, donationName, donationAmount, donationColor);
+      }
+    }
+  } else {
+    alert('Donator is not saved. Please manually add a new box to the row and re-save the donator.');
+	  return;
   }
-}
-  
-	}
-			
-else {
-  console.log('Donation not saved. Please manually add a new box to the row.');
-}
 }
 			
     	if (pledgePendingValue === "pending") {
@@ -669,32 +681,33 @@ else {
     		</div>
 			<div style="width: 100%; height: 225px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
     <!-- Bar graph chart -->
-   <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
-    <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #7866A1;"></div>
+<div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #77C4D5"></div>
         <span style="font-size: 13px; margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: ${individualCount}</span>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #77C4D5;"></div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #00758D;"></div>
         <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: ${foundationCount}</span>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #00758D;"></div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #7866A1;"></div>
         <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: ${corporationCount}</span>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #FF8C00;"></div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #C53636;"></div>
         <span style="font-size: 13px;margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: ${publicCount}</span>
     </div>
-   <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${boardBar}px; max-height: 100%; background-color: #FFEB3B;"></div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${boardBar}px; max-height: 100%; background-color: #FF8C00;"></div>
         <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: ${boardCount}</span>
     </div>
-	<div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${otherBar}px; max-height: 100%; background-color: #4CAF50;"></div>
+	<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${otherBar}px; max-height: 100%; background-color: #F8E647;"></div>
         <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: ${otherCount}</span>
     </div>
 </div>
+
 
 </div>
 
@@ -713,8 +726,8 @@ const donationBoxes = document.querySelectorAll(".donation-box");
         box.classList.remove("flipped");
       }
     });
-    const backElement = box.querySelector(".donation-box-back");
-    backElement.innerHTML = "$" + donationAmount.toLocaleString();
+    //const backElement = box.querySelector(".donation-box-back");
+    //backElement.innerHTML = "$" + donationAmount.toLocaleString();
   }); 
 
 		}, 0);
@@ -764,32 +777,33 @@ const donationBoxes = document.querySelectorAll(".donation-box");
      
  <div style="width: 100%; height: 225px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
                 <!-- Bar graph chart -->
-        <div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px;">
-    <div style="display: flex; margin-top: 0px; flex-direction: column; align-items: center;">
+       <div style="width: 85%; height: 80%; background-color: rgb(255, 255, 255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
         <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: 0</span>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
         <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: 0</span>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
         <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: 0</span>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
         <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: 0</span>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
         <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: 0</span>
     </div>
-	<div style="display: flex; flex-direction: column; align-items: center;">
+	<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
         <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
         <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: 0</span>
     </div>
-    </div>
+</div>
+
         </div>
     `;
 
@@ -825,7 +839,7 @@ const donationBoxes = document.querySelectorAll(".donation-box");
 	}
 
 
-function addDonationBox(row, donationName, donationAmount, donationColor) {
+function addDonationBox(row, rowIndex, donationName, donationAmount, donationColor) {
 
   console.log(row);
   const rowLabel = row.querySelector('.donation-row-label');
@@ -842,7 +856,7 @@ function addDonationBox(row, donationName, donationAmount, donationColor) {
 
   const boxFront = document.createElement('div');
   boxFront.className = 'donation-box-front';
-  boxFront.setAttribute('data-row', 'row' + row);
+  boxFront.setAttribute('data-row', rowIndex);
   boxFront.style.backgroundColor = donationColor;
   boxFront.style.color = "#fff";
   boxFront.style.fontWeight = "500";
@@ -859,6 +873,11 @@ function addDonationBox(row, donationName, donationAmount, donationColor) {
   boxInner.appendChild(boxBack);
   box.appendChild(boxInner);
   row.appendChild(box);
+	
+	const remainingAmount = removeDonationBoxes(amount);
+if (remainingAmount > 0) {
+  return;
+}
 
   // Update the total donations amount
   const totalDonationsLabel = document.querySelector('.donation-row-label b');
@@ -974,6 +993,41 @@ function toggleSettingsMenu() {
     popupContainer.style.display = "none";
   }
 }
+		
+function toggleSetting(settingId) {
+    const settingElement = document.getElementById(settingId);
+    const settingValue = settingElement.checked;
+
+    // Mock implementation: Do something with the setting value
+    console.log(`Setting '${settingId}' is toggled: ${settingValue}`);
+  }
+
+function saveSettings() {
+  const generalSettings = {
+    setting1: document.getElementById('setting1').checked,
+    setting2: document.getElementById('setting2').checked,
+    // Add more General settings here if needed
+  };
+
+  const campaignSettings = {
+    setting3: document.getElementById('setting3').checked,
+    setting4: document.getElementById('setting4').checked,
+    // Add more Campaign settings here if needed
+  };
+
+  const appearanceSettings = {
+    setting5: document.getElementById('setting5').checked,
+    setting6: document.getElementById('setting6').checked,
+    // Add more Appearance settings here if needed
+  };
+
+  // Mock implementation: Save the settings to a database or apply them to the application
+  console.log('Settings saved.');
+
+  // Close the settings menu after saving
+  toggleSettingsMenu();
+}
+
 
 // You may also want to close the settings menu if the user clicks outside of it
 document.addEventListener("click", function (event) {
@@ -983,6 +1037,51 @@ document.addEventListener("click", function (event) {
     popupContainer.style.display = "none";
   }
 });
+		
+// Function to remove donation boxes
+function removeDonationBoxes(donationAmount) {
+  let remainingAmount = donationAmount;
+
+  // Select all donation rows
+  let rows = Array.from(document.querySelectorAll('.donation-row'));
+
+  // Sort rows based on donation amount in descending order
+  rows.sort((a, b) => {
+    const aAmount = parseInt(a.querySelector('.donation-box').getAttribute('data-amount'));
+    const bAmount = parseInt(b.querySelector('.donation-box').getAttribute('data-amount'));
+    return bAmount - aAmount;
+  });
+
+  // Start from the highest donation amount row and move downwards
+  for (let i = 0; i < rows.length && remainingAmount > 0; i++) {
+    const row = rows[i];
+    let rowBoxes = Array.from(row.querySelectorAll('.donation-box'));
+
+    // Filter boxes to consider only empty boxes
+    rowBoxes = rowBoxes.filter(box => box.querySelector('.donation-box-front').innerText.trim() === '');
+
+    // If there are no empty boxes in this row, continue to the next row
+    if (rowBoxes.length === 0) {
+      continue;
+    }
+
+    const rowBoxAmount = parseInt(rowBoxes[0].getAttribute('data-amount')); // Assuming all boxes in a row have same donation amount
+
+    // Remove box if there's enough remaining amount
+    if (remainingAmount >= rowBoxAmount) {
+      rowBoxes[rowBoxes.length - 1].remove(); // Remove the last box
+      remainingAmount -= rowBoxAmount;
+
+      // Update row label
+      const rowLabel = row.querySelector('.donation-row-label');
+      const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+      rowLabel.innerText = (numBoxes - 1) + ' x ' + rowLabel.innerText.split(' ')[2];
+    }
+  }
+
+  return remainingAmount; // If it's not zero, there wasn't enough boxes to remove
+}
+
 
 		
 	</script>
@@ -1568,20 +1667,55 @@ donation-pyramid::before {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #fff;
+  background-color: #f1f1f1; /* Light gray background */
+  width: 300px; /* Adjust the width as needed */
   padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
   z-index: 10000; /* Make sure the popup is on top of other elements */
 }
 
 .settings-popup h2 {
-  margin-top: 0;
+  margin: 0 0 16px; /* Add some bottom margin to the heading */
+  font-size: 24px; /* Larger heading font size */
+  text-align: center; /* Center the heading text */
+}
+
+.settings-popup h3 {
+  margin: 16px 0 8px; /* Add some margin around the section headings */
+  padding-bottom: 8px; /* Add some space below the h3 element */
+  font-size: 18px; /* Slightly larger section headings */
+  font-weight: bold;
+  border-bottom: 1px solid #000; /* Thin black line at the bottom of each h3 */
+}
+
+.settings-popup .setting {
+  display: flex;
+  align-items: center;
+  margin-bottom: 17px; /* Adjust spacing between settings */
+}
+
+.settings-popup label {
+  margin-left: 8px; /* Add some space between the label and the toggle */
 }
 
 .settings-popup button {
-  margin-top: 10px;
+  margin-top: 15px; /* Increase top margin for better spacing */
+  display: block; /* Make the button a block element */
+  width: 100%; /* Make the button full-width */
+  padding: 10px 16px; /* Add padding to the button */
+  font-size: 16px; /* Larger button font size */
+  background-color: #F78D2D;
+  color: #fff; /* White button text color */
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
 }
+
+.settings-popup button:hover {
+  background-color: #00758D;
+}
+
 /* Additional style for the settings button */
 .settings-button {
   color: #fff;
@@ -1609,11 +1743,47 @@ donation-pyramid::before {
   <img src="https://icon-library.com/images/white-gear-icon/white-gear-icon-6.jpg" alt="Settings" style="width: 20px; height: 20px; align-items: center;  justify-content: center; align-items: center;">
 </div>
 
-<!-- Placeholder for the popup settings menu -->
 <div class="popup-container" id="settingsPopup">
   <div class="settings-popup">
     <h2>Settings</h2>
-    <p>Placeholder for settings options</p>
+    
+    <!-- General Section -->
+    <h3>General</h3>
+    <div class="setting">
+      <input type="checkbox" id="setting1" onclick="toggleSetting(setting1)">
+      <label for="setting1">Setting 1</label>
+    </div>
+    <div class="setting">
+      <input type="checkbox" id="setting2" onclick="toggleSetting(setting2)">
+      <label for="setting2">Setting 2</label>
+    </div>
+    <!-- Add more General settings here if needed -->
+    
+    <!-- Campaign Section -->
+    <h3>Campaign</h3>
+    <div class="setting">
+      <input type="checkbox" id="setting3" onclick="toggleSetting(setting3)">
+      <label for="setting3">Setting 3</label>
+    </div>
+    <div class="setting">
+      <input type="checkbox" id="setting4" onclick="toggleSetting(setting4)">
+      <label for="setting4">Setting 4</label>
+    </div>
+    <!-- Add more Campaign settings here if needed -->
+    
+    <!-- Appearance Section -->
+    <h3>Appearance</h3>
+    <div class="setting">
+      <input type="checkbox" id="setting5" onclick="toggleSetting(setting5)">
+      <label for="setting5">Setting 5</label>
+    </div>
+    <div class="setting">
+      <input type="checkbox" id="setting6" onclick="toggleSetting(setting6)">
+      <label for="setting6">Setting 6</label>
+    </div>
+    <!-- Add more Appearance settings here if needed -->
+
+    <button onclick="saveSettings()">Save</button>
     <button onclick="toggleSettingsMenu()">Close</button>
   </div>
 </div>
