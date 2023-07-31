@@ -65,6 +65,7 @@ function donation_toolkit_shortcode($atts) {
 		checkbox.style.backgroundColor = "#F78D2D";
   		return checkbox;
 	}
+		
 
 	//MOVES MANAGEMENT AND PP JS
 	function addRow() {
@@ -431,7 +432,7 @@ function donation_toolkit_shortcode($atts) {
 		targetRow.appendChild(targetCells[0]);
 		targetRow.appendChild(targetCells[1]);
 		targetRow.appendChild(targetCells[2]);
-
+			
 const donationName = values[1];
 const donationAmount = parseInt(values[2].replace(/[^0-9.-]+/g, ""));
 let donationColor = '';
@@ -454,22 +455,12 @@ switch (pledgePendingValue) {
 }
 
 const boxesToFill = 1;
-
 const rows = document.querySelectorAll('.donation-row');
-
-// Create an array of donation amounts
 const donationAmounts = [5000, 10000, 25000, 50000, 75000, 100000, 250000, 500000, 1250000, 2500000, 5000000];
-
-// Find the closest donation amount
 const closestAmount = donationAmounts.reduce((prev, curr) => Math.abs(curr - donationAmount) < Math.abs(prev - donationAmount) ? curr : prev);
-
-// Find the row index for the closest donation amount FIX BUG WHEN FEILD IS BLANK
 const rowIndex = 'row' + donationAmounts.indexOf(closestAmount);
-
-// Get the boxes in the correct row
 const boxes = document.querySelectorAll('.donation-box-front[data-row="' + rowIndex + '"]');
 
-// Keep track of which boxes have already been filled in this row
 const filledBoxes = [];
 boxes.forEach((box, index) => {
   if (box.innerHTML.trim() !== "") {
@@ -477,7 +468,6 @@ boxes.forEach((box, index) => {
   }
 });
 
-// Find the first empty box in the row
 let emptyIndex = -1;
 for (let i = 0; i < boxes.length; i++) {
   if (!filledBoxes.includes(i)) {
@@ -485,6 +475,7 @@ for (let i = 0; i < boxes.length; i++) {
     break;
   }
 }
+	
 
 if (emptyIndex !== -1) {
   const box = boxes[emptyIndex];
@@ -496,57 +487,74 @@ if (emptyIndex !== -1) {
   box.style.justifyContent = "center";
   box.style.alignItems = "center";
 
-  // Check if the display name has two words
   const words = displayName.split(" ");
   if (words.length === 2) {
     displayName = words.join("<br>");
   }
 
-  // Adjust font size if display name is too big for the box
   const boxWidth = 80;
   const boxHeight = 38;
 
-  // Create a temporary span element to measure the text size
   const span = document.createElement("span");
   span.innerHTML = displayName;
-
-  // Append the temporary span to the document body
   document.body.appendChild(span);
 
-  // Start with the initial font size and gradually reduce until it fits vertically
   let fontSize = 18;
 
-  // Check if the text overflows the box vertically
   while (span.offsetHeight > boxHeight) {
-    fontSize--; // Reduce the font size
+    fontSize--;
     span.style.fontSize = fontSize + "px";
   }
 
-  // Adjust font size if the text overflows the box horizontally
   while (span.offsetWidth > boxWidth) {
-    fontSize--; // Reduce the font size
+    fontSize--;
     span.style.fontSize = fontSize + "px";
   }
 
-  // Apply the final font size and padding
   box.style.fontSize = fontSize + "px";
   box.style.padding = "10px";
-
-  // Set the display name as the innerHTML of the box
   box.innerHTML = displayName;
 
-  // Remove the temporary span from the document body
   document.body.removeChild(span);
 
-  // Add the donation to the box
   const donationBox = box.parentElement;
   const donationBoxAmount = parseInt(donationBox.getAttribute('data-amount'));
   const donationValue = donationAmount < donationBoxAmount ? donationAmount : donationBoxAmount;
   const donationLabel = document.createElement('div');
   donationLabel.className = 'donation-label';
   box.appendChild(donationLabel);
-}
+} else {
+	const repopulate = confirm("Do you want to automatically repopulate the donation pyramid?"); // Adding a prompt
+	if (repopulate) {
+		// Get the boxes in the row corresponding to the donation amount
+const rowBoxes = document.querySelectorAll('.donation-box-front[data-row="' + rowIndex + '"]');
 
+let filledRowBoxes = 0;
+rowBoxes.forEach((box) => {
+  if (box.innerHTML.trim() !== "") {
+    filledRowBoxes++;
+  }
+});
+
+// If all boxes are filled in the current row, then create a new donation box
+if (filledRowBoxes === rowBoxes.length) {
+  // Find the row in the DOM
+  const row = rowBoxes[0] ? rowBoxes[0].closest('.donation-row') : null;
+  
+  if (row) {
+    // Create and add a new donation box to this row
+    // Note: You'll need to define addDonationBox yourself based on how your HTML is structured
+    addDonationBox(row, donationName, donationAmount, donationColor);
+  }
+}
+  
+	}
+			
+else {
+  console.log('Donation not saved. Please manually add a new box to the row.');
+}
+}
+			
     	if (pledgePendingValue === "pending") {
   			const tableBody = document.querySelector(".pending-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
@@ -815,6 +823,49 @@ const donationBoxes = document.querySelectorAll(".donation-box");
    	 		pdfWindow.location.href = objectUrl;
   		});
 	}
+
+
+function addDonationBox(row, donationName, donationAmount, donationColor) {
+
+  console.log(row);
+  const rowLabel = row.querySelector('.donation-row-label');
+  const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+
+  rowLabel.innerText = (numBoxes + 1) + ' x ' + rowLabel.innerText.split(' ')[2];
+  const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+  const box = document.createElement('div');
+  box.className = 'donation-box';
+  box.setAttribute('data-amount', amount);
+
+  const boxInner = document.createElement('div');
+  boxInner.className = 'donation-box-inner';
+
+  const boxFront = document.createElement('div');
+  boxFront.className = 'donation-box-front';
+  boxFront.setAttribute('data-row', 'row' + row);
+  boxFront.style.backgroundColor = donationColor;
+  boxFront.style.color = "#fff";
+  boxFront.style.fontWeight = "500";
+  boxFront.style.textAlign = "center";
+  boxFront.style.display = "flex";
+  boxFront.style.justifyContent = "center";
+  boxFront.style.alignItems = "center";
+  boxFront.innerHTML = donationName;
+
+  const boxBack = document.createElement('div');
+  boxBack.className = 'donation-box-back';
+
+  boxInner.appendChild(boxFront);
+  boxInner.appendChild(boxBack);
+  box.appendChild(boxInner);
+  row.appendChild(box);
+
+  // Update the total donations amount
+  const totalDonationsLabel = document.querySelector('.donation-row-label b');
+  const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
+  totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
+}
+	
 		
 function editNumBoxes(element) {
 	
@@ -932,9 +983,6 @@ document.addEventListener("click", function (event) {
     popupContainer.style.display = "none";
   }
 });
-
-
-
 
 		
 	</script>
