@@ -22,7 +22,12 @@ function donation_toolkit_shortcode($atts) {
 
 	?>
 	<script>
+		// Global array to store donors
+let donors = [];
 		
+		function numberWithCommas(number) {
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
 	//TABS JS
 	function activateTab(){
 		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
@@ -446,9 +451,18 @@ pyramidRows.forEach(row => {
 		targetRow.appendChild(targetCells[0]);
 		targetRow.appendChild(targetCells[1]);
 		targetRow.appendChild(targetCells[2]);
-			
+		
+
 const donationName = values[1];
 const donationAmount = parseInt(values[2].replace(/[^0-9.-]+/g, ""));
+
+// Create a new donor object and add to donors array
+let newDonor = {
+  name: donationName,
+  amount: donationAmount
+};
+donors.push(newDonor);
+			
 let donationColor = '';
 switch (pledgePendingValue) {
   case 'pledge':
@@ -636,86 +650,136 @@ if (emptyIndex !== -1) {
     			otherCount++;
   			}
 		});
-
 	
 		const highestCount = Math.max(individualCount, foundationCount, corporationCount, publicCount, boardCount, otherCount);
 			
-        const individualBar = ((individualCount * 100)/(highestCount));
-		const foundationBar = ((foundationCount * 100)/(highestCount));
-		const corporationBar = ((corporationCount * 100)/(highestCount));
-		const publicBar = ((publicCount * 100)/(highestCount));
-		const boardBar = ((boardCount * 100)/(highestCount));
-		const otherBar = ((otherCount * 100)/(highestCount));
+        const individualBar = ((individualCount * 180)/(highestCount));
+		const foundationBar = ((foundationCount * 180)/(highestCount));
+		const corporationBar = ((corporationCount * 180)/(highestCount));
+		const publicBar = ((publicCount * 180)/(highestCount));
+		const boardBar = ((boardCount * 180)/(highestCount));
+		const otherBar = ((otherCount * 180)/(highestCount));
 			
 		const formattedGoal = '$' + goal.toLocaleString();
 		const formattedPledged = '$' + totalDonations.toLocaleString();
 		const formattedPending = '$' + pendingDonations.toLocaleString();
+		const pendpledge = pendingDonations + totalDonations;
+		const formattedPP = '$' + pendpledge.toLocaleString();
+		let percentFix = Math.round(percent);
     	const meterFillStyle = "width: " + percent + "%";
     	const meterFillContent = `<div class="fill" style="width: ${percent}%">${percent > 100 ? `<p>${Math.round(percent)}%</p>` : ''}</div>`;
 		const dashboard = document.getElementById("dashboard-html");
 		dashboard.innerHTML = `
        	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0C1; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
-            <div style="width: 100%; height: 100px; background-color: #77C4D5; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+            <div style="width: 100%; height: 100px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
                 <!-- Campaign goal box -->
-                <h2 style="color: #FFFFFF; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
+                <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedPledged} Pledged (${percentFix}% to Goal)</h2>
             </div>
-            <div style="width: 100%; height: 90px; background-color: #7866A1; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; padding: 10px;">
-                <!-- Donation meter box -->
-                <div class="dashboard-meter">
+            <div class="dashboard-meter" style="width: 100%; height: 90px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+              
                     ${meterFillContent}
-                </div>
+         
             </div>
             <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">
-        		<div style="width: 49%; background-color: #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pledged box -->
             		<div>
-               	 		<h3 style="color: #FFFFFF; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPledged} Pledged</h3>
+               	 		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
             		</div>
         		</div>
-        		<div style="width: 49%; background-color: #F78D2D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pending box -->
             		<div>
-                		<h3 style="color: #FFFFFF; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
+                		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPP} Pledged & Pending</h3>
             		</div>
         		</div>
     		</div>
-			<div style="width: 100%; height: 225px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
-    <!-- Bar graph chart -->
-<div style="width: 85%; height: 80%; background-color: rgb(255,255,255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px;">
+<div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">		
+
+<div style="width: 37%; height: 250px; background-color: rgb(255, 255, 255); border: 5px solid #00758D; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 10px;">
+<div style="width: 100%; display: flex; align-items: center; flex-direction: column;">
+    <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
+        ${formattedGoal} Campaign Goal
+    </h3>
+    <div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+        <!-- Pie Chart Using SVG -->
+        <svg width="100%" height="100%" viewBox="0 0 42 42">
+            <!-- Endowment slice -->
+            <path d="M21 21 L21 3 A18 18 0 0 1 39 21 Z" fill="#00758D"></path>
+            <text x="22" y="10" font-size="2" fill="white"></text>
+
+            <!-- Capital slice -->
+            <path d="M21 21 L39 21 A18 18 0 0 1 3 21 Z" fill="#7866A1"></path>
+            <text x="30" y="30" font-size="2" fill="white"></text>
+
+            <!-- Operating slice -->
+            <path d="M21 21 L3 21 A18 18 0 0 1 21 3 Z" fill="#FF8C00"></path>
+            <text x="8" y="30" font-size="2" fill="white"></text>
+        </svg>
+    </div>
+   </div>
+   </div>
+
+<!-- Bar graph chart -->
+<div style="width: 61%; height: 250px; background-color: rgb(255,255,255); border: 5px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px;">
     <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #77C4D5"></div>
-        <span style="font-size: 13px; margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: ${individualCount}</span>
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #FF8C00;"></div>
+        <span style="font-size: 10px; margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: ${individualCount}</span>
+    </div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #00758D;"></div>
+        <span style="font-size: 10px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: ${corporationCount}</span>
     </div>
     <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #00758D;"></div>
-        <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: ${foundationCount}</span>
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #77C4D5;"></div>
+        <span style="font-size: 10px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: ${foundationCount}</span>
     </div>
+   
     <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #7866A1;"></div>
-        <span style="font-size: 13px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: ${corporationCount}</span>
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${boardBar}px; max-height: 100%; background-color: #7866A1"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: ${boardCount}</span>
     </div>
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #C53636;"></div>
-        <span style="font-size: 13px;margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: ${publicCount}</span>
-    </div>
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${boardBar}px; max-height: 100%; background-color: #FF8C00;"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: ${boardCount}</span>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #CBCBCB;"></div>
+        <span style="font-size: 10px;margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: ${publicCount}</span>
     </div>
 	<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 70px; border-radius: 5px 5px 0 0; height: ${otherBar}px; max-height: 100%; background-color: #F8E647;"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: ${otherCount}</span>
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${otherBar}px; max-height: 100%; background-color: #000000;"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: ${otherCount}</span>
+    </div>
+</div>
+
+</div>
+<div style="width: 100%; height: 160px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; padding: 0 20px;">
+    <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); text-align: center; padding: 0 20px;">Top 5 Donors</h2>
+    <div id="donorContainer" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 50%;">
+        <!-- Donors will be populated here by the script -->
     </div>
 </div>
 
 
-</div>
-
-</div>
 
         </div>
     `;
 
+		// Sort donorArray in descending order based on donation amount
+    donors.sort((a, b) => b.amount - a.amount);
+	console.log(donors);
+    // Get the donorContainer element
+    const donorContainer = document.getElementById('donorContainer');
+
+    // Populate the top 5 donors into the donorContainer
+    for (let i = 0; i < 5 && i < donors.length; i++) {
+        const donor = donors[i];
+        const donorElement = document.createElement('div');
+donorElement.innerHTML = `
+    <div style="text-align: center; margin: 0 35px;">
+        <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
+        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">$${numberWithCommas(Math.round(donor.amount))}</span></div>
+    </div>`;
+        donorContainer.appendChild(donorElement);
+    }
+			
 const donationBoxes = document.querySelectorAll(".donation-box");
 
   donationBoxes.forEach(function (box) {
@@ -750,61 +814,90 @@ const donationBoxes = document.querySelectorAll(".donation-box");
 		const dashboard = document.getElementById("dashboard-html");
 		dashboard.innerHTML = `
        	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
-            <div style="width: 100%; height: 100px; background-color: #77C4D5; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+            <div style="width: 100%; height: 100px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
                 <!-- Campaign goal box -->
-                <h2 style="color: #FFFFFF; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedGoal} Campaign Goal</h2>
+                <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">$0 Pledged (0% to Goal)</h2>
             </div>
-            <div style="width: 100%; height: 90px; background-color: #7866A1; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; padding: 10px;">
-                <!-- Donation meter box -->
-                <div class="dashboard-meter">
+            <div class="dashboard-meter" style="width: 100%; height: 90px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; padding: 10px;">
                     ${meterFillContent}
-                </div>
             </div>
             <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">
-        		<div style="width: 49%; background-color: #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pledged box -->
             		<div>
-               	 		<h3 style="color: #FFFFFF; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pledged</h3>
+               	 		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pending</h3>
             		</div>
         		</div>
-        		<div style="width: 49%; background-color: #F78D2D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
             		<!-- Amount pending box -->
             		<div>
-                		<h3 style="color: #FFFFFF; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pending</h3>
+                		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">$0 Pledged & Pending</h3>
             		</div>
         		</div>
     		</div>
      
- <div style="width: 100%; height: 225px; background-color: #77C4D5; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
-                <!-- Bar graph chart -->
-       <div style="width: 85%; height: 80%; background-color: rgb(255, 255, 255); border: 7px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px;">
+ <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">
+       
+<div style="width: 37%; height: 250px; background-color: rgb(255, 255, 255); border: 5px solid #00758D; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 10px;">
+<div style="width: 100%; display: flex; align-items: center; flex-direction: column;">
+    <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
+        ${formattedGoal} Campaign Goal
+    </h3>
+    <div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+        <!-- Pie Chart Using SVG -->
+        <svg width="100%" height="100%" viewBox="0 0 42 42">
+            <!-- Endowment slice -->
+            <path d="M21 21 L21 3 A18 18 0 0 1 39 21 Z" fill="#00758D"></path>
+            <text x="22" y="10" font-size="2" fill="white"></text>
+
+            <!-- Capital slice -->
+            <path d="M21 21 L39 21 A18 18 0 0 1 3 21 Z" fill="#7866A1"></path>
+            <text x="30" y="30" font-size="2" fill="white"></text>
+
+            <!-- Operating slice -->
+            <path d="M21 21 L3 21 A18 18 0 0 1 21 3 Z" fill="#FF8C00"></path>
+            <text x="8" y="30" font-size="2" fill="white"></text>
+        </svg>
+    </div>
+   </div>
+   </div>
+
+
+<div style="width: 61%; height: 250px; background-color: rgb(255, 255, 255); border: 5px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px;">
     <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: 0</span>
+        <div style="width: 50px; border-radius: 5px 5px 0 0; height: 180px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: 0</span>
+    </div>
+
+  <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 50px; border-radius: 5px 5px 0 0; height: 180px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: 0</span>
+    </div>  
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 50px; border-radius: 5px 5px 0 0; height: 180px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: 0</span>
     </div>
     <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: 0</span>
+        <div style="width: 50px; border-radius: 5px 5px 0 0; height: 180px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: 0</span>
     </div>
     <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: 0</span>
+        <div style="width: 50px; border-radius: 5px 5px 0 0; height: 180px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: 0</span>
     </div>
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: 0</span>
-    </div>
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: 0</span>
-    </div>
+    
 	<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 70px; border-radius: 5px 5px 0 0; height: 100px; max-height: 100%; background-color: #EFEFEFE5"></div>
-        <span style="font-size: 13px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: 0</span>
+        <div style="width: 50px; border-radius: 5px 5px 0 0; height: 180px; max-height: 100%; background-color: #EFEFEFE5"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: 0</span>
     </div>
+
 </div>
 
         </div>
+<div style="width: 100%; height: 100px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+                <!-- Campaign goal box -->
+                <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">Top 5 Donors</h2>
+            </div>
     `;
 
 	});
@@ -979,28 +1072,43 @@ rows.forEach(row => {
   return totalDonations;
 	
 }
-
-function numberWithCommas(number) {
-  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
 		
+// JavaScript function to open the settings menu
+function openSettingsMenu() {
+  const popupContainer = document.getElementById("settingsPopup");
+  popupContainer.style.display = "block";
+  updateSettings(); // Update the checkboxes based on the current settings
+}
+
+// JavaScript function to close the settings menu
+function closeSettingsMenu() {
+  const popupContainer = document.getElementById("settingsPopup");
+  popupContainer.style.display = "none";
+}
+
 // JavaScript function to toggle the settings menu
 function toggleSettingsMenu() {
   const popupContainer = document.getElementById("settingsPopup");
-  if (popupContainer.style.display === "none" || popupContainer.style.display === '') {
-    popupContainer.style.display = "block";
+  if (popupContainer.style.display === "none" || popupContainer.style.display === "") {
+    openSettingsMenu();
   } else {
-    popupContainer.style.display = "none";
+    closeSettingsMenu();
   }
 }
-		
-function toggleSetting(settingId) {
-    const settingElement = document.getElementById(settingId);
-    const settingValue = settingElement.checked;
 
-    // Mock implementation: Do something with the setting value
-    console.log(`Setting '${settingId}' is toggled: ${settingValue}`);
-  }
+// Function to update the checkboxes based on the current settings
+function updateSettings() {
+  const generalSettings = {
+    setting1: document.getElementById('setting1').checked,
+    setting2: document.getElementById('setting2').checked,
+    // Add more General settings here if needed
+  };
+
+  // Update the checkboxes based on the saved settings
+  document.getElementById('setting1').checked = generalSettings.setting1;
+  document.getElementById('setting2').checked = generalSettings.setting2;
+  // Update other checkboxes as needed
+}
 
 function saveSettings() {
   const generalSettings = {
@@ -1011,7 +1119,7 @@ function saveSettings() {
 
   const campaignSettings = {
     setting3: document.getElementById('setting3').checked,
-    setting4: document.getElementById('setting4').checked,
+    setting4: document.getElementById('setting4').value,
     // Add more Campaign settings here if needed
   };
 
@@ -1021,11 +1129,29 @@ function saveSettings() {
     // Add more Appearance settings here if needed
   };
 
+  // Implement the setting1 (Read-Only Mode)
+  if (generalSettings.setting1) {
+    // Disable all buttons except for the tabbed menu tab buttons and the logout button
+    const allButtons = document.querySelectorAll('button');
+    allButtons.forEach(button => {
+      // Check if the button is not part of the tabbed menu and not the logout button
+      if (!button.closest('.tabbed-menu') && !button.closest('.logout-button')) {
+        button.disabled = true;
+      }
+    });
+  } else {
+    // Enable all buttons if setting1 is not checked
+    const allButtons = document.querySelectorAll('button');
+    allButtons.forEach(button => {
+      button.disabled = false;
+    });
+  }
+
   // Mock implementation: Save the settings to a database or apply them to the application
   console.log('Settings saved.');
 
   // Close the settings menu after saving
-  toggleSettingsMenu();
+  closeSettingsMenu();
 }
 
 
@@ -1668,7 +1794,7 @@ donation-pyramid::before {
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: #f1f1f1; /* Light gray background */
-  width: 300px; /* Adjust the width as needed */
+  width: 350px; /* Adjust the width as needed */
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
@@ -1682,8 +1808,8 @@ donation-pyramid::before {
 }
 
 .settings-popup h3 {
-  margin: 16px 0 8px; /* Add some margin around the section headings */
-  padding-bottom: 8px; /* Add some space below the h3 element */
+  margin: 20px 5px 20px; /* Add some margin around the section headings */
+  padding-bottom: 10px; /* Add some space below the h3 element */
   font-size: 18px; /* Slightly larger section headings */
   font-weight: bold;
   border-bottom: 1px solid #000; /* Thin black line at the bottom of each h3 */
@@ -1736,7 +1862,19 @@ donation-pyramid::before {
 	transition: background-color 0.3s;
 }
 
-
+ .settings-popup input[type="number"] {
+ background-color: #F8F8F8; /* Added background color to match the original style */
+    width: 100px; /* Set the desired width for the input number fields */
+	height: 25px;
+    padding: 8px; /* Add some padding for better appearance */
+    border: 1px solid #ccc; /* Add a border for a clear outline */
+    border-radius: 5px; /* Add a slight border-radius for a rounded look */
+    box-sizing: border-box; /* Include the padding and border within the specified width */
+    font-size: 12px; /* Adjust the font size as needed */
+	position: absolute;
+	 right: 45px;
+	margin-left: 10px;
+  }
 </style>
 
 <div class="settings-button" onclick="toggleSettingsMenu()">
@@ -1750,36 +1888,36 @@ donation-pyramid::before {
     <!-- General Section -->
     <h3>General</h3>
     <div class="setting">
-      <input type="checkbox" id="setting1" onclick="toggleSetting(setting1)">
-      <label for="setting1">Setting 1</label>
+      <input type="checkbox" id="setting1">
+      <label for="setting1">Read-Only Mode</label>
     </div>
     <div class="setting">
-      <input type="checkbox" id="setting2" onclick="toggleSetting(setting2)">
-      <label for="setting2">Setting 2</label>
+      <input type="checkbox" id="setting2">
+      <label for="setting2">Anonymous Mode</label>
     </div>
     <!-- Add more General settings here if needed -->
     
     <!-- Campaign Section -->
     <h3>Campaign</h3>
     <div class="setting">
-      <input type="checkbox" id="setting3" onclick="toggleSetting(setting3)">
-      <label for="setting3">Setting 3</label>
+      <label for="setting3">Edit Campaign Goal:</label>
+      <input type="number" id="setting3" min="0">
     </div>
     <div class="setting">
-      <input type="checkbox" id="setting4" onclick="toggleSetting(setting4)">
-      <label for="setting4">Setting 4</label>
+      <label for="setting4">Edit Lead Gift:</label>
+      <input type="number" id="setting4" min="0">
     </div>
     <!-- Add more Campaign settings here if needed -->
     
     <!-- Appearance Section -->
     <h3>Appearance</h3>
     <div class="setting">
-      <input type="checkbox" id="setting5" onclick="toggleSetting(setting5)">
-      <label for="setting5">Setting 5</label>
+      <input type="checkbox" id="setting5">
+      <label for="setting5">High Contrast</label>
     </div>
     <div class="setting">
-      <input type="checkbox" id="setting6" onclick="toggleSetting(setting6)">
-      <label for="setting6">Setting 6</label>
+      <input type="checkbox" id="setting6">
+      <label for="setting6">Large Text</label>
     </div>
     <!-- Add more Appearance settings here if needed -->
 
@@ -1787,6 +1925,7 @@ donation-pyramid::before {
     <button onclick="toggleSettingsMenu()">Close</button>
   </div>
 </div>
+
 
 <div class="logout-button">
 	' . add_logout_button() . '
@@ -1872,7 +2011,7 @@ donation-pyramid::before {
             <th>Type</th>
             <th>Full Name</th>
             <th>Organization</th>
-            <th>Gift Request</th>
+            <th>Amount</th>
             <th>Next Step</th>
             <th>Recent Involvement</th>
             <th>Notes</th>
