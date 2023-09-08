@@ -9,7 +9,23 @@ function donation_toolkit_shortcode($atts) {
 	$campaign_id = $campaign->ID;
 	$goal = floatval(str_replace(array('$', ','), '', get_field('donation_goal', $campaign_id)));
 	
-	$imgurl = get_field('client_logo',$campaign_id);
+	$imgurl = get_field('client_logo', $campaign_id);
+
+	$slice1 = get_field('slice_1', $campaign_id);
+	$slice2 = get_field('slice_2', $campaign_id);
+	$slice3 = get_field('slice_3', $campaign_id);
+	
+	// Split the input string by ': $' to get two parts
+	$part1 = explode(': $', $slice1);
+	$part2 = explode(': $', $slice2);
+	$part3 = explode(': $', $slice3);
+	
+    $field1name = "'" . trim($part1[0]) . "'";
+    $field1amount = str_replace(',', '', trim($part1[1])); 
+	$field2name = "'" . trim($part2[0]) . "'";
+    $field2amount = str_replace(',', '', trim($part2[1])); 
+	$field3name = "'" . trim($part3[0]) . "'";
+    $field3amount = str_replace(',', '', trim($part3[1])); 
 
     if (filter_var($imgurl, FILTER_VALIDATE_URL) === FALSE)
     {
@@ -22,12 +38,14 @@ function donation_toolkit_shortcode($atts) {
 
 	?>
 	<script>
-		// Global array to store donors
+// Global array to store donors
 let donors = [];
 		
-		function numberWithCommas(number) {
+function numberWithCommas(number) {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
+		
+
 	//TABS JS
 	function activateTab(){
 		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
@@ -323,7 +341,7 @@ pyramidRows.forEach(row => {
 				// Remove the donation from the pipeline table
     			const pipelineTable = document.querySelector(".pipeline-table tbody");
     			const pipelineRows = pipelineTable.querySelectorAll("tr");
-    			pendingRows.forEach(row => {
+    			pipelineRows.forEach(row => {
         			const donationCell = row.querySelector("td:nth-child(1)");
         			if (donationCell.innerHTML.trim() === displayName) {
             			row.remove(); // Remove the row from the table
@@ -452,7 +470,6 @@ pyramidRows.forEach(row => {
 		targetRow.appendChild(targetCells[1]);
 		targetRow.appendChild(targetCells[2]);
 		
-
 const donationName = values[1];
 const donationAmount = parseInt(values[2].replace(/[^0-9.-]+/g, ""));
 
@@ -552,9 +569,11 @@ if (emptyIndex !== -1) {
   donationLabel.className = 'donation-label';
   box.appendChild(donationLabel);
 } else {
-  const repopulate = confirm("This row is already full. Would you like to add an additional donator box and automatically repopulate the Gift Pyramid?"); // Adding a prompt
-  if (repopulate) {
-    // Get the boxes in the row corresponding to the donation amount
+
+const repopulate = confirm("This row is already full. Would you like to add an additional donator box and automatically repopulate the Gift Pyramid?"); // Adding a prompt
+console.log(repopulate);
+if (repopulate) {
+	 // Get the boxes in the row corresponding to the donation amount
     const rowBoxes = document.querySelectorAll('.donation-box-front[data-row="' + rowIndex + '"]');
 
     let filledRowBoxes = 0;
@@ -576,7 +595,8 @@ if (emptyIndex !== -1) {
       }
     }
   } else {
-    alert('Donator is not saved. Please manually add a new box to the row and re-save the donator.');
+    const modal = document.getElementById('alertModule');
+    modal.style.display = "block";
 	  return;
   }
 }
@@ -592,17 +612,41 @@ if (emptyIndex !== -1) {
   			const tableBody = document.querySelector(".pledges-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
 		}
-		const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
-		const totalDonations = pledgesCells.reduce((acc, curr) => {
-  			const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
-  			return isNaN(amount) ? acc : acc + amount;
-		}, 0);
-			
-		const pendingCells = Array.from(document.querySelectorAll(".pending-table tbody td:nth-child(2)"));
-		const pendingDonations = pendingCells.reduce((acc, curr) => {
-  			const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
-  			return isNaN(amount) ? acc : acc + amount;
-		}, 0);
+		// ... previous code ...
+
+const pledgesTotalElement = document.querySelector(".pledges-total");
+const pendingTotalElement = document.querySelector(".pending-total");
+const pipelineTotalElement = document.querySelector(".pipeline-total");
+
+const formatCurrency = (amount) => {
+    // You can format this as per your requirements
+    return "$" + numberWithCommas(amount);
+};
+
+// Populate the totals for Pledges
+const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
+const totalDonations = pledgesCells.reduce((acc, curr) => {
+    const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+   return isNaN(amount) ? acc : acc + amount;
+}, 0);
+pledgesTotalElement.innerText = formatCurrency(totalDonations);
+
+// Populate the totals for Pending
+const pendingCells = Array.from(document.querySelectorAll(".pending-table tbody td:nth-child(2)"));
+const pendingDonations = pendingCells.reduce((acc, curr) => {
+    const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+return isNaN(amount) ? acc : acc + amount;
+}, 0);
+pendingTotalElement.innerText = formatCurrency(pendingDonations);
+
+// Populate the totals for Pipeline
+const pipelineCells = Array.from(document.querySelectorAll(".pipeline-table tbody td:nth-child(2)"));
+const pipelineDonations = pipelineCells.reduce((acc, curr) => {
+    const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+  return isNaN(amount) ? acc : acc + amount;
+}, 0);
+pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
+
 		
 		const goal = <?php echo $goal; ?>;
 		const percent = totalDonations / goal * 100;
@@ -670,10 +714,10 @@ if (emptyIndex !== -1) {
     	const meterFillContent = `<div class="fill" style="width: ${percent}%">${percent > 100 ? `<p>${Math.round(percent)}%</p>` : ''}</div>`;
 		const dashboard = document.getElementById("dashboard-html");
 		dashboard.innerHTML = `
-       	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0C1; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
-            <div style="width: 100%; height: 100px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+       	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
+                        <div style="width: 100%; height: 70px; background-color: #F0F0F0; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
                 <!-- Campaign goal box -->
-                <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedPledged} Pledged (${percentFix}% to Goal)</h2>
+                <h2 style="color: #00758D; font-size: 41px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedPledged} Pledged (${percentFix}% to Goal)</h2>
             </div>
             <div class="dashboard-meter" style="width: 100%; height: 90px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
               
@@ -702,21 +746,21 @@ if (emptyIndex !== -1) {
         ${formattedGoal} Campaign Goal
     </h3>
     <div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
-        <!-- Pie Chart Using SVG -->
-        <svg width="100%" height="100%" viewBox="0 0 42 42">
-            <!-- Endowment slice -->
-            <path d="M21 21 L21 3 A18 18 0 0 1 39 21 Z" fill="#00758D"></path>
-            <text x="22" y="10" font-size="2" fill="white"></text>
+    <!-- Pie Chart Using SVG -->
+    <svg width="100%" height="100%" viewBox="0 0 42 42">
+        <!-- Endowment slice -->
+        <path id="endowmentSlice" d="M21 21 L21 3 A18 18 0 0 1 39 21 Z" fill="#00758D"></path>
+        <text id="endowmentText" x="22" y="10" font-size="2" fill="white"></text>
 
-            <!-- Capital slice -->
-            <path d="M21 21 L39 21 A18 18 0 0 1 3 21 Z" fill="#7866A1"></path>
-            <text x="30" y="30" font-size="2" fill="white"></text>
+        <!-- Capital slice -->
+        <path id="capitalSlice" d="M21 21 L39 21 A18 18 0 0 1 3 21 Z" fill="#7866A1"></path>
+        <text id="capitalText" x="30" y="30" font-size="2" fill="white"></text>
 
-            <!-- Operating slice -->
-            <path d="M21 21 L3 21 A18 18 0 0 1 21 3 Z" fill="#FF8C00"></path>
-            <text x="8" y="30" font-size="2" fill="white"></text>
-        </svg>
-    </div>
+        <!-- Operating slice -->
+        <path id="operatingSlice" d="M21 21 L3 21 A18 18 0 0 1 21 3 Z" fill="#FF8C00"></path>
+        <text id="operatingText" x="8" y="30" font-size="2" fill="white"></text>
+    </svg>
+</div>
    </div>
    </div>
 
@@ -779,21 +823,7 @@ donorElement.innerHTML = `
     </div>`;
         donorContainer.appendChild(donorElement);
     }
-			
-const donationBoxes = document.querySelectorAll(".donation-box");
-
-  donationBoxes.forEach(function (box) {
-    box.addEventListener("click", function () {
-      if (!box.classList.contains("flipped") && box.innerHTML.trim() !== "") {
-        box.classList.add("flipped");
-      } else {
-        box.classList.remove("flipped");
-      }
-    });
-    //const backElement = box.querySelector(".donation-box-back");
-    //backElement.innerHTML = "$" + donationAmount.toLocaleString();
-  }); 
-
+		
 		}, 0);
 		
 	}
@@ -814,9 +844,9 @@ const donationBoxes = document.querySelectorAll(".donation-box");
 		const dashboard = document.getElementById("dashboard-html");
 		dashboard.innerHTML = `
        	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
-            <div style="width: 100%; height: 100px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+            <div style="width: 100%; height: 70px; background-color: #F0F0F0; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
                 <!-- Campaign goal box -->
-                <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">$0 Pledged (0% to Goal)</h2>
+                <h2 style="color: #00758D; font-size: 41px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">$0 Pledged (0% to Goal)</h2>
             </div>
             <div class="dashboard-meter" style="width: 100%; height: 90px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; padding: 10px;">
                     ${meterFillContent}
@@ -843,22 +873,23 @@ const donationBoxes = document.querySelectorAll(".donation-box");
     <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
         ${formattedGoal} Campaign Goal
     </h3>
-    <div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
-        <!-- Pie Chart Using SVG -->
-        <svg width="100%" height="100%" viewBox="0 0 42 42">
-            <!-- Endowment slice -->
-            <path d="M21 21 L21 3 A18 18 0 0 1 39 21 Z" fill="#00758D"></path>
-            <text x="22" y="10" font-size="2" fill="white"></text>
+<div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+    <!-- Pie Chart Using SVG -->
+    <svg width="100%" height="100%" viewBox="0 0 42 42">
+        <!-- Endowment slice -->
+        <path id="endowmentSlice" d="" fill="#00758D"></path>
+        <text id="endowmentText" x="12" y="10" font-size="2" fill="white"></text>
 
-            <!-- Capital slice -->
-            <path d="M21 21 L39 21 A18 18 0 0 1 3 21 Z" fill="#7866A1"></path>
-            <text x="30" y="30" font-size="2" fill="white"></text>
+        <!-- Capital slice -->
+        <path id="capitalSlice" d="" fill="#7866A1"></path>
+        <text id="capitalText" x="5" y="30" font-size="2" fill="white"></text>
 
-            <!-- Operating slice -->
-            <path d="M21 21 L3 21 A18 18 0 0 1 21 3 Z" fill="#FF8C00"></path>
-            <text x="8" y="30" font-size="2" fill="white"></text>
-        </svg>
-    </div>
+        <!-- Operating slice -->
+        <path id="operatingSlice" d="" fill="#FF8C00"></path>
+        <text id="operatingText" x="27" y="30" font-size="2" fill="white"></text>
+    </svg>
+</div>
+
    </div>
    </div>
 
@@ -979,80 +1010,264 @@ if (remainingAmount > 0) {
 }
 	
 		
+let globalRowLabel; // To hold the reference to the element being edited
+
 function editNumBoxes(element) {
-	
-  const rowLabel = element;
-  const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
-  const newRowLabel = prompt('Enter the new number of boxes:', numBoxes);
-  if (newRowLabel !== null) {
-    const newNumBoxes = parseInt(newRowLabel);
-    if (!isNaN(newNumBoxes) && newNumBoxes > 0) {
-      const row = rowLabel.parentElement;
-      const currentNumBoxes = row.querySelectorAll('.donation-box').length;
-      const filledBoxes = row.querySelectorAll('.donation-box-front:not(:empty)');
+    globalRowLabel = element;
+    const numBoxes = parseInt(globalRowLabel.innerText.split(' ')[0]);
 
-      if (filledBoxes.length > 0 && newNumBoxes < currentNumBoxes) {
-        alert('Error: Cannot reduce the number of boxes to less than the amount of boxes already filled.');
+    // Set input value and show the modal
+    document.getElementById('numBoxesInput').value = numBoxes;
+    document.getElementById('customModal').style.display = "block";
+}
+
+function saveChanges() {
+    const newNumBoxes = parseInt(document.getElementById('numBoxesInput').value);
+    if (isNaN(newNumBoxes) || newNumBoxes < 0) {
+        document.getElementById('customModal').style.display = "none";
+		const mod = document.getElementById('errorModule2');
+    	mod.style.display = "block";
         return;
-      }
-      if (newNumBoxes > 8) {
-        alert('Error: Maximum number of boxes in each row is 8.');
+    }
+
+    const row = globalRowLabel.parentElement;
+    const currentNumBoxes = row.querySelectorAll('.donation-box').length;
+    const filledBoxes = row.querySelectorAll('.donation-box-front:not(:empty)');
+
+    if (filledBoxes.length > 0 && newNumBoxes < currentNumBoxes) {
+		document.getElementById('customModal').style.display = "none";
+		const modalerror = document.getElementById('errorModule1');
+    	modalerror.style.display = "block";
         return;
-      }
+    }
 
-      rowLabel.innerText = newNumBoxes + ' x ' + rowLabel.innerText.split(' ')[2];
-      const existingBox = row.querySelector('.donation-box-front');
-      const rowId = existingBox ? existingBox.getAttribute('data-row') : '';
+    if (newNumBoxes === 0) {
+		document.getElementById('customModal').style.display = "none";
+		const modalDelete = document.getElementById('errorModule4');
+    	modalDelete.style.display = "block";
+        return;
+    }
 
-      if (newNumBoxes > currentNumBoxes) {
-        const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
-        const boxesToAdd = newNumBoxes - currentNumBoxes;
+    globalRowLabel.innerText = newNumBoxes + ' x ' + globalRowLabel.innerText.split(' ')[2];
+    const existingBox = row.querySelector('.donation-box-front');
+    const rowId = existingBox ? existingBox.getAttribute('data-row') : '';
 
-        for (let i = 0; i < boxesToAdd; i++) {
-          const box = document.createElement('div');
-          box.className = 'donation-box';
-          box.setAttribute('data-amount', amount);
+    const amount = parseInt(globalRowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+    let boxesToAdd = newNumBoxes - currentNumBoxes;
+    let currentRow = row;
 
-          const boxInner = document.createElement('div');
-          boxInner.className = 'donation-box-inner';
+    while (boxesToAdd > 0) {
+        const boxesInThisRow = currentRow.querySelectorAll('.donation-box').length;
+        const boxesSpaceInThisRow = 8 - boxesInThisRow; // calculate the space left in the current row
+        const boxesToAppend = Math.min(boxesSpaceInThisRow, boxesToAdd); // Decide how many boxes we can append to the current row
 
-          const boxFront = document.createElement('div');
-          boxFront.className = 'donation-box-front';
-          boxFront.setAttribute('data-row', rowId);
+        for (let i = 0; i < boxesToAppend; i++) {
+            const box = document.createElement('div');
+            box.className = 'donation-box';
+            box.setAttribute('data-amount', amount);
 
-          const boxBack = document.createElement('div');
-          boxBack.className = 'donation-box-back';
+            const boxInner = document.createElement('div');
+            boxInner.className = 'donation-box-inner';
 
-          boxInner.appendChild(boxFront);
-          boxInner.appendChild(boxBack);
-          box.appendChild(boxInner);
-          row.appendChild(box);
+            const boxFront = document.createElement('div');
+            boxFront.className = 'donation-box-front';
+            boxFront.setAttribute('data-row', rowId);
+
+            const boxBack = document.createElement('div');
+            boxBack.className = 'donation-box-back';
+
+            boxInner.appendChild(boxFront);
+            boxInner.appendChild(boxBack);
+            box.appendChild(boxInner);
+            currentRow.appendChild(box);
         }
-      } else if (newNumBoxes < currentNumBoxes) {
+
+        boxesToAdd -= boxesToAppend; // Reduce the number of boxes left to append
+
+        if (boxesToAdd > 0) {
+            // Create a new row without a label and append it below the current row
+            const newRow = document.createElement('div');
+            newRow.className = row.className; // Assuming the row has a specific class to copy
+            currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
+            currentRow = newRow;
+			closeModal();
+        }
+    }
+    // Logic for removing boxes, unchanged from the previous version
+    if (newNumBoxes < currentNumBoxes) {
         const boxesToRemove = currentNumBoxes - newNumBoxes;
         const boxes = row.querySelectorAll('.donation-box');
 
         for (let i = 0; i < boxesToRemove; i++) {
-          row.removeChild(boxes[boxes.length - 1]);
+            row.removeChild(boxes[boxes.length - 1 - i]);
         }
-      }
-
-      // Update the total donations amount
-      const totalDonationsLabel = document.querySelector('.donation-row-label b');
-      const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
-      totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
-      rowLabel.classList.add('button-pressed');
-rowLabel.classList.add('flash-animation');
-setTimeout(() => {
-  rowLabel.classList.remove('button-pressed');
-  setTimeout(() => {
-    rowLabel.classList.remove('flash-animation');
-  }, 300);
-}, 200);
-    } else {
-      alert('Invalid input. Please enter a positive number.');
     }
-  }
+
+    updateTotalDonations();
+    closeModal();
+}
+
+function updateTotalDonations() {
+    const totalDonationsLabel = document.querySelector('.donation-row-label b');
+    const totalDonations = calculateTotalDonations();
+    totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations);
+}
+
+
+function addNewRow(amount, numBoxes, position, referenceElement) {
+    if (numBoxes > 8) {
+		document.getElementById('addNewModuleModal').style.display = "none";
+		const modal = document.getElementById('errorModule');
+    	modal.style.display = "block";
+        return;
+    }
+	if (numBoxes < 1) {
+		document.getElementById('addNewModuleModal').style.display = "none";
+		const modal = document.getElementById('errorModule3');
+    	modal.style.display = "block";
+        return;
+    }
+
+	const row = globalRowLabel.parentElement;
+    const newRow = document.createElement('div');
+    newRow.className = 'donation-row';
+	
+const newRowLabel = document.createElement('div');
+newRowLabel.className = 'donation-row-label';
+newRowLabel.innerText = numBoxes + ' x $' + amount;
+
+// Assign an anonymous function to onclick
+newRowLabel.onclick = function() {
+  editNumBoxes(this); // Pass the 'this' context to editNumBoxes
+};
+
+newRow.appendChild(newRowLabel);
+
+
+
+    for (let i = 0; i < numBoxes; i++) {
+        const box = document.createElement('div');
+        box.className = 'donation-box';
+        box.setAttribute('data-amount', amount);
+
+        const boxInner = document.createElement('div');
+        boxInner.className = 'donation-box-inner';
+
+        const boxFront = document.createElement('div');
+        boxFront.className = 'donation-box-front';
+		
+        const boxBack = document.createElement('div');
+        boxBack.className = 'donation-box-back';
+
+        boxInner.appendChild(boxFront);
+        boxInner.appendChild(boxBack);
+        box.appendChild(boxInner);
+        newRow.appendChild(box);
+    }
+
+    if (position === 'above') {
+        referenceElement.parentNode.insertBefore(newRow, referenceElement);
+    } else {
+        if (referenceElement.nextSibling) {
+            referenceElement.parentNode.insertBefore(newRow, referenceElement.nextSibling);
+        } else {
+            referenceElement.parentNode.appendChild(newRow);
+        }
+    }
+	// Update the total donations amount
+  const totalDonationsLabel = document.querySelector('.donation-row-label b');
+  const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
+  totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
+}
+		
+function openAddNewModule() {
+	closeModal();
+    const modal = document.getElementById('addNewModuleModal');
+    modal.style.display = "block";
+
+    const aboveBtn = modal.querySelector('#aboveBtn');
+    const belowBtn = modal.querySelector('#belowBtn');
+    const saveModuleBtn = modal.querySelector('#saveModuleBtn');
+
+    aboveBtn.onclick = function () {
+        setButtonHighlighted(aboveBtn);
+        setButtonUnhighlighted(belowBtn);
+        modal.setAttribute('data-position', 'above');
+    };
+
+    belowBtn.onclick = function () {
+        setButtonHighlighted(belowBtn);
+        setButtonUnhighlighted(aboveBtn);
+        modal.setAttribute('data-position', 'below');
+    };
+
+    saveModuleBtn.onclick = function () {
+        const newRowNumBoxes = document.getElementById('numberBoxesInput').value;
+        const newRowDonationAmount = document.getElementById('donationAmountInput').value;
+
+        if (newRowDonationAmount && newRowNumBoxes) {
+            const donationAmount = parseFloat(newRowDonationAmount.replace(/[^0-9.]/g, ''));
+            const positionChoice = modal.getAttribute('data-position');
+            addNewRow(numberWithCommas(donationAmount), parseInt(newRowNumBoxes), positionChoice, globalRowLabel.parentElement);
+        }
+        
+        document.getElementById('addNewModuleModal').style.display = "none";
+    };
+}
+
+function setButtonHighlighted(button) {
+    button.style.backgroundColor = "#F78D2D";
+    button.style.color = "black";
+}
+
+function setButtonUnhighlighted(button) {
+    button.style.backgroundColor = "";
+    button.style.color = "";
+}
+
+function closeModal() {
+    document.getElementById('customModal').style.display = "none";
+}
+		
+function closeNewModal() {
+    document.getElementById('addNewModuleModal').style.display = "none";
+}
+		
+function closeErrorOpenModal() {
+	document.getElementById('errorModule').style.display = "none";
+    document.getElementById('addNewModuleModal').style.display = "block";
+}
+		
+function closeErrorOpenModal1() {
+	document.getElementById('errorModule1').style.display = "none";
+    document.getElementById('customModal').style.display = "block";
+}
+	
+function closeErrorOpenModal2() {
+	document.getElementById('errorModule2').style.display = "none";
+    document.getElementById('customModal').style.display = "block";
+}
+		
+function closeErrorOpenModal3() {
+	document.getElementById('errorModule3').style.display = "none";
+    document.getElementById('addNewModuleModal').style.display = "block";
+}
+
+function cancelDeleteRow() {
+	document.getElementById('errorModule4').style.display = "none";
+    document.getElementById('customModal').style.display = "block";
+}
+		
+function closeNewMod(){
+	const row = globalRowLabel.parentElement;
+	row.remove();
+	document.getElementById('errorModule4').style.display = "none";
+    updateTotalDonations();
+    closeModal();
+}
+
+function closeAlert() {
+	document.getElementById('alertModule').style.display = "none";
 }
 		
 function calculateTotalDonations() {
@@ -1070,7 +1285,6 @@ rows.forEach(row => {
 });
 
   return totalDonations;
-	
 }
 		
 // JavaScript function to open the settings menu
@@ -1083,7 +1297,7 @@ function openSettingsMenu() {
 // JavaScript function to close the settings menu
 function closeSettingsMenu() {
   const popupContainer = document.getElementById("settingsPopup");
-  popupContainer.style.display = "none";
+  popupContainer.style.display = "none"; // Simply set the display to "none"
 }
 
 // JavaScript function to toggle the settings menu
@@ -1146,7 +1360,7 @@ function saveSettings() {
       button.disabled = false;
     });
   }
-
+	
   // Mock implementation: Save the settings to a database or apply them to the application
   console.log('Settings saved.');
 
@@ -1159,8 +1373,23 @@ function saveSettings() {
 document.addEventListener("click", function (event) {
   const popupContainer = document.getElementById("settingsPopup");
   const settingsButton = document.querySelector(".settings-button");
+  
+  // Check if the clicked element is not within the settings button or settings popup
   if (!event.target.closest(".settings-button") && !event.target.closest(".settings-popup")) {
-    popupContainer.style.display = "none";
+    closeSettingsMenu(); // Close the settings menu
+  }
+});
+
+// Attach the event listeners for the close and save buttons
+document.addEventListener("DOMContentLoaded", function () {
+  const closeButton = document.getElementById("closeButton");
+  if (closeButton) {
+    closeButton.addEventListener("click", closeSettingsMenu);
+  }
+
+  const saveButton = document.getElementById("saveButton");
+  if (saveButton) {
+    saveButton.addEventListener("click", saveSettings);
   }
 });
 		
@@ -1207,8 +1436,59 @@ function removeDonationBoxes(donationAmount) {
 
   return remainingAmount; // If it's not zero, there wasn't enough boxes to remove
 }
+	
+    const slice1Value = <?php echo $field1name; ?>;
+    const slice2Value = <?php echo $field2name; ?>;
+    const slice3Value = <?php echo $field3name; ?>;
+    var totalBudget = <?php echo $goal; ?>;
+
+    var slice1Amount = <?php echo $field1amount; ?>;
+    var slice2Amount = <?php echo $field2amount; ?>;
+    var slice3Amount = <?php echo $field3amount; ?>;
+
+    var slice1Proportion = (slice1Amount / totalBudget);
+    var slice2Proportion = (slice2Amount / totalBudget);
+    var slice3Proportion = (slice3Amount / totalBudget);
 
 
+    // Update pie chart slices
+    createSlice("endowmentSlice", "endowmentText", "#00758D", 0, slice1Proportion, slice1Value);
+    createSlice("capitalSlice", "capitalText", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, slice2Value);
+    createSlice("operatingSlice", "operatingText", "#FF8C00", slice1Proportion + slice2Proportion, slice1Proportion + slice2Proportion + slice3Proportion, slice3Value);
+
+    // Function to create a path description for a pie chart slice
+    function createSlice(sliceId, textId, fillColor, startProportion, endProportion, sliceName, sliceValue) {
+        var radius = 18;
+        var centerX = 21;
+        var centerY = 21;
+
+        var startAngle = startProportion * 360;
+        var endAngle = endProportion * 360;
+
+        var startRad = (startAngle - 90) * Math.PI / 180;
+        var endRad = (endAngle - 90) * Math.PI / 180;
+
+        var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+
+        var startX = centerX + radius * Math.cos(startRad);
+        var startY = centerY + radius * Math.sin(startRad);
+
+        var endX = centerX + radius * Math.cos(endRad);
+        var endY = centerY + radius * Math.sin(endRad);
+
+        var pathData = [
+            "M", centerX, centerY,
+            "L", startX, startY,
+            "A", radius, radius, 0, largeArcFlag, 1, endX, endY,
+            "Z"
+        ].join(" ");
+
+        // Update slice path and text
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById(sliceId).setAttribute("d", pathData);
+            document.getElementById(sliceId).setAttribute("fill", fillColor);
+        });
+    }
 		
 	</script>
 	<?php
@@ -1216,6 +1496,49 @@ function removeDonationBoxes(donationAmount) {
 // Define the HTML and CSS output
 $output = '
 <style>
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    padding-top: 10%;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border-radius: 8px; /* Added border-radius for rounded corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow for a popup effect */
+    border: 1px solid #e5e5e5; /* Lighter border color */
+    width: 300px;
+    text-align: center;
+}
+
+/* New button styles */
+.modal-content button {
+    display: inline-block;
+    padding: 7px 12px; /* Smaller padding for smaller buttons */
+    margin: 7px; /* Space between buttons */
+	margin-top: 7px; /* Space between buttons */
+    background-color: #00758D; /* Example color: Adjust as per theme */
+    border: none;
+    border-radius: 7px; /* Rounded corners */
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px; /* Font size adjust if needed */
+    transition: background-color 0.3s ease; /* Smooth color transition */
+}
+
+.modal-content button:hover {
+    background-color: #F78D2D; /* Darker shade on hover */
+}
 
 .donation-row-label {
   transition: background-color 0.3s;
@@ -1875,6 +2198,23 @@ donation-pyramid::before {
 	 right: 45px;
 	margin-left: 10px;
   }
+  
+tfoot tr {
+    background-color: #A7A7A7; /* Dark grey background */
+    color: #fff; /* White text */
+    font-size: 0.9em; /* Slightly smaller font size */
+    font-style: italic; /* Italicize text */
+    height: 17px; /* Set row height */
+    overflow: hidden; /* This ensures that the background color respects the border radius */
+}
+
+tfoot td {
+    padding: 2px 10px; /* Adjusted padding for better appearance within the 20px height */
+    line-height: 16px; /* Adjusted line height to fit better within the given height */
+}
+
+
+
 </style>
 
 <div class="settings-button" onclick="toggleSettingsMenu()">
@@ -1921,11 +2261,10 @@ donation-pyramid::before {
     </div>
     <!-- Add more Appearance settings here if needed -->
 
-    <button onclick="saveSettings()">Save</button>
-    <button onclick="toggleSettingsMenu()">Close</button>
+    <button id="closeButton">Close</button>
+	<button id="saveButton">Save</button>
   </div>
 </div>
-
 
 <div class="logout-button">
 	' . add_logout_button() . '
@@ -1955,52 +2294,73 @@ donation-pyramid::before {
       <h2>Gift Pyramid</h2>
       ' . $donation_pyramid . '
     </div>
-    <div class="tab" id="pledges-pending">
-      <h2>Pledges, Pending, & Pipeline</h2>
-      <div class="table-container">
-        <div class="table-column">
-          <h2>Pledges</h2>
-          <table class="pledges-table" id="pledged-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Amount</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
+     <div class="tab" id="pledges-pending">
+        <h2>Pledges, Pending, & Pipeline</h2>
+        <div class="table-container">
+            <div class="table-column">
+                <h2>Pledges</h2>
+                <table class="pledges-table" id="pledged-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Total:</td>
+                            <td class="pledges-total"></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="table-column">
+                <h2>Pending</h2>
+                <table class="pending-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Total:</td>
+                            <td class="pending-total"></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="table-column">
+                <h2>Pipeline</h2>
+                <table class="pipeline-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Total:</td>
+                            <td class="pipeline-total"></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
-        <div class="table-column">
-          <h2>Pending</h2>
-          <table class="pending-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Amount</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-        </div>
-		<div class="table-column">
-          <h2>Pipeline</h2>
-          <table class="pipeline-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Amount</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
 <div class="tab" id="moves-management">
       <h2>Moves Management</h2>
@@ -2038,8 +2398,88 @@ donation-pyramid::before {
 </div>
 
   </div>
+  
+<div id="customModal" class="modal">
+  <div class="modal-content">
+    <label>Enter the new number of boxes:</label>
+    <input type="number" id="numBoxesInput" value="">
+    <button onclick="saveChanges()">Save Changes</button>
+    <button onclick="openAddNewModule()">Add New Row</button>
+    <button onclick="closeModal()">Cancel</button>
+  </div>
+</div> 
+
+<div id="addNewModuleModal" class="modal">
+  <div class="modal-content">
+    <label>Where would you like to add the new row?</label>
+    <button id="aboveBtn">Above</button>
+    <button id="belowBtn">Below</button>
+    <label>New number of donation boxes: </label>
+    <input type="number" id="numberBoxesInput" value="">
+    <label>Donation amount: </label>
+    <input type="text" id="donationAmountInput" value="">
+    <button id="saveModuleBtn">Save New Row</button>
+    <button onclick="closeNewModal()">Cancel</button>
+  </div>
+</div>
+
+
+<div id="errorModule" class="modal">
+  <div class="modal-content">
+  <label>Error: Maximum number of boxes in a new row is 8.</label>
+    <button onclick="closeErrorOpenModal()">Ok</button>
+</div>  
+</div>
+  
+<div id="errorModule1" class="modal">
+  <div class="modal-content">
+  <label>Error: Cannot reduce the number of boxes to less than the amount of boxes already filled.</label>
+    <button onclick="closeErrorOpenModal1()">Ok</button>
+  </div>
+ </div>
+ 
+<div id="errorModule2" class="modal">
+  <div class="modal-content">
+  <label>Error: Number of boxes must be greater than 0.</label>
+    <button onclick="closeErrorOpenModal2()">Ok</button>
+ </div>
+ </div>
+ 
+ <div id="errorModule3" class="modal">
+  <div class="modal-content">
+  <label>Error: Number of boxes must be greater than 0.</label>
+    <button onclick="closeErrorOpenModal3()">Ok</button>
+ </div>
+ </div>
+  
+  
+<div id="errorModule4" class="modal">
+  <div class="modal-content">
+  <label>Are you sure you would like to delete this row?</label>
+    <button onclick="cancelDeleteRow()">Cancel</button>
+	<button onclick="closeNewMod()">Ok</button>
+  </div>
+</div>
+
+<div id="alertModule" class="modal">
+  <div class="modal-content">
+  <label>Donator is not saved. Please manually add a new box to the row and re-save the donator.</label>
+	<button onclick="closeAlert()">Ok</button>
+  </div>
+</div>
+
+<div id="alertModule1" class="modal">
+  <div class="modal-content">
+    <button data-action="cancel">Cancel</button>
+    <button data-action="ok">Ok</button>
+  </div>
+</div>
+
+
+
 </div>
 ';
+	
 // Return the output
 return $output;
 
