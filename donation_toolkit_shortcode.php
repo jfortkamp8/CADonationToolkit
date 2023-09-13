@@ -38,13 +38,15 @@ function donation_toolkit_shortcode($atts) {
 
 	?>
 	<script>
-// Global array to store donors
-let donors = [];
 		
-function numberWithCommas(number) {
-  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
+	// Global
+	let donors = [];
+	let displayName = "";
+	let globalRowLabel;
 		
+	function numberWithCommas(number) {
+  		return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	}
 
 	//TABS JS
 	function activateTab(){
@@ -77,6 +79,7 @@ function numberWithCommas(number) {
 		
 	document.addEventListener('DOMContentLoaded', activateTab);
 		
+	//ADD CHECKBOX
 	function addCircleCheckbox() {
   		const checkbox = document.createElement("input");
   		checkbox.type = "checkbox";
@@ -89,7 +92,6 @@ function numberWithCommas(number) {
   		return checkbox;
 	}
 		
-
 	//MOVES MANAGEMENT AND PP JS
 	function addRow() {
 		
@@ -196,7 +198,6 @@ function numberWithCommas(number) {
 		orgNameContainer.appendChild(orgNameCheckbox);
 		orgNameContainer.appendChild(inputs[1]);
 		
-		let displayName = "";
 		
 		fullNameCheckbox.addEventListener("change", function () {
   			if (fullNameCheckbox.checked) {
@@ -568,12 +569,23 @@ if (emptyIndex !== -1) {
   const donationLabel = document.createElement('div');
   donationLabel.className = 'donation-label';
   box.appendChild(donationLabel);
-} else {
+	
 
-const repopulate = confirm("This row is already full. Would you like to add an additional donator box and automatically repopulate the Gift Pyramid?"); // Adding a prompt
-console.log(repopulate);
-if (repopulate) {
-	 // Get the boxes in the row corresponding to the donation amount
+} else {
+    const modal = document.getElementById('alertModule1');
+    modal.style.display = "block";
+
+    const confirmButton = document.getElementById('confirmButton');
+    const cancelButton = document.getElementById('cancelButton');
+
+	cancelButton.onclick = function() {
+		modal.style.display = "none";
+        const modal1 = document.getElementById('alertModule');
+    	modal1.style.display = "block";
+    }
+	
+    confirmButton.onclick = function() {
+			 // Get the boxes in the row corresponding to the donation amount
     const rowBoxes = document.querySelectorAll('.donation-box-front[data-row="' + rowIndex + '"]');
 
     let filledRowBoxes = 0;
@@ -594,14 +606,9 @@ if (repopulate) {
         addDonationBox(row, rowIndex, donationName, donationAmount, donationColor);
       }
     }
-  } else {
-    const modal = document.getElementById('alertModule');
-    modal.style.display = "block";
-	  return;
-  }
-}
-			
-    	if (pledgePendingValue === "pending") {
+        modal.style.display = "none";
+		    	
+		if (pledgePendingValue === "pending") {
   			const tableBody = document.querySelector(".pending-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
 		}
@@ -695,6 +702,19 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
   			}
 		});
 	
+		const slice1Value = <?php echo $field1name; ?>;
+	const slice2Value = <?php echo $field2name; ?>;
+	const slice3Value = <?php echo $field3name; ?>;
+	var totalBudget = <?php echo $goal; ?>;
+
+	var slice1Amount = <?php echo $field1amount; ?>;
+	var slice2Amount = <?php echo $field2amount; ?>;
+	var slice3Amount = <?php echo $field3amount; ?>;
+
+	var slice1Proportion = (slice1Amount / totalBudget);
+	var slice2Proportion = (slice2Amount / totalBudget);
+	var slice3Proportion = (slice3Amount / totalBudget);
+		
 		const highestCount = Math.max(individualCount, foundationCount, corporationCount, publicCount, boardCount, otherCount);
 			
         const individualBar = ((individualCount * 180)/(highestCount));
@@ -745,20 +765,23 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
     <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
         ${formattedGoal} Campaign Goal
     </h3>
-    <div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+<div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
     <!-- Pie Chart Using SVG -->
     <svg width="100%" height="100%" viewBox="0 0 42 42">
         <!-- Endowment slice -->
-        <path id="endowmentSlice" d="M21 21 L21 3 A18 18 0 0 1 39 21 Z" fill="#00758D"></path>
-        <text id="endowmentText" x="22" y="10" font-size="2" fill="white"></text>
+        <path id="endowmentSlice1" d="" fill="#00758D"></path>
+        <text id="endowmentTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="endowmentTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
 
         <!-- Capital slice -->
-        <path id="capitalSlice" d="M21 21 L39 21 A18 18 0 0 1 3 21 Z" fill="#7866A1"></path>
-        <text id="capitalText" x="30" y="30" font-size="2" fill="white"></text>
+        <path id="capitalSlice1" d="" fill="#7866A1"></path>
+        <text id="capitalTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="capitalTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
 
         <!-- Operating slice -->
-        <path id="operatingSlice" d="M21 21 L3 21 A18 18 0 0 1 21 3 Z" fill="#FF8C00"></path>
-        <text id="operatingText" x="8" y="30" font-size="2" fill="white"></text>
+        <path id="operatingSlice1" d="" fill="#FF8C00"></path>
+        <text id="operatingTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="operatingTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
     </svg>
 </div>
    </div>
@@ -805,7 +828,256 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 
         </div>
     `;
+	createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+		// Sort donorArray in descending order based on donation amount
+    donors.sort((a, b) => b.amount - a.amount);
+	console.log(donors);
+    // Get the donorContainer element
+    const donorContainer = document.getElementById('donorContainer');
 
+    // Populate the top 5 donors into the donorContainer
+    for (let i = 0; i < 5 && i < donors.length; i++) {
+        const donor = donors[i];
+        const donorElement = document.createElement('div');
+donorElement.innerHTML = `
+    <div style="text-align: center; margin: 0 35px;">
+        <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
+        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">$${numberWithCommas(Math.round(donor.amount))}</span></div>
+    </div>`;
+        donorContainer.appendChild(donorElement);
+    }
+		
+		}
+
+	return;
+}
+
+    	if (pledgePendingValue === "pending") {
+  			const tableBody = document.querySelector(".pending-table tbody");
+  			tableBody.insertBefore(targetRow, tableBody.firstChild);
+		}
+		if (pledgePendingValue === "engaged" || pledgePendingValue === "identified") {
+  			const tableBody = document.querySelector(".pipeline-table tbody");
+  			tableBody.insertBefore(targetRow, tableBody.firstChild);
+		} else if (pledgePendingValue === "pledge") {
+  			const tableBody = document.querySelector(".pledges-table tbody");
+  			tableBody.insertBefore(targetRow, tableBody.firstChild);
+		}
+		// ... previous code ...
+
+const pledgesTotalElement = document.querySelector(".pledges-total");
+const pendingTotalElement = document.querySelector(".pending-total");
+const pipelineTotalElement = document.querySelector(".pipeline-total");
+
+const formatCurrency = (amount) => {
+    // You can format this as per your requirements
+    return "$" + numberWithCommas(amount);
+};
+
+// Populate the totals for Pledges
+const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
+const totalDonations = pledgesCells.reduce((acc, curr) => {
+    const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+   return isNaN(amount) ? acc : acc + amount;
+}, 0);
+pledgesTotalElement.innerText = formatCurrency(totalDonations);
+
+// Populate the totals for Pending
+const pendingCells = Array.from(document.querySelectorAll(".pending-table tbody td:nth-child(2)"));
+const pendingDonations = pendingCells.reduce((acc, curr) => {
+    const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+return isNaN(amount) ? acc : acc + amount;
+}, 0);
+pendingTotalElement.innerText = formatCurrency(pendingDonations);
+
+// Populate the totals for Pipeline
+const pipelineCells = Array.from(document.querySelectorAll(".pipeline-table tbody td:nth-child(2)"));
+const pipelineDonations = pipelineCells.reduce((acc, curr) => {
+    const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+  return isNaN(amount) ? acc : acc + amount;
+}, 0);
+pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
+
+		
+		const goal = <?php echo $goal; ?>;
+		const percent = totalDonations / goal * 100;
+		const meterFill = document.getElementById("donation-meter-fill");
+		meterFill.style.width = `${percent}%`;
+		meterFill.innerHTML = `
+  			<div class="fill" style="width: ${percent}%">
+    		${percent > 100 ? `<p>${percent.toFixed()}%</p>` : ''}
+  			</div>
+		`;
+		const meterText = document.getElementById("donation-meter-text");
+	    const meterTexthead = document.getElementById("donation-meter-head");
+		meterTexthead.innerHTML = `$${totalDonations.toLocaleString()} Raised To-Date (${percent.toFixed()}%)`;
+		meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
+			
+		// Initialize count variables for each donation type
+		let individualCount = 0;
+		let foundationCount = 0;
+		let corporationCount = 0;
+		let publicCount = 0;
+		let boardCount = 0;
+		let otherCount = 0;
+
+		// Select all the rows in the moves management table
+		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
+		
+			
+		// Iterate over each row and update the count variables
+		rowsType.forEach(row => {
+  			const donationTypeSelect = row.querySelector('.donation-type-select');
+ 			const donationTypeValue = donationTypeSelect.value;
+
+  			// Update the count variables based on the donation type value
+  			if (donationTypeValue === "individual") {
+    			individualCount++;
+  			} else if (donationTypeValue === "foundation") {
+    			foundationCount++;
+  			} else if (donationTypeValue === "corporation") {
+    			corporationCount++;
+  			} else if (donationTypeValue === "public") {
+    			publicCount++;
+  			} else if (donationTypeValue === "board") {
+    			boardCount++;
+  			} else if (donationTypeValue === "other") {
+    			otherCount++;
+  			}
+		});
+			
+		const slice1Value = <?php echo $field1name; ?>;
+		const slice2Value = <?php echo $field2name; ?>;
+		const slice3Value = <?php echo $field3name; ?>;
+		var totalBudget = <?php echo $goal; ?>;
+
+		var slice1Amount = <?php echo $field1amount; ?>;
+		var slice2Amount = <?php echo $field2amount; ?>;
+		var slice3Amount = <?php echo $field3amount; ?>;
+
+		var slice1Proportion = (slice1Amount / totalBudget);
+		var slice2Proportion = (slice2Amount / totalBudget);
+		var slice3Proportion = (slice3Amount / totalBudget);
+			
+		const highestCount = Math.max(individualCount, foundationCount, corporationCount, publicCount, boardCount, otherCount);
+			
+        const individualBar = ((individualCount * 180)/(highestCount));
+		const foundationBar = ((foundationCount * 180)/(highestCount));
+		const corporationBar = ((corporationCount * 180)/(highestCount));
+		const publicBar = ((publicCount * 180)/(highestCount));
+		const boardBar = ((boardCount * 180)/(highestCount));
+		const otherBar = ((otherCount * 180)/(highestCount));
+		const formattedGoal = '$' + goal.toLocaleString();
+		const formattedPledged = '$' + totalDonations.toLocaleString();
+		const formattedPending = '$' + pendingDonations.toLocaleString();
+		const pendpledge = pendingDonations + totalDonations;
+		const formattedPP = '$' + pendpledge.toLocaleString();
+		let percentFix = Math.round(percent);
+    	const meterFillStyle = "width: " + percent + "%";
+    	const meterFillContent = `<div class="fill" style="width: ${percent}%">${percent > 100 ? `<p>${Math.round(percent)}%</p>` : ''}</div>`;
+		const dashboard = document.getElementById("dashboard-html");
+		dashboard.innerHTML = `
+       	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
+                        <div style="width: 100%; height: 70px; background-color: #F0F0F0; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+                <!-- Campaign goal box -->
+                <h2 style="color: #00758D; font-size: 41px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedPledged} Pledged (${percentFix}% to Goal)</h2>
+            </div>
+            <div class="dashboard-meter" style="width: 100%; height: 90px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+              
+                    ${meterFillContent}
+         
+            </div>
+            <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pledged box -->
+            		<div>
+               	 		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
+            		</div>
+        		</div>
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pending box -->
+            		<div>
+                		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPP} Pledged & Pending</h3>
+            		</div>
+        		</div>
+    		</div>
+<div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">		
+
+<div style="width: 37%; height: 250px; background-color: rgb(255, 255, 255); border: 5px solid #00758D; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 10px;">
+<div style="width: 100%; display: flex; align-items: center; flex-direction: column;">
+    <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
+        ${formattedGoal} Campaign Goal
+    </h3>
+<div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+    <!-- Pie Chart Using SVG -->
+    <svg width="100%" height="100%" viewBox="0 0 42 42">
+        <!-- Endowment slice -->
+        <path id="endowmentSlice1" d="" fill="#00758D"></path>
+        <text id="endowmentTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="endowmentTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+
+        <!-- Capital slice -->
+        <path id="capitalSlice1" d="" fill="#7866A1"></path>
+        <text id="capitalTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="capitalTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+
+        <!-- Operating slice -->
+        <path id="operatingSlice1" d="" fill="#FF8C00"></path>
+        <text id="operatingTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="operatingTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+    </svg>
+</div>
+   </div>
+   </div>
+
+<!-- Bar graph chart -->
+<div style="width: 61%; height: 250px; background-color: rgb(255,255,255); border: 5px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #FF8C00;"></div>
+        <span style="font-size: 10px; margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: ${individualCount}</span>
+    </div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #00758D;"></div>
+        <span style="font-size: 10px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: ${corporationCount}</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #77C4D5;"></div>
+        <span style="font-size: 10px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: ${foundationCount}</span>
+    </div>
+   
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${boardBar}px; max-height: 100%; background-color: #7866A1"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: ${boardCount}</span>
+    </div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #CBCBCB;"></div>
+        <span style="font-size: 10px;margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: ${publicCount}</span>
+    </div>
+	<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${otherBar}px; max-height: 100%; background-color: #000000;"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: ${otherCount}</span>
+    </div>
+</div>
+
+</div>
+<div style="width: 100%; height: 160px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; padding: 0 20px;">
+    <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); text-align: center; padding: 0 20px;">Top 5 Donors</h2>
+    <div id="donorContainer" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 50%;">
+        <!-- Donors will be populated here by the script -->
+    </div>
+</div>
+
+
+
+        </div>
+    `;
+    
+	// Update pie chart slices
+	createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
 	console.log(donors);
@@ -828,7 +1100,7 @@ donorElement.innerHTML = `
 		
 	}
 
-		
+	//ADD DASHBOARD ON PAGE LOAD
 	document.addEventListener("DOMContentLoaded", function() {
   		const goal = <?php echo $goal; ?>;
   		
@@ -878,15 +1150,18 @@ donorElement.innerHTML = `
     <svg width="100%" height="100%" viewBox="0 0 42 42">
         <!-- Endowment slice -->
         <path id="endowmentSlice" d="" fill="#00758D"></path>
-        <text id="endowmentText" x="12" y="10" font-size="2" fill="white"></text>
+        <text id="endowmentTextName" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="endowmentTextAmount" font-size="2.3" fill="rgb(255,255,255)"></text>
 
         <!-- Capital slice -->
         <path id="capitalSlice" d="" fill="#7866A1"></path>
-        <text id="capitalText" x="5" y="30" font-size="2" fill="white"></text>
+        <text id="capitalTextName" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="capitalTextAmount" font-size="2.3" fill="rgb(255,255,255)"></text>
 
         <!-- Operating slice -->
         <path id="operatingSlice" d="" fill="#FF8C00"></path>
-        <text id="operatingText" x="27" y="30" font-size="2" fill="white"></text>
+        <text id="operatingTextName" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="operatingTextAmount" font-size="2.3" fill="rgb(255,255,255)"></text>
     </svg>
 </div>
 
@@ -933,7 +1208,6 @@ donorElement.innerHTML = `
 
 	});
 		
-
 	//SAVE AS PDF
 	function generatePDF() {
   		const tab = document.querySelector('.tab.active');
@@ -962,104 +1236,102 @@ donorElement.innerHTML = `
   		});
 	}
 
+    //ADD NEW DONATION BOX
+	function addDonationBox(row, rowIndex, donationName, donationAmount, donationColor) {
+  		console.log(row);
+  		const rowLabel = row.querySelector('.donation-row-label');
+  		const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
 
-function addDonationBox(row, rowIndex, donationName, donationAmount, donationColor) {
+  		rowLabel.innerText = (numBoxes + 1) + ' x ' + rowLabel.innerText.split(' ')[2];
+  		const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+  		const box = document.createElement('div');
+  		box.className = 'donation-box';
+  		box.setAttribute('data-amount', amount);
 
-  console.log(row);
-  const rowLabel = row.querySelector('.donation-row-label');
-  const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+  		const boxInner = document.createElement('div');
+ 		boxInner.className = 'donation-box-inner';
 
-  rowLabel.innerText = (numBoxes + 1) + ' x ' + rowLabel.innerText.split(' ')[2];
-  const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
-  const box = document.createElement('div');
-  box.className = 'donation-box';
-  box.setAttribute('data-amount', amount);
+ 		const boxFront = document.createElement('div');
+ 		boxFront.className = 'donation-box-front';
+ 		boxFront.setAttribute('data-row', rowIndex);
+  		boxFront.style.backgroundColor = donationColor;
+  		boxFront.style.color = "#fff";
+  		boxFront.style.fontWeight = "500";
+ 		boxFront.style.textAlign = "center";
+  		boxFront.style.display = "flex";
+  		boxFront.style.justifyContent = "center";
+  		boxFront.style.alignItems = "center";
+  		boxFront.innerHTML = donationName;
 
-  const boxInner = document.createElement('div');
-  boxInner.className = 'donation-box-inner';
+  		const boxBack = document.createElement('div');
+  		boxBack.className = 'donation-box-back';
 
-  const boxFront = document.createElement('div');
-  boxFront.className = 'donation-box-front';
-  boxFront.setAttribute('data-row', rowIndex);
-  boxFront.style.backgroundColor = donationColor;
-  boxFront.style.color = "#fff";
-  boxFront.style.fontWeight = "500";
-  boxFront.style.textAlign = "center";
-  boxFront.style.display = "flex";
-  boxFront.style.justifyContent = "center";
-  boxFront.style.alignItems = "center";
-  boxFront.innerHTML = donationName;
-
-  const boxBack = document.createElement('div');
-  boxBack.className = 'donation-box-back';
-
-  boxInner.appendChild(boxFront);
-  boxInner.appendChild(boxBack);
-  box.appendChild(boxInner);
-  row.appendChild(box);
+  		boxInner.appendChild(boxFront);
+  		boxInner.appendChild(boxBack);
+  		box.appendChild(boxInner);
+  		row.appendChild(box);
 	
-	const remainingAmount = removeDonationBoxes(amount);
-if (remainingAmount > 0) {
-  return;
-}
+		const remainingAmount = removeDonationBoxes(amount);
+		if (remainingAmount > 0) {
+  			return;
+		}
 
-  // Update the total donations amount
-  const totalDonationsLabel = document.querySelector('.donation-row-label b');
-  const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
-  totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
-}
+  		// Update the total donations amount
+  		const totalDonationsLabel = document.querySelector('.donation-row-label b');
+  		const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
+  		totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
+	}
 	
-		
-let globalRowLabel; // To hold the reference to the element being edited
+	//DONATION PYRAMID EDIT ROWS
+	function editNumBoxes(element) {
+    	globalRowLabel = element;
+    	const numBoxes = parseInt(globalRowLabel.innerText.split(' ')[0]);
 
-function editNumBoxes(element) {
-    globalRowLabel = element;
-    const numBoxes = parseInt(globalRowLabel.innerText.split(' ')[0]);
+    	// Set input value and show the modal
+    	document.getElementById('numBoxesInput').value = numBoxes;
+    	document.getElementById('customModal').style.display = "block";
+	}
+	
+	//SAVE
+	function saveChanges() {
+    	const newNumBoxes = parseInt(document.getElementById('numBoxesInput').value);
+    	if (isNaN(newNumBoxes) || newNumBoxes < 0) {
+        	document.getElementById('customModal').style.display = "none";
+			const mod = document.getElementById('errorModule2');
+    		mod.style.display = "block";
+        	return;
+    	}
 
-    // Set input value and show the modal
-    document.getElementById('numBoxesInput').value = numBoxes;
-    document.getElementById('customModal').style.display = "block";
-}
+    	const row = globalRowLabel.parentElement;
+    	const currentNumBoxes = row.querySelectorAll('.donation-box').length;
+    	const filledBoxes = row.querySelectorAll('.donation-box-front:not(:empty)');
 
-function saveChanges() {
-    const newNumBoxes = parseInt(document.getElementById('numBoxesInput').value);
-    if (isNaN(newNumBoxes) || newNumBoxes < 0) {
-        document.getElementById('customModal').style.display = "none";
-		const mod = document.getElementById('errorModule2');
-    	mod.style.display = "block";
-        return;
-    }
+    	if (filledBoxes.length > 0 && newNumBoxes < currentNumBoxes) {
+			document.getElementById('customModal').style.display = "none";
+			const modalerror = document.getElementById('errorModule1');
+    		modalerror.style.display = "block";
+        	return;
+    	}
 
-    const row = globalRowLabel.parentElement;
-    const currentNumBoxes = row.querySelectorAll('.donation-box').length;
-    const filledBoxes = row.querySelectorAll('.donation-box-front:not(:empty)');
+    	if (newNumBoxes === 0) {
+			document.getElementById('customModal').style.display = "none";
+			const modalDelete = document.getElementById('errorModule4');
+    		modalDelete.style.display = "block";
+        	return;
+    	}
 
-    if (filledBoxes.length > 0 && newNumBoxes < currentNumBoxes) {
-		document.getElementById('customModal').style.display = "none";
-		const modalerror = document.getElementById('errorModule1');
-    	modalerror.style.display = "block";
-        return;
-    }
+    	globalRowLabel.innerText = newNumBoxes + ' x ' + globalRowLabel.innerText.split(' ')[2];
+    	const existingBox = row.querySelector('.donation-box-front');
+    	const rowId = existingBox ? existingBox.getAttribute('data-row') : '';
 
-    if (newNumBoxes === 0) {
-		document.getElementById('customModal').style.display = "none";
-		const modalDelete = document.getElementById('errorModule4');
-    	modalDelete.style.display = "block";
-        return;
-    }
+    	const amount = parseInt(globalRowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+    	let boxesToAdd = newNumBoxes - currentNumBoxes;
+    	let currentRow = row;
 
-    globalRowLabel.innerText = newNumBoxes + ' x ' + globalRowLabel.innerText.split(' ')[2];
-    const existingBox = row.querySelector('.donation-box-front');
-    const rowId = existingBox ? existingBox.getAttribute('data-row') : '';
-
-    const amount = parseInt(globalRowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
-    let boxesToAdd = newNumBoxes - currentNumBoxes;
-    let currentRow = row;
-
-    while (boxesToAdd > 0) {
-        const boxesInThisRow = currentRow.querySelectorAll('.donation-box').length;
-        const boxesSpaceInThisRow = 8 - boxesInThisRow; // calculate the space left in the current row
-        const boxesToAppend = Math.min(boxesSpaceInThisRow, boxesToAdd); // Decide how many boxes we can append to the current row
+    	while (boxesToAdd > 0) {
+        	const boxesInThisRow = currentRow.querySelectorAll('.donation-box').length;
+        	const boxesSpaceInThisRow = 8 - boxesInThisRow; // calculate the space left in the current row
+        	const boxesToAppend = Math.min(boxesSpaceInThisRow, boxesToAdd); // Decide how many boxes we can append to the current row
 
         for (let i = 0; i < boxesToAppend; i++) {
             const box = document.createElement('div');
@@ -1091,59 +1363,57 @@ function saveChanges() {
             currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
             currentRow = newRow;
 			closeModal();
-        }
-    }
-    // Logic for removing boxes, unchanged from the previous version
-    if (newNumBoxes < currentNumBoxes) {
-        const boxesToRemove = currentNumBoxes - newNumBoxes;
-        const boxes = row.querySelectorAll('.donation-box');
+        	}
+    	}
+    	// Logic for removing boxes, unchanged from the previous version
+    	if (newNumBoxes < currentNumBoxes) {
+        	const boxesToRemove = currentNumBoxes - newNumBoxes;
+        	const boxes = row.querySelectorAll('.donation-box');
 
-        for (let i = 0; i < boxesToRemove; i++) {
-            row.removeChild(boxes[boxes.length - 1 - i]);
-        }
-    }
+        	for (let i = 0; i < boxesToRemove; i++) {
+            	row.removeChild(boxes[boxes.length - 1 - i]);
+        	}
+    	}
 
-    updateTotalDonations();
-    closeModal();
-}
+    	updateTotalDonations();
+    	closeModal();
+	}
 
-function updateTotalDonations() {
-    const totalDonationsLabel = document.querySelector('.donation-row-label b');
-    const totalDonations = calculateTotalDonations();
-    totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations);
-}
+	//UPDATE DONATION RUNNING TOTAL
+	function updateTotalDonations() {
+    	const totalDonationsLabel = document.querySelector('.donation-row-label b');
+    	const totalDonations = calculateTotalDonations();
+    	totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations);
+	}
 
+	function addNewRow(amount, numBoxes, position, referenceElement) {
+    	if (numBoxes > 8) {
+			document.getElementById('addNewModuleModal').style.display = "none";
+			const modal = document.getElementById('errorModule');
+    		modal.style.display = "block";
+        	return;
+    	}
+		if (numBoxes < 1) {
+			document.getElementById('addNewModuleModal').style.display = "none";
+			const modal = document.getElementById('errorModule3');
+    		modal.style.display = "block";
+        	return;
+    	}
 
-function addNewRow(amount, numBoxes, position, referenceElement) {
-    if (numBoxes > 8) {
-		document.getElementById('addNewModuleModal').style.display = "none";
-		const modal = document.getElementById('errorModule');
-    	modal.style.display = "block";
-        return;
-    }
-	if (numBoxes < 1) {
-		document.getElementById('addNewModuleModal').style.display = "none";
-		const modal = document.getElementById('errorModule3');
-    	modal.style.display = "block";
-        return;
-    }
-
-	const row = globalRowLabel.parentElement;
-    const newRow = document.createElement('div');
-    newRow.className = 'donation-row';
+		const row = globalRowLabel.parentElement;
+    	const newRow = document.createElement('div');
+    	newRow.className = 'donation-row';
 	
-const newRowLabel = document.createElement('div');
-newRowLabel.className = 'donation-row-label';
-newRowLabel.innerText = numBoxes + ' x $' + amount;
+	const newRowLabel = document.createElement('div');
+	newRowLabel.className = 'donation-row-label';
+	newRowLabel.innerText = numBoxes + ' x $' + amount;
 
-// Assign an anonymous function to onclick
-newRowLabel.onclick = function() {
-  editNumBoxes(this); // Pass the 'this' context to editNumBoxes
-};
+	// Assign an anonymous function to onclick
+	newRowLabel.onclick = function() {
+  		editNumBoxes(this); // Pass the 'this' context to editNumBoxes
+	};
 
-newRow.appendChild(newRowLabel);
-
-
+	newRow.appendChild(newRowLabel);
 
     for (let i = 0; i < numBoxes; i++) {
         const box = document.createElement('div');
@@ -1174,91 +1444,91 @@ newRow.appendChild(newRowLabel);
             referenceElement.parentNode.appendChild(newRow);
         }
     }
-	// Update the total donations amount
-  const totalDonationsLabel = document.querySelector('.donation-row-label b');
-  const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
-  totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
-}
+		// Update the total donations amount
+  		const totalDonationsLabel = document.querySelector('.donation-row-label b');
+  		const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
+  		totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
+	}
 		
-function openAddNewModule() {
-	closeModal();
-    const modal = document.getElementById('addNewModuleModal');
-    modal.style.display = "block";
+	function openAddNewModule() {
+		closeModal();
+    	const modal = document.getElementById('addNewModuleModal');
+    	modal.style.display = "block";
 
-    const aboveBtn = modal.querySelector('#aboveBtn');
-    const belowBtn = modal.querySelector('#belowBtn');
-    const saveModuleBtn = modal.querySelector('#saveModuleBtn');
+    	const aboveBtn = modal.querySelector('#aboveBtn');
+    	const belowBtn = modal.querySelector('#belowBtn');
+    	const saveModuleBtn = modal.querySelector('#saveModuleBtn');
 
-    aboveBtn.onclick = function () {
-        setButtonHighlighted(aboveBtn);
-        setButtonUnhighlighted(belowBtn);
-        modal.setAttribute('data-position', 'above');
-    };
+    	aboveBtn.onclick = function () {
+        	setButtonHighlighted(aboveBtn);
+        	setButtonUnhighlighted(belowBtn);
+        	modal.setAttribute('data-position', 'above');
+    	};
 
-    belowBtn.onclick = function () {
-        setButtonHighlighted(belowBtn);
-        setButtonUnhighlighted(aboveBtn);
-        modal.setAttribute('data-position', 'below');
-    };
+    	belowBtn.onclick = function () {
+        	setButtonHighlighted(belowBtn);
+        	setButtonUnhighlighted(aboveBtn);
+        	modal.setAttribute('data-position', 'below');
+    	};
 
-    saveModuleBtn.onclick = function () {
-        const newRowNumBoxes = document.getElementById('numberBoxesInput').value;
-        const newRowDonationAmount = document.getElementById('donationAmountInput').value;
+    	saveModuleBtn.onclick = function () {
+        	const newRowNumBoxes = document.getElementById('numberBoxesInput').value;
+        	const newRowDonationAmount = document.getElementById('donationAmountInput').value;
 
-        if (newRowDonationAmount && newRowNumBoxes) {
-            const donationAmount = parseFloat(newRowDonationAmount.replace(/[^0-9.]/g, ''));
-            const positionChoice = modal.getAttribute('data-position');
-            addNewRow(numberWithCommas(donationAmount), parseInt(newRowNumBoxes), positionChoice, globalRowLabel.parentElement);
-        }
+        	if (newRowDonationAmount && newRowNumBoxes) {
+            	const donationAmount = parseFloat(newRowDonationAmount.replace(/[^0-9.]/g, ''));
+            	const positionChoice = modal.getAttribute('data-position');
+            	addNewRow(numberWithCommas(donationAmount), parseInt(newRowNumBoxes), positionChoice, globalRowLabel.parentElement);
+        	}
         
-        document.getElementById('addNewModuleModal').style.display = "none";
-    };
-}
+        	document.getElementById('addNewModuleModal').style.display = "none";
+    	};
+	}
 
-function setButtonHighlighted(button) {
-    button.style.backgroundColor = "#F78D2D";
-    button.style.color = "black";
-}
+	function setButtonHighlighted(button) {
+    	button.style.backgroundColor = "#F78D2D";
+    	button.style.color = "black";
+	}
 
-function setButtonUnhighlighted(button) {
-    button.style.backgroundColor = "";
-    button.style.color = "";
-}
+	function setButtonUnhighlighted(button) {
+    	button.style.backgroundColor = "";
+    	button.style.color = "";
+	}
 
-function closeModal() {
+	function closeModal() {
     document.getElementById('customModal').style.display = "none";
 }
 		
-function closeNewModal() {
+	function closeNewModal() {
     document.getElementById('addNewModuleModal').style.display = "none";
 }
 		
-function closeErrorOpenModal() {
+	function closeErrorOpenModal() {
 	document.getElementById('errorModule').style.display = "none";
     document.getElementById('addNewModuleModal').style.display = "block";
 }
 		
-function closeErrorOpenModal1() {
+	function closeErrorOpenModal1() {
 	document.getElementById('errorModule1').style.display = "none";
     document.getElementById('customModal').style.display = "block";
 }
 	
-function closeErrorOpenModal2() {
+	function closeErrorOpenModal2() {
 	document.getElementById('errorModule2').style.display = "none";
     document.getElementById('customModal').style.display = "block";
 }
 		
-function closeErrorOpenModal3() {
+	function closeErrorOpenModal3() {
 	document.getElementById('errorModule3').style.display = "none";
     document.getElementById('addNewModuleModal').style.display = "block";
 }
 
-function cancelDeleteRow() {
+	function cancelDeleteRow() {
 	document.getElementById('errorModule4').style.display = "none";
     document.getElementById('customModal').style.display = "block";
 }
 		
-function closeNewMod(){
+	function closeNewMod(){
 	const row = globalRowLabel.parentElement;
 	row.remove();
 	document.getElementById('errorModule4').style.display = "none";
@@ -1266,229 +1536,329 @@ function closeNewMod(){
     closeModal();
 }
 
-function closeAlert() {
-	document.getElementById('alertModule').style.display = "none";
-}
+	function closeAlert() {
+		document.getElementById('alertModule').style.display = "none";
+	}
 		
-function calculateTotalDonations() {
-  const rows = document.querySelectorAll('.donation-row');
-  let totalDonations = 0;
+	function calculateTotalDonations() {
+    	const rows = document.querySelectorAll('.donation-row');
+  		let totalDonations = 0;
 
-rows.forEach(row => {
-  const rowLabel = row.querySelector('.donation-row-label');
-  const isTotalRow = rowLabel.innerHTML.includes('Total:');
-  if (!isTotalRow) {
-    const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
-    const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
-    totalDonations += numBoxes * amount;
-  }
-});
+		rows.forEach(row => {
+  			const rowLabel = row.querySelector('.donation-row-label');
+  			const isTotalRow = rowLabel.innerHTML.includes('Total:');
+  			if (!isTotalRow) {
+    			const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+    			const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+  	  			totalDonations += numBoxes * amount;
+  			}
+			});
 
   return totalDonations;
 }
 		
-// JavaScript function to open the settings menu
-function openSettingsMenu() {
-  const popupContainer = document.getElementById("settingsPopup");
-  popupContainer.style.display = "block";
-  updateSettings(); // Update the checkboxes based on the current settings
-}
-
-// JavaScript function to close the settings menu
-function closeSettingsMenu() {
-  const popupContainer = document.getElementById("settingsPopup");
-  popupContainer.style.display = "none"; // Simply set the display to "none"
-}
-
-// JavaScript function to toggle the settings menu
-function toggleSettingsMenu() {
-  const popupContainer = document.getElementById("settingsPopup");
-  if (popupContainer.style.display === "none" || popupContainer.style.display === "") {
-    openSettingsMenu();
-  } else {
-    closeSettingsMenu();
-  }
-}
-
-// Function to update the checkboxes based on the current settings
-function updateSettings() {
-  const generalSettings = {
-    setting1: document.getElementById('setting1').checked,
-    setting2: document.getElementById('setting2').checked,
-    // Add more General settings here if needed
-  };
-
-  // Update the checkboxes based on the saved settings
-  document.getElementById('setting1').checked = generalSettings.setting1;
-  document.getElementById('setting2').checked = generalSettings.setting2;
-  // Update other checkboxes as needed
-}
-
-function saveSettings() {
-  const generalSettings = {
-    setting1: document.getElementById('setting1').checked,
-    setting2: document.getElementById('setting2').checked,
-    // Add more General settings here if needed
-  };
-
-  const campaignSettings = {
-    setting3: document.getElementById('setting3').checked,
-    setting4: document.getElementById('setting4').value,
-    // Add more Campaign settings here if needed
-  };
-
-  const appearanceSettings = {
-    setting5: document.getElementById('setting5').checked,
-    setting6: document.getElementById('setting6').checked,
-    // Add more Appearance settings here if needed
-  };
-
-  // Implement the setting1 (Read-Only Mode)
-  if (generalSettings.setting1) {
-    // Disable all buttons except for the tabbed menu tab buttons and the logout button
-    const allButtons = document.querySelectorAll('button');
-    allButtons.forEach(button => {
-      // Check if the button is not part of the tabbed menu and not the logout button
-      if (!button.closest('.tabbed-menu') && !button.closest('.logout-button')) {
-        button.disabled = true;
-      }
-    });
-  } else {
-    // Enable all buttons if setting1 is not checked
-    const allButtons = document.querySelectorAll('button');
-    allButtons.forEach(button => {
-      button.disabled = false;
-    });
-  }
-	
-  // Mock implementation: Save the settings to a database or apply them to the application
-  console.log('Settings saved.');
-
-  // Close the settings menu after saving
-  closeSettingsMenu();
-}
-
-
-// You may also want to close the settings menu if the user clicks outside of it
-document.addEventListener("click", function (event) {
-  const popupContainer = document.getElementById("settingsPopup");
-  const settingsButton = document.querySelector(".settings-button");
-  
-  // Check if the clicked element is not within the settings button or settings popup
-  if (!event.target.closest(".settings-button") && !event.target.closest(".settings-popup")) {
-    closeSettingsMenu(); // Close the settings menu
-  }
-});
-
-// Attach the event listeners for the close and save buttons
-document.addEventListener("DOMContentLoaded", function () {
-  const closeButton = document.getElementById("closeButton");
-  if (closeButton) {
-    closeButton.addEventListener("click", closeSettingsMenu);
-  }
-
-  const saveButton = document.getElementById("saveButton");
-  if (saveButton) {
-    saveButton.addEventListener("click", saveSettings);
-  }
-});
+	let savedSettings = {
+  		setting1: false,  // Default value
+  		setting2: false,  // Default value
+  		setting5: false,  // Default value
+  		setting6: false,  // Default value
+  		// ...add other settings here...
+	};
 		
-// Function to remove donation boxes
-function removeDonationBoxes(donationAmount) {
-  let remainingAmount = donationAmount;
-
-  // Select all donation rows
-  let rows = Array.from(document.querySelectorAll('.donation-row'));
-
-  // Sort rows based on donation amount in descending order
-  rows.sort((a, b) => {
-    const aAmount = parseInt(a.querySelector('.donation-box').getAttribute('data-amount'));
-    const bAmount = parseInt(b.querySelector('.donation-box').getAttribute('data-amount'));
-    return bAmount - aAmount;
-  });
-
-  // Start from the highest donation amount row and move downwards
-  for (let i = 0; i < rows.length && remainingAmount > 0; i++) {
-    const row = rows[i];
-    let rowBoxes = Array.from(row.querySelectorAll('.donation-box'));
-
-    // Filter boxes to consider only empty boxes
-    rowBoxes = rowBoxes.filter(box => box.querySelector('.donation-box-front').innerText.trim() === '');
-
-    // If there are no empty boxes in this row, continue to the next row
-    if (rowBoxes.length === 0) {
-      continue;
-    }
-
-    const rowBoxAmount = parseInt(rowBoxes[0].getAttribute('data-amount')); // Assuming all boxes in a row have same donation amount
-
-    // Remove box if there's enough remaining amount
-    if (remainingAmount >= rowBoxAmount) {
-      rowBoxes[rowBoxes.length - 1].remove(); // Remove the last box
-      remainingAmount -= rowBoxAmount;
-
-      // Update row label
-      const rowLabel = row.querySelector('.donation-row-label');
-      const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
-      rowLabel.innerText = (numBoxes - 1) + ' x ' + rowLabel.innerText.split(' ')[2];
-    }
-  }
-
-  return remainingAmount; // If it's not zero, there wasn't enough boxes to remove
-}
+	// open the settings menu
+	function openSettingsMenu() {
 	
-    const slice1Value = <?php echo $field1name; ?>;
-    const slice2Value = <?php echo $field2name; ?>;
-    const slice3Value = <?php echo $field3name; ?>;
-    var totalBudget = <?php echo $goal; ?>;
+		document.getElementById('setting1').checked = savedSettings.setting1;
+  		document.getElementById('setting2').checked = savedSettings.setting2;
+  		document.getElementById('setting5').checked = savedSettings.setting5;
+  		document.getElementById('setting6').checked = savedSettings.setting6;
+	
+  		const popupContainer = document.getElementById("settingsPopup");
+  		popupContainer.style.display = "block";
+  		updateSettings(); // Update the checkboxes based on the current settings
+	}
 
-    var slice1Amount = <?php echo $field1amount; ?>;
-    var slice2Amount = <?php echo $field2amount; ?>;
-    var slice3Amount = <?php echo $field3amount; ?>;
+	// close the settings menu
+	function closeSettingsMenu() {
+  		const popupContainer = document.getElementById("settingsPopup");
+  		popupContainer.style.display = "none"; // Simply set the display to "none"
+	}
 
-    var slice1Proportion = (slice1Amount / totalBudget);
-    var slice2Proportion = (slice2Amount / totalBudget);
-    var slice3Proportion = (slice3Amount / totalBudget);
+	// toggle the settings menu
+	function toggleSettingsMenu() {
+  		const popupContainer = document.getElementById("settingsPopup");
+  		if (popupContainer.style.display === "none" || popupContainer.style.display === "") {
+    		openSettingsMenu();
+  		} else {
+    		closeSettingsMenu();
+  		}
+	}
 
+	// Function to update the checkboxes based on the current settings
+	function updateSettings() {
+  		const generalSettings = {
+    		setting1: document.getElementById('setting1').checked,
+    		setting2: document.getElementById('setting2').checked,
+    		// Add more General settings here if needed
+  		};
 
-    // Update pie chart slices
-    createSlice("endowmentSlice", "endowmentText", "#00758D", 0, slice1Proportion, slice1Value);
-    createSlice("capitalSlice", "capitalText", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, slice2Value);
-    createSlice("operatingSlice", "operatingText", "#FF8C00", slice1Proportion + slice2Proportion, slice1Proportion + slice2Proportion + slice3Proportion, slice3Value);
+  		// Update the checkboxes based on the saved settings
+  		document.getElementById('setting1').checked = generalSettings.setting1;
+  		document.getElementById('setting2').checked = generalSettings.setting2;
+  		// Update other checkboxes as needed
+	}
 
-    // Function to create a path description for a pie chart slice
-    function createSlice(sliceId, textId, fillColor, startProportion, endProportion, sliceName, sliceValue) {
-        var radius = 18;
-        var centerX = 21;
-        var centerY = 21;
+	function applyAnonymousSetting() {
+    // Setting to make the displayName variable blank
+    	const generalSettings = {
+      		setting2: document.getElementById('setting2').checked,
+    	};
+    	if (generalSettings.setting2) {
+        	window.displayName = ''; // Assumes displayName is a global variable
+    	}
+    	// If not anonymous, you might want to set the displayName back to its original value or do nothing
+	}
 
-        var startAngle = startProportion * 360;
-        var endAngle = endProportion * 360;
-
-        var startRad = (startAngle - 90) * Math.PI / 180;
-        var endRad = (endAngle - 90) * Math.PI / 180;
-
-        var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
-
-        var startX = centerX + radius * Math.cos(startRad);
-        var startY = centerY + radius * Math.sin(startRad);
-
-        var endX = centerX + radius * Math.cos(endRad);
-        var endY = centerY + radius * Math.sin(endRad);
-
-        var pathData = [
-            "M", centerX, centerY,
-            "L", startX, startY,
-            "A", radius, radius, 0, largeArcFlag, 1, endX, endY,
-            "Z"
-        ].join(" ");
-
-        // Update slice path and text
-        document.addEventListener("DOMContentLoaded", function () {
-            document.getElementById(sliceId).setAttribute("d", pathData);
-            document.getElementById(sliceId).setAttribute("fill", fillColor);
-        });
+	function applyAppearanceSettings() {
+    const appearanceSettings = {
+      setting5: document.getElementById('setting5').checked,
+      setting6: document.getElementById('setting6').checked,
+      // Add more Appearance settings here if needed
+    };
+    // Setting5 (High Contrast Mode)
+    if (appearanceSettings.setting5) {
+        document.body.classList.add('high-contrast'); 
+    } else {
+        document.body.classList.remove('high-contrast');
     }
+
+    // Setting6 (Large Text Mode)
+    if (appearanceSettings.setting6) {
+        document.body.classList.add('large-text');
+    } else {
+        document.body.classList.remove('large-text');
+    }
+}
+
+	function saveSettings() {
+		savedSettings.setting1 = document.getElementById('setting1').checked;
+  		savedSettings.setting2 = document.getElementById('setting2').checked;
+  		savedSettings.setting5 = document.getElementById('setting5').checked;
+  		savedSettings.setting6 = document.getElementById('setting6').checked;
+	
+  	const generalSettings = {
+    	setting1: document.getElementById('setting1').checked,
+    	setting2: document.getElementById('setting2').checked,
+    	// Add more General settings here if needed
+  	};
+
+  	const appearanceSettings = {
+    	setting5: document.getElementById('setting5').checked,
+    	setting6: document.getElementById('setting6').checked,
+    	// Add more Appearance settings here if needed
+  	};
+
+  	// Implement the setting1 (Read-Only Mode)
+	if (generalSettings.setting1) {
+  	// Disable all buttons except for the tabbed menu tab buttons, the logout button, and buttons in settingsPopup
+  		const allButtons = document.querySelectorAll('button');
+  		allButtons.forEach(button => {
+    	// Check if the button is not part of the tabbed menu, not the logout button, and not inside the settingsPopup
+   		if (!button.closest('.tabbed-menu') && !button.closest('.logout-button') && !button.closest('#settingsPopup')) {
+      		button.disabled = true;
+    	}
+  	});
+	} else {
+  	// Enable all buttons if setting1 is not checked
+  		const allButtons = document.querySelectorAll('button');
+  		allButtons.forEach(button => {
+    	button.disabled = false;
+  		});
+	}
+
+  	applyAnonymousSetting();
+  	applyAppearanceSettings();
+
+  	// Close the settings menu after saving
+  	closeSettingsMenu();
+	}
+
+	// You may also want to close the settings menu if the user clicks outside of it
+	document.addEventListener("click", function (event) {
+  		const popupContainer = document.getElementById("settingsPopup");
+  		const settingsButton = document.querySelector(".settings-button");
+  
+  		// Check if the clicked element is not within the settings button or settings popup
+  		if (!event.target.closest(".settings-button") && !event.target.closest(".settings-popup")) {
+    		closeSettingsMenu(); // Close the settings menu
+  		}
+	});
+
+	// Attach the event listeners for the close and save buttons
+	document.addEventListener("DOMContentLoaded", function () {
+  		const closeButton = document.getElementById("closeButton");
+  		if (closeButton) {
+    		closeButton.addEventListener("click", closeSettingsMenu);
+  		}
+		const saveButton = document.getElementById("settingSaveButton");
+  		if (saveButton) {
+    		saveButton.addEventListener("click", saveSettings);
+  		}
+	});
+		
+	// Function to remove donation boxes
+	function removeDonationBoxes(donationAmount) {
+  		let remainingAmount = donationAmount;
+
+  		// Select all donation rows
+  		let rows = Array.from(document.querySelectorAll('.donation-row'));
+
+  		// Sort rows based on donation amount in descending order
+  		rows.sort((a, b) => {
+    		const aAmount = parseInt(a.querySelector('.donation-box').getAttribute('data-amount'));
+    		const bAmount = parseInt(b.querySelector('.donation-box').getAttribute('data-amount'));
+    		return bAmount - aAmount;
+  		});
+
+  		// Start from the highest donation amount row and move downwards
+  		for (let i = 0; i < rows.length && remainingAmount > 0; i++) {
+    	const row = rows[i];
+    	let rowBoxes = Array.from(row.querySelectorAll('.donation-box'));
+
+    	// Filter boxes to consider only empty boxes
+    	rowBoxes = rowBoxes.filter(box => box.querySelector('.donation-box-front').innerText.trim() === '');
+
+    	// If there are no empty boxes in this row, continue to the next row
+    	if (rowBoxes.length === 0) {
+      		continue;
+    	}
+
+    	const rowBoxAmount = parseInt(rowBoxes[0].getAttribute('data-amount')); // Assuming all boxes in a row have same donation amount
+
+    	// Remove box if there's enough remaining amount
+    	if (remainingAmount >= rowBoxAmount) {
+      		rowBoxes[rowBoxes.length - 1].remove(); // Remove the last box
+      		remainingAmount -= rowBoxAmount;
+
+      		// Update row label
+      		const rowLabel = row.querySelector('.donation-row-label');
+      		const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+      		rowLabel.innerText = (numBoxes - 1) + ' x ' + rowLabel.innerText.split(' ')[2];
+    		}
+  		}
+
+  		return remainingAmount; // If it's not zero, there wasn't enough boxes to remove
+	}
+
+	const slice1Value = <?php echo $field1name; ?>;
+	const slice2Value = <?php echo $field2name; ?>;
+	const slice3Value = <?php echo $field3name; ?>;
+	var totalBudget = <?php echo $goal; ?>;
+
+	var slice1Amount = <?php echo $field1amount; ?>;
+	var slice2Amount = <?php echo $field2amount; ?>;
+	var slice3Amount = <?php echo $field3amount; ?>;
+
+	var slice1Proportion = (slice1Amount / totalBudget);
+	var slice2Proportion = (slice2Amount / totalBudget);
+	var slice3Proportion = (slice3Amount / totalBudget);
+
+	// Update pie chart slices
+	createSlice("endowmentSlice", "endowmentTextName", "endowmentTextAmount", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice("capitalSlice", "capitalTextName", "capitalTextAmount", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice("operatingSlice", "operatingTextName", "operatingTextAmount", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+
+		
+	// Function to create a path description for a pie chart slice
+	function createSlice(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue) {
+    	var radius = 18;
+    	var centerX = 21;
+    	var centerY = 21;
+
+    	var startAngle = startProportion * 360;
+    	var endAngle = endProportion * 360;
+
+    	var startRad = (startAngle - 90) * Math.PI / 180;
+    	var endRad = (endAngle - 90) * Math.PI / 180;
+
+    	var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+
+    	var startX = centerX + radius * Math.cos(startRad);
+    	var startY = centerY + radius * Math.sin(startRad);
+
+    	var endX = centerX + radius * Math.cos(endRad);
+    	var endY = centerY + radius * Math.sin(endRad);
+
+    	var pathData = [
+        	"M", centerX, centerY,
+        	"L", startX, startY,
+        	"A", radius, radius, 0, largeArcFlag, 1, endX, endY,
+        	"Z"
+    	].join(" ");
+
+	// Calculate text position outside the pie chart (near the slice)
+	var midAngle = (startAngle + endAngle) / 2;
+	var midRad = (midAngle - 90) * Math.PI / 180;
+	var textX = centerX + (radius - 8) * Math.cos(midRad) - 7;  // Subtracting 5 to shift text to the left
+	var textYName = centerY + (radius - 10) * Math.sin(midRad) - (0.5);  // Adjusted Y position for name to be slightly above
+	var textYAmount = centerY + (radius - 10) * Math.sin(midRad) + (0.5);  // Adjusted Y position for amount to be slightly below
+
+    	// Update slice path and text
+        document.addEventListener("DOMContentLoaded", function () {
+        	document.getElementById(sliceId).setAttribute("d", pathData);
+        	document.getElementById(sliceId).setAttribute("fill", fillColor);
+        	document.getElementById(textIdName).textContent = sliceName;
+        	document.getElementById(textIdName).setAttribute("x", textX);
+        	document.getElementById(textIdName).setAttribute("y", textYName - 1);  // Adjusted Y position for name to be above amount
+        	document.getElementById(textIdAmount).textContent = "$" + numberWithCommas(sliceValue);
+        	document.getElementById(textIdAmount).setAttribute("x", textX);
+        	document.getElementById(textIdAmount).setAttribute("y", textYAmount + 1);  // Adjusted Y position for amount to be below name
+    	});
+	}
+	
+	// Function to create a path description for a pie chart slice
+	function createSlice1(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue) {
+    	var radius = 18;
+    	var centerX = 21;
+    	var centerY = 21;
+
+    	var startAngle = startProportion * 360;
+    	var endAngle = endProportion * 360;
+
+    	var startRad = (startAngle - 90) * Math.PI / 180;
+    	var endRad = (endAngle - 90) * Math.PI / 180;
+
+    	var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+
+    	var startX = centerX + radius * Math.cos(startRad);
+    	var startY = centerY + radius * Math.sin(startRad);
+
+    	var endX = centerX + radius * Math.cos(endRad);
+    	var endY = centerY + radius * Math.sin(endRad);
+
+    	var pathData = [
+        	"M", centerX, centerY,
+        	"L", startX, startY,
+        	"A", radius, radius, 0, largeArcFlag, 1, endX, endY,
+        	"Z"
+    	].join(" ");
+
+	// Calculate text position outside the pie chart (near the slice)
+	var midAngle = (startAngle + endAngle) / 2;
+	var midRad = (midAngle - 90) * Math.PI / 180;
+	var textX = centerX + (radius - 8) * Math.cos(midRad) - 7;  // Subtracting 5 to shift text to the left
+	var textYName = centerY + (radius - 10) * Math.sin(midRad) - (0.5);  // Adjusted Y position for name to be slightly above
+	var textYAmount = centerY + (radius - 10) * Math.sin(midRad) + (0.5);  // Adjusted Y position for amount to be slightly below
+
+        	document.getElementById(sliceId).setAttribute("d", pathData);
+        	document.getElementById(sliceId).setAttribute("fill", fillColor);
+        	document.getElementById(textIdName).textContent = sliceName;
+        	document.getElementById(textIdName).setAttribute("x", textX);
+        	document.getElementById(textIdName).setAttribute("y", textYName - 1);  // Adjusted Y position for name to be above amount
+        	document.getElementById(textIdAmount).textContent = "$" + numberWithCommas(sliceValue);
+        	document.getElementById(textIdAmount).setAttribute("x", textX);
+        	document.getElementById(textIdAmount).setAttribute("y", textYAmount + 1);  // Adjusted Y position for amount to be below name
+	}
 		
 	</script>
 	<?php
@@ -1955,11 +2325,11 @@ donation-pyramid::before {
   
 }
 
-  .donation-key {
-    position: absolute;
-    top: 280px;
-    right: 400px;
-  }
+.donation-key {
+  position: absolute;
+  top: 280px;
+  right: 400px;
+}
 
   .donation-key-item {
     display: flex;
@@ -2115,6 +2485,7 @@ donation-pyramid::before {
   position: fixed;
   top: 50%;
   left: 50%;
+  
   transform: translate(-50%, -50%);
   background-color: #f1f1f1; /* Light gray background */
   width: 350px; /* Adjust the width as needed */
@@ -2161,8 +2532,15 @@ donation-pyramid::before {
   cursor: pointer;
 }
 
-.settings-popup button:hover {
-  background-color: #00758D;
+.settings-popup .small-button {
+  width: 100%; /* Remove full-width */
+  padding: 5px 10px; /* Adjust padding for smaller size */
+  font-size: 14px; /* Smaller font size */
+  background-color:  #3D8898;
+}
+
+.settings-popup .small-button:hover {
+  background-color: #FEA758;
 }
 
 /* Additional style for the settings button */
@@ -2184,23 +2562,10 @@ donation-pyramid::before {
 	background-color: #707070;
 	transition: background-color 0.3s;
 }
-
- .settings-popup input[type="number"] {
- background-color: #F8F8F8; /* Added background color to match the original style */
-    width: 100px; /* Set the desired width for the input number fields */
-	height: 25px;
-    padding: 8px; /* Add some padding for better appearance */
-    border: 1px solid #ccc; /* Add a border for a clear outline */
-    border-radius: 5px; /* Add a slight border-radius for a rounded look */
-    box-sizing: border-box; /* Include the padding and border within the specified width */
-    font-size: 12px; /* Adjust the font size as needed */
-	position: absolute;
-	 right: 45px;
-	margin-left: 10px;
-  }
+ 
   
 tfoot tr {
-    background-color: #A7A7A7; /* Dark grey background */
+    background-color: #DC9657; /* Dark grey background */
     color: #fff; /* White text */
     font-size: 0.9em; /* Slightly smaller font size */
     font-style: italic; /* Italicize text */
@@ -2210,10 +2575,8 @@ tfoot tr {
 
 tfoot td {
     padding: 2px 10px; /* Adjusted padding for better appearance within the 20px height */
-    line-height: 16px; /* Adjusted line height to fit better within the given height */
+    line-height: 16px; /*justed line height to fit better within the given height */
 }
-
-
 
 </style>
 
@@ -2237,18 +2600,6 @@ tfoot td {
     </div>
     <!-- Add more General settings here if needed -->
     
-    <!-- Campaign Section -->
-    <h3>Campaign</h3>
-    <div class="setting">
-      <label for="setting3">Edit Campaign Goal:</label>
-      <input type="number" id="setting3" min="0">
-    </div>
-    <div class="setting">
-      <label for="setting4">Edit Lead Gift:</label>
-      <input type="number" id="setting4" min="0">
-    </div>
-    <!-- Add more Campaign settings here if needed -->
-    
     <!-- Appearance Section -->
     <h3>Appearance</h3>
     <div class="setting">
@@ -2261,8 +2612,8 @@ tfoot td {
     </div>
     <!-- Add more Appearance settings here if needed -->
 
-    <button id="closeButton">Close</button>
-	<button id="saveButton">Save</button>
+    <button class="small-button" id="closeButton">Close</button>
+	<button id="settingSaveButton">Save</button>
   </div>
 </div>
 
@@ -2468,11 +2819,13 @@ tfoot td {
   </div>
 </div>
 
+<!-- Custom modal -->
 <div id="alertModule1" class="modal">
-  <div class="modal-content">
-    <button data-action="cancel">Cancel</button>
-    <button data-action="ok">Ok</button>
-  </div>
+    <div class="modal-content">
+        <p>This row is already full. Would you like to add an additional donator box and automatically repopulate the Gift Pyramid?</p>
+        <button id="confirmButton">Yes</button>
+        <button id="cancelButton">No</button>
+    </div>
 </div>
 
 
