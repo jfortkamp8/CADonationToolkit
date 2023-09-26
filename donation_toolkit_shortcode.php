@@ -5,7 +5,7 @@ function donation_toolkit_shortcode($atts) {
 	$campaign = get_page_by_path($campaign_slug, OBJECT, 'campaigns');
 	if (!$campaign) {
 		return 'Campaign not found.';
-	}
+	} 
 	$campaign_id = $campaign->ID;
 	$goal = floatval(str_replace(array('$', ','), '', get_field('donation_goal', $campaign_id)));
 	
@@ -24,7 +24,7 @@ function donation_toolkit_shortcode($atts) {
     $field1amount = str_replace(',', '', trim($part1[1])); 
 	$field2name = "'" . trim($part2[0]) . "'";
     $field2amount = str_replace(',', '', trim($part2[1])); 
-	$field3name = "'" . trim($part3[0]) . "'";
+	$field3name = "'" . trim($part3[0]) .     "'";
     $field3amount = str_replace(',', '', trim($part3[1])); 
 
     if (filter_var($imgurl, FILTER_VALIDATE_URL) === FALSE)
@@ -41,13 +41,21 @@ function donation_toolkit_shortcode($atts) {
 		
 	// Global
 	let donors = [];
-	let displayName = "";
+	var displayName;
 	let globalRowLabel;
 		
+	function makeDarker(color, factor) {
+  const r = Math.max(0, parseInt(color.substring(1, 3), 16) - factor);
+  const g = Math.max(0, parseInt(color.substring(3, 5), 16) - factor);
+  const b = Math.max(0, parseInt(color.substring(5, 7), 16) - factor);
+
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
 	function numberWithCommas(number) {
   		return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 	}
-
+		 
+	
 	//TABS JS
 	function activateTab(){
 		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
@@ -150,22 +158,6 @@ function donation_toolkit_shortcode($atts) {
 		cells[1].appendChild(donationTypeSelect);
   		cells[0].width = '12%';
   		cells[1].width = '12%';
-		const fullNameCheckbox = addCircleCheckbox();
-		const orgNameCheckbox = addCircleCheckbox();
-
-		const fullNameContainer = document.createElement("div");
-		fullNameContainer.style.display = "flex";
-		fullNameContainer.style.alignItems = "center";
-
-		const orgNameContainer = document.createElement("div");
-		orgNameContainer.style.display = "flex";
-		orgNameContainer.style.alignItems = "center";
-
-		cells[2].innerHTML = "";
-		cells[2].appendChild(fullNameContainer);
-
-		cells[3].innerHTML = "";
-		cells[3].appendChild(orgNameContainer);
 
 		cells[2].width = '14%';
 		cells[3].width = '12%';
@@ -192,6 +184,23 @@ function donation_toolkit_shortcode($atts) {
     		return input;
  		});
 		
+const fullNameCheckbox = addCircleCheckbox();
+		const orgNameCheckbox = addCircleCheckbox();
+
+		const fullNameContainer = document.createElement("div");
+		fullNameContainer.style.display = "flex";
+		fullNameContainer.style.alignItems = "center";
+
+		const orgNameContainer = document.createElement("div");
+		orgNameContainer.style.display = "flex";
+		orgNameContainer.style.alignItems = "center";
+
+		cells[2].innerHTML = "";
+		cells[2].appendChild(fullNameContainer);
+
+		cells[3].innerHTML = "";
+		cells[3].appendChild(orgNameContainer);
+		
 		fullNameContainer.appendChild(fullNameCheckbox);
 		fullNameContainer.appendChild(inputs[0]);
 
@@ -213,7 +222,6 @@ function donation_toolkit_shortcode($atts) {
   			}
 		});
 				
-		
   		// Add column to attach files to donation
 		const attachFiles = document.createElement("td");
 		attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
@@ -475,15 +483,16 @@ const donationName = values[1];
 const donationAmount = parseInt(values[2].replace(/[^0-9.-]+/g, ""));
 
 // Create a new donor object and add to donors array
-let newDonor = {
-  name: donationName,
-  amount: donationAmount
-};
-donors.push(newDonor);
+
 			
 let donationColor = '';
 switch (pledgePendingValue) {
   case 'pledge':
+	let newDonor = {
+  name: displayName,
+  amount: donationAmount
+};
+donors.push(newDonor);
     donationColor = '#7866A1';
     break;
   case 'pending':
@@ -500,12 +509,33 @@ switch (pledgePendingValue) {
     return;
 }
 
-const boxesToFill = 1;
+// Get the rows and their amounts from the DOM
 const rows = document.querySelectorAll('.donation-row');
-const donationAmounts = [5000, 10000, 25000, 50000, 75000, 100000, 250000, 500000, 1250000, 2500000, 5000000];
-const closestAmount = donationAmounts.reduce((prev, curr) => Math.abs(curr - donationAmount) < Math.abs(prev - donationAmount) ? curr : prev);
-const rowIndex = 'row' + donationAmounts.indexOf(closestAmount);
+let donationRowAmounts = [];
+			
+console.log(donationRowAmounts);
+
+document.querySelectorAll('.donation-row').forEach(row => {
+    let box = row.querySelector('.donation-box');
+    if (box) {
+        let amount = parseInt(box.getAttribute('data-amount'));
+        if (!isNaN(amount)) {
+            donationRowAmounts.push(amount);
+        }
+    }
+});
+
+
+// Find the closest donation amount
+const closestAmount = donationRowAmounts.reduce((prev, curr) => Math.abs(curr - donationAmount) < Math.abs(prev - donationAmount) ? curr : prev);
+
+// Use closestAmount to get the closest row
+const rowIndex = 'row' + closestAmount / 1000;
+
 const boxes = document.querySelectorAll('.donation-box-front[data-row="' + rowIndex + '"]');
+
+const boxesToFill = 1;
+
 
 const filledBoxes = [];
 boxes.forEach((box, index) => {
@@ -516,22 +546,58 @@ boxes.forEach((box, index) => {
 
 let emptyIndex = -1;
 for (let i = 0; i < boxes.length; i++) {
+  console.log(`Checking box at index ${i}...`);  // Debugging log
   if (!filledBoxes.includes(i)) {
+    console.log(`Found empty box at index ${i}`);  // Debugging log
     emptyIndex = i;
     break;
   }
 }
+console.log('Final emptyIndex:', emptyIndex); 
 	
 
 if (emptyIndex !== -1) {
-  const box = boxes[emptyIndex];
-  box.style.backgroundColor = donationColor;
-  box.style.color = "#fff";
-  box.style.fontWeight = "500";
-  box.style.textAlign = "center";
-  box.style.display = "flex";
-  box.style.justifyContent = "center";
-  box.style.alignItems = "center";
+const box = boxes[emptyIndex];  // Assuming boxes[emptyIndex] is your .donation-box-front
+
+box.style.backgroundColor = donationColor;
+box.style.color = "#fff";
+box.style.fontWeight = "500";
+box.style.textAlign = "center";
+box.style.display = "flex";
+box.style.justifyContent = "center";
+box.style.alignItems = "center";
+
+const backOfBox = box.parentElement.querySelector('.donation-box-back');
+backOfBox.innerHTML = '$' + numberWithCommas(donationAmount);
+const darkerDonationColor = makeDarker(donationColor, 30); // The factor 30 can be adjusted
+backOfBox.style.backgroundColor = darkerDonationColor;
+
+backOfBox.style.color = "#fff";
+backOfBox.style.fontWeight = "400";
+backOfBox.style.textAlign = "center";
+backOfBox.style.display = "none";  // Hide the back initially
+
+const donationBox = box.closest('.donation-box');
+if (donationBox) {
+  let flipped = false;  // To keep track of the flip state
+  
+  donationBox.addEventListener('click', function() {
+    console.log("Flip");
+
+    if (flipped) {
+      // Show the front, hide the back
+      box.style.display = "flex";
+      backOfBox.style.display = "none";
+    } else {
+      // Hide the front, show the back
+      box.style.display = "none";
+      backOfBox.style.display = "flex";
+    }
+
+    flipped = !flipped;  // Toggle the state
+  });
+}
+
 
   const words = displayName.split(" ");
   if (words.length === 2) {
@@ -563,7 +629,6 @@ if (emptyIndex !== -1) {
 
   document.body.removeChild(span);
 
-  const donationBox = box.parentElement;
   const donationBoxAmount = parseInt(donationBox.getAttribute('data-amount'));
   const donationValue = donationAmount < donationBoxAmount ? donationAmount : donationBoxAmount;
   const donationLabel = document.createElement('div');
@@ -949,17 +1014,17 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 		});
 			
 		const slice1Value = <?php echo $field1name; ?>;
-		const slice2Value = <?php echo $field2name; ?>;
-		const slice3Value = <?php echo $field3name; ?>;
-		var totalBudget = <?php echo $goal; ?>;
+	const slice2Value = <?php echo $field2name; ?>;
+	const slice3Value = <?php echo $field3name; ?>;
+	var totalBudget = <?php echo $goal; ?>;
 
-		var slice1Amount = <?php echo $field1amount; ?>;
-		var slice2Amount = <?php echo $field2amount; ?>;
-		var slice3Amount = <?php echo $field3amount; ?>;
+	var slice1Amount = <?php echo $field1amount; ?>;
+	var slice2Amount = <?php echo $field2amount; ?>;
+	var slice3Amount = <?php echo $field3amount; ?>;
 
-		var slice1Proportion = (slice1Amount / totalBudget);
-		var slice2Proportion = (slice2Amount / totalBudget);
-		var slice3Proportion = (slice3Amount / totalBudget);
+	var slice1Proportion = (slice1Amount / totalBudget);
+	var slice2Proportion = (slice2Amount / totalBudget);
+	var slice3Proportion = (slice3Amount / totalBudget);
 			
 		const highestCount = Math.max(individualCount, foundationCount, corporationCount, publicCount, boardCount, otherCount);
 			
@@ -1291,47 +1356,50 @@ donorElement.innerHTML = `
     	document.getElementById('numBoxesInput').value = numBoxes;
     	document.getElementById('customModal').style.display = "block";
 	}
-	
-	//SAVE
-	function saveChanges() {
-    	const newNumBoxes = parseInt(document.getElementById('numBoxesInput').value);
-    	if (isNaN(newNumBoxes) || newNumBoxes < 0) {
-        	document.getElementById('customModal').style.display = "none";
-			const mod = document.getElementById('errorModule2');
-    		mod.style.display = "block";
-        	return;
-    	}
 
-    	const row = globalRowLabel.parentElement;
-    	const currentNumBoxes = row.querySelectorAll('.donation-box').length;
-    	const filledBoxes = row.querySelectorAll('.donation-box-front:not(:empty)');
+		//SAVE
+function saveChanges() {
+    const newNumBoxes = parseInt(document.getElementById('numBoxesInput').value);
+    if (isNaN(newNumBoxes) || newNumBoxes < 0) {
+        document.getElementById('customModal').style.display = "none";
+        const mod = document.getElementById('errorModule2');
+        mod.style.display = "block";
+        return;
+    }
 
-    	if (filledBoxes.length > 0 && newNumBoxes < currentNumBoxes) {
-			document.getElementById('customModal').style.display = "none";
-			const modalerror = document.getElementById('errorModule1');
-    		modalerror.style.display = "block";
-        	return;
-    	}
+    const row = globalRowLabel.parentElement;
+    const amount = parseInt(globalRowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
 
-    	if (newNumBoxes === 0) {
-			document.getElementById('customModal').style.display = "none";
-			const modalDelete = document.getElementById('errorModule4');
-    		modalDelete.style.display = "block";
-        	return;
-    	}
+    // Fetch all boxes of the same data-amount across all rows
+    const allBoxesOfSameAmount = document.querySelectorAll(`.donation-box[data-amount="${amount}"]`);
+    const currentNumBoxes = allBoxesOfSameAmount.length;
+    const filledBoxes = row.querySelectorAll('.donation-box-front:not(:empty)');
 
-    	globalRowLabel.innerText = newNumBoxes + ' x ' + globalRowLabel.innerText.split(' ')[2];
-    	const existingBox = row.querySelector('.donation-box-front');
-    	const rowId = existingBox ? existingBox.getAttribute('data-row') : '';
+    if (filledBoxes.length > 0 && newNumBoxes < currentNumBoxes) {
+        document.getElementById('customModal').style.display = "none";
+        const modalerror = document.getElementById('errorModule1');
+        modalerror.style.display = "block";
+        return;
+    }
 
-    	const amount = parseInt(globalRowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
-    	let boxesToAdd = newNumBoxes - currentNumBoxes;
-    	let currentRow = row;
+    if (newNumBoxes === 0) {
+        document.getElementById('customModal').style.display = "none";
+        const modalDelete = document.getElementById('errorModule4');
+        modalDelete.style.display = "block";
+        return;
+    }
 
-    	while (boxesToAdd > 0) {
-        	const boxesInThisRow = currentRow.querySelectorAll('.donation-box').length;
-        	const boxesSpaceInThisRow = 8 - boxesInThisRow; // calculate the space left in the current row
-        	const boxesToAppend = Math.min(boxesSpaceInThisRow, boxesToAdd); // Decide how many boxes we can append to the current row
+    globalRowLabel.innerText = newNumBoxes + ' x ' + globalRowLabel.innerText.split(' ')[2];
+    const existingBox = row.querySelector('.donation-box-front');
+    const rowId = existingBox ? existingBox.getAttribute('data-row') : '';
+
+    let boxesToAdd = newNumBoxes - currentNumBoxes;
+    let currentRow = row;
+
+    while (boxesToAdd > 0) {
+        const boxesInThisRow = currentRow.querySelectorAll('.donation-box').length;
+        const boxesSpaceInThisRow = 8 - boxesInThisRow;
+        const boxesToAppend = Math.min(boxesSpaceInThisRow, boxesToAdd);
 
         for (let i = 0; i < boxesToAppend; i++) {
             const box = document.createElement('div');
@@ -1354,30 +1422,30 @@ donorElement.innerHTML = `
             currentRow.appendChild(box);
         }
 
-        boxesToAdd -= boxesToAppend; // Reduce the number of boxes left to append
+        boxesToAdd -= boxesToAppend;
 
         if (boxesToAdd > 0) {
-            // Create a new row without a label and append it below the current row
             const newRow = document.createElement('div');
-            newRow.className = row.className; // Assuming the row has a specific class to copy
+            newRow.className = row.className;
             currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
             currentRow = newRow;
-			closeModal();
-        	}
-    	}
-    	// Logic for removing boxes, unchanged from the previous version
-    	if (newNumBoxes < currentNumBoxes) {
-        	const boxesToRemove = currentNumBoxes - newNumBoxes;
-        	const boxes = row.querySelectorAll('.donation-box');
+        }
+    }
 
-        	for (let i = 0; i < boxesToRemove; i++) {
-            	row.removeChild(boxes[boxes.length - 1 - i]);
-        	}
-    	}
+    if (newNumBoxes < currentNumBoxes) {
+        const boxesToRemove = currentNumBoxes - newNumBoxes;
 
-    	updateTotalDonations();
-    	closeModal();
-	}
+        // Removing boxes from the last, irrespective of the row they are in
+        for (let i = 0; i < boxesToRemove; i++) {
+            allBoxesOfSameAmount[allBoxesOfSameAmount.length - 1 - i].remove();
+        }
+    }
+
+    updateTotalDonations();
+    closeModal();
+}
+
+
 
 	//UPDATE DONATION RUNNING TOTAL
 	function updateTotalDonations() {
@@ -1404,6 +1472,7 @@ donorElement.innerHTML = `
     	const newRow = document.createElement('div');
     	newRow.className = 'donation-row';
 	
+	
 	const newRowLabel = document.createElement('div');
 	newRowLabel.className = 'donation-row-label';
 	newRowLabel.innerText = numBoxes + ' x $' + amount;
@@ -1416,15 +1485,51 @@ donorElement.innerHTML = `
 	newRow.appendChild(newRowLabel);
 
     for (let i = 0; i < numBoxes; i++) {
+		// Convert amount to an integer if it's in a string format like "$150,000"
+    amount = parseInt(amount.toString().replace(/[$,]/g, ''));
         const box = document.createElement('div');
         box.className = 'donation-box';
         box.setAttribute('data-amount', amount);
 
         const boxInner = document.createElement('div');
         boxInner.className = 'donation-box-inner';
+// Get the rows and their amounts from the DOM
+const rows = document.querySelectorAll('.donation-row');
+let donationRowAmounts = [];
 
-        const boxFront = document.createElement('div');
-        boxFront.className = 'donation-box-front';
+document.querySelectorAll('.donation-row').forEach(row => {
+    let box = row.querySelector('.donation-box');
+    if (box) {
+        let amount = parseInt(box.getAttribute('data-amount'));
+        if (!isNaN(amount)) {
+            donationRowAmounts.push(amount);
+        } 
+    }
+});
+    
+
+    // Add the current row's amount to the list of row amounts.
+    donationRowAmounts.push(amount);
+
+    // Sort the array in ascending order
+    donationRowAmounts.sort((a, b) => a - b);
+
+    console.log("Sorted Donation Row Amounts:", donationRowAmounts);  // Debugging log
+
+    // Find the closest donation amount
+    const closestAmount = donationRowAmounts.reduce((prev, curr) => Math.abs(curr - amount) < Math.abs(prev - amount) ? curr : prev);
+
+    // Use closestAmount to get the closest row
+    const rowIndex = 'row' + closestAmount / 1000;
+
+			
+	console.log("Donation Row Amounts:", donationRowAmounts);
+console.log("Current amount variable:", amount);
+console.log("Closest amount:", closestAmount);
+       const boxFront = document.createElement('div');
+		boxFront.className = 'donation-box-front';
+		boxFront.setAttribute('data-row', rowIndex);
+
 		
         const boxBack = document.createElement('div');
         boxBack.className = 'donation-box-back';
@@ -1530,7 +1635,13 @@ donorElement.innerHTML = `
 		
 	function closeNewMod(){
 	const row = globalRowLabel.parentElement;
-	row.remove();
+		const amount = parseInt(globalRowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+	let nextRow = row;
+        while (nextRow && nextRow.querySelector(`.donation-box[data-amount="${amount}"]`)) {
+            const tempRow = nextRow;
+            nextRow = nextRow.nextElementSibling;
+            tempRow.remove();
+        }
 	document.getElementById('errorModule4').style.display = "none";
     updateTotalDonations();
     closeModal();
@@ -1540,26 +1651,28 @@ donorElement.innerHTML = `
 		document.getElementById('alertModule').style.display = "none";
 	}
 		
-	function calculateTotalDonations() {
-    	const rows = document.querySelectorAll('.donation-row');
-  		let totalDonations = 0;
+function calculateTotalDonations() {
+    let totalDonations = 0;
 
-		rows.forEach(row => {
-  			const rowLabel = row.querySelector('.donation-row-label');
-  			const isTotalRow = rowLabel.innerHTML.includes('Total:');
-  			if (!isTotalRow) {
-    			const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
-    			const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
-  	  			totalDonations += numBoxes * amount;
-  			}
-			});
+    // Get all donation-box elements
+    const donationBoxes = document.querySelectorAll('.donation-box');
 
-  return totalDonations;
+    donationBoxes.forEach(box => {
+        // Retrieve the data-amount value and add it to the total
+        const amount = parseInt(box.getAttribute('data-amount'));
+        if (!isNaN(amount)) {
+            totalDonations += amount;
+        }
+    });
+
+    return totalDonations;
 }
+
+
 		
 	let savedSettings = {
   		setting1: false,  // Default value
-  		setting2: false,  // Default value
+  		//setting2: false,  // Default value
   		setting5: false,  // Default value
   		setting6: false,  // Default value
   		// ...add other settings here...
@@ -1569,7 +1682,7 @@ donorElement.innerHTML = `
 	function openSettingsMenu() {
 	
 		document.getElementById('setting1').checked = savedSettings.setting1;
-  		document.getElementById('setting2').checked = savedSettings.setting2;
+  		//document.getElementById('setting2').checked = savedSettings.setting2;
   		document.getElementById('setting5').checked = savedSettings.setting5;
   		document.getElementById('setting6').checked = savedSettings.setting6;
 	
@@ -1598,26 +1711,35 @@ donorElement.innerHTML = `
 	function updateSettings() {
   		const generalSettings = {
     		setting1: document.getElementById('setting1').checked,
-    		setting2: document.getElementById('setting2').checked,
+    		//setting2: document.getElementById('setting2').checked,
     		// Add more General settings here if needed
   		};
 
   		// Update the checkboxes based on the saved settings
   		document.getElementById('setting1').checked = generalSettings.setting1;
-  		document.getElementById('setting2').checked = generalSettings.setting2;
+  		//document.getElementById('setting2').checked = generalSettings.setting2;
   		// Update other checkboxes as needed
 	}
-
-	function applyAnonymousSetting() {
-    // Setting to make the displayName variable blank
-    	const generalSettings = {
-      		setting2: document.getElementById('setting2').checked,
-    	};
-    	if (generalSettings.setting2) {
-        	window.displayName = ''; // Assumes displayName is a global variable
-    	}
-    	// If not anonymous, you might want to set the displayName back to its original value or do nothing
-	}
+		
+	/*function applyAnonymousSetting() {
+    const generalSettings = {
+        setting2: document.getElementById('setting2').checked,
+    };
+    
+    if (generalSettings.setting2) {
+        for (const input in lockedInputs) {
+            if (lockedInputs.hasOwnProperty(input)) {
+                input.value = ' ';
+            }
+        }
+    } else {
+        for (const input in lockedInputs) {
+            if (lockedInputs.hasOwnProperty(input)) {
+                input.value = lockedInputs[input]; // Restore the original displayName
+            }
+        }
+    }
+}*/
 
 	function applyAppearanceSettings() {
     const appearanceSettings = {
@@ -1642,13 +1764,13 @@ donorElement.innerHTML = `
 
 	function saveSettings() {
 		savedSettings.setting1 = document.getElementById('setting1').checked;
-  		savedSettings.setting2 = document.getElementById('setting2').checked;
+  		//savedSettings.setting2 = document.getElementById('setting2').checked;
   		savedSettings.setting5 = document.getElementById('setting5').checked;
   		savedSettings.setting6 = document.getElementById('setting6').checked;
 	
   	const generalSettings = {
     	setting1: document.getElementById('setting1').checked,
-    	setting2: document.getElementById('setting2').checked,
+    	//setting2: document.getElementById('setting2').checked,
     	// Add more General settings here if needed
   	};
 
@@ -1676,7 +1798,7 @@ donorElement.innerHTML = `
   		});
 	}
 
-  	applyAnonymousSetting();
+  	//applyAnonymousSetting();
   	applyAppearanceSettings();
 
   	// Close the settings menu after saving
@@ -1860,12 +1982,103 @@ donorElement.innerHTML = `
         	document.getElementById(textIdAmount).setAttribute("y", textYAmount + 1);  // Adjusted Y position for amount to be below name
 	}
 		
+	function redirectToToolkitHome() {
+    window.location.href = "https://www.cramerphilanthropy.com/campaign-toolkit-home/";
+}
+
 	</script>
 	<?php
 	
 // Define the HTML and CSS output
 $output = '
 <style>
+
+/* High Contrast Mode */
+.high-contrast {
+    background-color: #000; /* Black background */
+    color: #F78D2D; /* Orange text color */
+    border-color: #F78D2D; /* Orange borders */
+}
+
+.high-contrast a {
+    color: #77C4D5; /* Light Blue links for visibility */
+    text-decoration: underline; /* Underline links to make them stand out more */
+}
+
+.high-contrast button,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+    background-color: #00758D; /* Teal background for form elements */
+    color: #F78D2D; /* Orange text */
+    border: 2px solid #F78D2D; /* Orange border for form elements */
+}
+
+.high-contrast button:hover,
+.high-contrast input[type="button"]:hover,
+.high-contrast input[type="submit"]:hover {
+    background-color: #7866A1; /* Purple for hover states */
+    color: #F78D2D;
+}
+
+.high-contrast button:focus,
+.high-contrast input:focus,
+.high-contrast select:focus,
+.high-contrast textarea:focus {
+    outline: 2px solid #77C4D5; /* Light Blue outline on focus for better visibility */
+}
+
+.high-contrast header,
+.high-contrast footer,
+.high-contrast nav {
+    background-color: #00758D; /* Teal backgrounds for larger site sections */
+}
+
+.high-contrast h1, 
+.high-contrast h2, 
+.high-contrast h3,
+.high-contrast h4, 
+.high-contrast h5, 
+.high-contrast h6 {
+    color: #7866A1; /* Purple headings */
+}
+
+
+/* Large Text Mode */
+.large-text {
+    font-size: 20px; /* Base font size for larger text */
+}
+
+.large-text h1 {
+    font-size: 2.5em; /* Adjust heading sizes based on new base size */
+}
+
+.large-text h2 {
+    font-size: 2em;
+}
+
+.large-text h3 {
+    font-size: 1.75em;
+}
+
+.large-text h4 {
+    font-size: 1.5em;
+}
+
+.large-text h5 {
+    font-size: 1.25em;
+}
+
+.large-text h6 {
+    font-size: 1em;
+}
+
+.large-text button,
+.large-text input,
+.large-text select,
+.large-text textarea {
+    font-size: 20px; /* Keep form elements consistent with text size */
+}
 
 .modal {
     display: none;
@@ -2271,19 +2484,6 @@ to { opacity: 1; }
   margin-left: 130px;
 }
 
-donation-pyramid::before {
-  content: "";
-  display: block;
-  position: absolute;
-  top: 270px;
-  left: 60px;
-  right: 380px;
-  bottom: 37.7%;
-  background-color: #D4F0FF89;
-  z-index: -1;
-  filter: blur(2px); /* add a blur filter with 10px radius */
-}
-
 
 .donation-row {
   display: flex;
@@ -2327,8 +2527,8 @@ donation-pyramid::before {
 
 .donation-key {
   position: absolute;
-  top: 280px;
-  right: 400px;
+  top: 40%;
+  right: 30%;
 }
 
   .donation-key-item {
@@ -2407,7 +2607,6 @@ donation-pyramid::before {
                 0% { width: 0%; }
                 100% { width: ${percent}%; }
             }
-
 .donation-box {
   position: relative;
   width: 90px;
@@ -2435,7 +2634,7 @@ donation-pyramid::before {
   position: absolute;
   width: 100%;
   height: 100%;
-  backface-visibility: hidden;
+
 }
 
 .donation-box-front {
@@ -2445,15 +2644,14 @@ donation-pyramid::before {
   justify-content: center;
   align-items: center;
   font-weight: 500;
-  text-align: center;
+  text-align: center; 
   font-size: 18px;
   padding: 10px;
   color: #000;
 }
 
 .donation-box-back {
-  background-color: #939393;
-  display: flex;
+  background-color: #d4d4d4;
   border-radius: 25px;
   justify-content: center;
   align-items: center;
@@ -2462,12 +2660,11 @@ donation-pyramid::before {
   font-size: 18px;
   padding: 10px;
   color: #fff;
-  transform: rotateX(180deg);
+
+  
 }
 
-.flipped .donation-box-inner {
-  transform: rotateX(180deg);
-}
+
 
 /* Style for the popup settings menu */
 .popup-container {
@@ -2562,6 +2759,26 @@ donation-pyramid::before {
 	background-color: #707070;
 	transition: background-color 0.3s;
 }
+
+.home-button {
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  position: absolute;
+  top: 165px;
+  right: 210px;
+  width: 41px; 
+  height: 41px;
+  background-color: #B2B2B2; /* Added background color to match the original style */
+  color: white;
+  cursor: pointer;
+}
+
+.home-button:hover {
+	background-color: #707070;
+	transition: background-color 0.3s;
+}
  
   
 tfoot tr {
@@ -2580,6 +2797,10 @@ tfoot td {
 
 </style>
 
+<div class="home-button" onclick="redirectToToolkitHome()">
+<img src="https://icon-library.com/images/white-home-icon-png/white-home-icon-png-21.jpg" alt="Home" style="width: 20px; height: 20px; align-items: center;  justify-content: center; align-items: center;">
+</div>
+
 <div class="settings-button" onclick="toggleSettingsMenu()">
   <img src="https://icon-library.com/images/white-gear-icon/white-gear-icon-6.jpg" alt="Settings" style="width: 20px; height: 20px; align-items: center;  justify-content: center; align-items: center;">
 </div>
@@ -2594,10 +2815,7 @@ tfoot td {
       <input type="checkbox" id="setting1">
       <label for="setting1">Read-Only Mode</label>
     </div>
-    <div class="setting">
-      <input type="checkbox" id="setting2">
-      <label for="setting2">Anonymous Mode</label>
-    </div>
+    
     <!-- Add more General settings here if needed -->
     
     <!-- Appearance Section -->
@@ -2674,7 +2892,7 @@ tfoot td {
                 <table class="pending-table">
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th span class="display-name">Name</th>
                             <th>Amount</th>
                             <th>Date</th>
                         </tr>
