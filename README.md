@@ -8,6 +8,8 @@ Color Codes:
   Purple: #7866A1
   Light Blue: #77C4D5
 
+Fonts: Warnock Pro, Noto Sans, and Noto Serif.
+
 Team Input Mtg. 5/17/23
 
 * Pipeline
