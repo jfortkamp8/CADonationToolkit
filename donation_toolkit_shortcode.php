@@ -11,6 +11,7 @@ function donation_toolkit_shortcode($atts) {
 	
 	$imgurl = get_field('client_logo', $campaign_id);
 
+	$campaign_name = get_field('campaign_name', $campaign_id);
 	$slice1 = get_field('slice_1', $campaign_id);
 	$slice2 = get_field('slice_2', $campaign_id);
 	$slice3 = get_field('slice_3', $campaign_id);
@@ -43,6 +44,7 @@ function donation_toolkit_shortcode($atts) {
 	let donors = [];
 	var displayName;
 	let globalRowLabel;
+	var clientLogoURL = '<?php echo $imgurl; ?>';
 		
 	function makeDarker(color, factor) {
   const r = Math.max(0, parseInt(color.substring(1, 3), 16) - factor);
@@ -54,8 +56,8 @@ function donation_toolkit_shortcode($atts) {
 	function numberWithCommas(number) {
   		return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 	}
-		 
-	
+		
+
 	//TABS JS
 	function activateTab(){
 		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
@@ -1272,46 +1274,98 @@ donorElement.innerHTML = `
     `;
 
 	});
-		
-	//SAVE AS PDF
-	function generatePDF() {
-  		const tab = document.querySelector('.tab.active');
-  		const tabName = tab.getAttribute('id');
-  		const date = new Date().toLocaleDateString().replaceAll('/', '-');
-  		const pdfName = `MyPDF_${tabName}_${date}.pdf`; // Update the PDF name as desired
+function generatePDF() {
+    const tab = document.querySelector('.tab.active');
+    const tabTitleElement = tab.querySelector('h2');
+    const tabTitle = tabTitleElement.innerText;
 
-  		html2canvas(tab, { scrollY: -window.scrollY }).then(canvas => {
-    		const imgData = canvas.toDataURL('image/png');
-   		 	const imgWidth = 250; // width of image inside the margins
-    		const pageWidth = 290; // A4 page width in mm
-    		const pageHeight = 320; // A4 page height in mm
-    		const marginLeft = (pageWidth - imgWidth) / 2;
-    		const marginTop = 25;
-    		const imgHeight = canvas.height * imgWidth / canvas.width;
-    		const doc = new jsPDF('l', 'mm');
-    		const position = 0;
+    // Temporarily hide the h2 element
+    tabTitleElement.style.display = 'none';
 
-    		doc.addImage(imgData, 'PNG', marginLeft, marginTop, imgWidth, imgHeight);
-    		const pdfBlob = doc.output('blob');
-    		const objectUrl = URL.createObjectURL(pdfBlob);
+    html2canvas(tab, { scrollY: -window.scrollY }).then(tabCanvas => {
+        // Restore the h2 element after capturing
+        tabTitleElement.style.display = '';
 
-    		// Open the PDF in a new tab
-    		const pdfWindow = window.open();
-   	 		pdfWindow.location.href = objectUrl;
-  		});
-	}
+        const doc = new jsPDF('l', 'mm');
+        const imgWidth = 290;
+        const marginLeft = 5;
+        const marginTop = 5;
+        const imgHeight = 187;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = tabCanvas.width;
+        canvas.height = tabCanvas.height + 300;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(tabCanvas, 0, 195);
+
+        ctx.font = 'bold 50px Noto Sans';
+        ctx.textAlign = 'center';
+        ctx.fillText(tabTitle, canvas.width / 2, 145);
+
+        ctx.font = '30px Noto Sans';
+		ctx.style = 'italic';
+        ctx.fillText(new Date().toDateString(), canvas.width / 2, 175);
+
+        const cramerLogo = new Image();
+        cramerLogo.src = 'https://www.cramerphilanthropy.com/wp-content/uploads/2022/05/CRAMERLOGO-05-1-1024x391.png';
+        cramerLogo.onload = function() {
+            const logoWidth = cramerLogo.width * 0.33;
+            const logoHeight = cramerLogo.height * 0.33;
+            ctx.drawImage(cramerLogo, 20, 10, logoWidth, logoHeight);
+
+            const clientLogo = new Image();
+            clientLogo.src = clientLogoURL;
+            clientLogo.onload = function() {
+                const logoWidth = clientLogo.width * 0.12;
+                const logoHeight = clientLogo.height * 0.12;
+                ctx.drawImage(clientLogo, 1775, -15, logoWidth, logoHeight);
+
+                ctx.fillStyle = 'red';
+                ctx.font = '70px Noto Serif';
+                ctx.globalAlpha = 0.5; // Making the watermark a bit transparent
+                ctx.textAlign = 'left'; // Align the confidential text to the left side
+                ctx.fillText('CONFIDENTIAL', 10, canvas.height - 5); // Adjust position accordingly
+
+                const imgData = canvas.toDataURL('image/png');
+                doc.addImage(imgData, 'PNG', marginLeft, marginTop, imgWidth, imgHeight);
+                const pdfBlob = doc.output('blob');
+
+                // Construct the filename
+                const campaignName = "<?php echo $campaign_name; ?>"; // Replace this with the appropriate variable or function to get the campaign name
+                const filename = `${campaignName}_${tabTitle}_${new Date().toISOString().slice(0, 10)}.pdf`;
+
+                // Create a temporary anchor to initiate a download
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(pdfBlob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+        };
+    });
+}
+
 
     //ADD NEW DONATION BOX
 	function addDonationBox(row, rowIndex, donationName, donationAmount, donationColor) {
   		console.log(row);
   		const rowLabel = row.querySelector('.donation-row-label');
-  		const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+  		let numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
 
-  		rowLabel.innerText = (numBoxes + 1) + ' x ' + rowLabel.innerText.split(' ')[2];
-  		const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
-  		const box = document.createElement('div');
-  		box.className = 'donation-box';
-  		box.setAttribute('data-amount', amount);
+  		numBoxes += 1;  // Increment the number of boxes
+if (numBoxes == 0) {
+    rowLabel.style.display = " none";  // Hide the label
+} else {
+    rowLabel.style.display = "";  // Ensure the label is visible
+    rowLabel.innerText = numBoxes + ' x ' + rowLabel.innerText.split(' ')[2];
+}
+
+const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+const box = document.createElement('div');
+box.className = 'donation-box';
+box.setAttribute('data-amount', amount);
+
 
   		const boxInner = document.createElement('div');
  		boxInner.className = 'donation-box-inner';
@@ -1319,6 +1373,7 @@ donorElement.innerHTML = `
  		const boxFront = document.createElement('div');
  		boxFront.className = 'donation-box-front';
  		boxFront.setAttribute('data-row', rowIndex);
+		console.log(donationColor);
   		boxFront.style.backgroundColor = donationColor;
   		boxFront.style.color = "#fff";
   		boxFront.style.fontWeight = "500";
@@ -1328,18 +1383,81 @@ donorElement.innerHTML = `
   		boxFront.style.alignItems = "center";
   		boxFront.innerHTML = donationName;
 
-  		const boxBack = document.createElement('div');
+		  		const boxBack = document.createElement('div');
   		boxBack.className = 'donation-box-back';
+boxBack.innerHTML = '$' + numberWithCommas(donationAmount);
+const darkerDonationColor = makeDarker(donationColor, 30); // The factor 30 can be adjusted
+boxBack.style.backgroundColor = darkerDonationColor;
+
+boxBack.style.color = "#fff";
+boxBack.style.fontWeight = "400";
+boxBack.style.textAlign = "center";
+boxBack.style.display = "none";  // Hide the back initially
+
+const donationBox = box.closest('.donation-box');
+if (donationBox) {
+  let flipped = false;  // To keep track of the flip state
+  
+  donationBox.addEventListener('click', function() {
+    console.log("Flip");
+
+    if (flipped) {
+      // Show the front, hide the back
+      boxFront.style.display = "flex";
+      boxBack.style.display = "none";
+    } else {
+      // Hide the front, show the back
+      boxFront.style.display = "none";
+      boxBack.style.display = "flex";
+    }
+
+    flipped = !flipped;  // Toggle the state
+  });
+}
+
+
+  const words = displayName.split(" ");
+  if (words.length === 2) {
+    displayName = words.join("<br>");
+  }
+
+  const boxWidth = 80;
+  const boxHeight = 38;
+
+  const span = document.createElement("span");
+  span.innerHTML = displayName;
+  document.body.appendChild(span);
+
+  let fontSize = 18;
+
+  while (span.offsetHeight > boxHeight) {
+    fontSize--;
+    span.style.fontSize = fontSize + "px";
+  }
+
+  while (span.offsetWidth > boxWidth) {
+    fontSize--;
+    span.style.fontSize = fontSize + "px";
+  }
+
+  boxFront.style.fontSize = fontSize + "px";
+  boxFront.style.padding = "10px";
+  boxFront.innerHTML = displayName;
+
+  document.body.removeChild(span);
+	
 
   		boxInner.appendChild(boxFront);
   		boxInner.appendChild(boxBack);
   		box.appendChild(boxInner);
   		row.appendChild(box);
 	
+		
 		const remainingAmount = removeDonationBoxes(amount);
 		if (remainingAmount > 0) {
   			return;
 		}
+		
 
   		// Update the total donations amount
   		const totalDonationsLabel = document.querySelector('.donation-row-label b');
@@ -1356,26 +1474,46 @@ donorElement.innerHTML = `
     	document.getElementById('numBoxesInput').value = numBoxes;
     	document.getElementById('customModal').style.display = "block";
 	}
+		
+function updateRowMargin(){
+	const donationRows = document.querySelectorAll('.donation-row');
+
+donationRows.forEach((row, index) => {
+    if (index > 0) {
+        const currentAmount = row.querySelector('.donation-box').dataset.amount;
+        const previousAmount = donationRows[index - 1].querySelector('.donation-box').dataset.amount;
+        
+        if (currentAmount && previousAmount && currentAmount === previousAmount) {
+            row.style.marginTop = '-5px'; // Adjust as needed
+        }
+    }
+});
+
+}
 
 		//SAVE
 function saveChanges() {
     const newNumBoxes = parseInt(document.getElementById('numBoxesInput').value);
+
     if (isNaN(newNumBoxes) || newNumBoxes < 0) {
         document.getElementById('customModal').style.display = "none";
         const mod = document.getElementById('errorModule2');
         mod.style.display = "block";
         return;
     }
-
-    const row = globalRowLabel.parentElement;
+   const row = globalRowLabel.parentElement;
     const amount = parseInt(globalRowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
+	
 
     // Fetch all boxes of the same data-amount across all rows
     const allBoxesOfSameAmount = document.querySelectorAll(`.donation-box[data-amount="${amount}"]`);
     const currentNumBoxes = allBoxesOfSameAmount.length;
-    const filledBoxes = row.querySelectorAll('.donation-box-front:not(:empty)');
 
-    if (filledBoxes.length > 0 && newNumBoxes < currentNumBoxes) {
+    // Get all filled boxes with the same data-amount across all rows
+    const filledBoxes = document.querySelectorAll(`.donation-box[data-amount="${amount}"] .donation-box-front:not(:empty)`);
+
+    // Check if we're trying to reduce the number of boxes to a value less than the number of filled boxes
+    if (filledBoxes.length > newNumBoxes) {
         document.getElementById('customModal').style.display = "none";
         const modalerror = document.getElementById('errorModule1');
         modalerror.style.display = "block";
@@ -1390,18 +1528,19 @@ function saveChanges() {
     }
 
     globalRowLabel.innerText = newNumBoxes + ' x ' + globalRowLabel.innerText.split(' ')[2];
-    const existingBox = row.querySelector('.donation-box-front');
-    const rowId = existingBox ? existingBox.getAttribute('data-row') : '';
 
     let boxesToAdd = newNumBoxes - currentNumBoxes;
-    let currentRow = row;
+     const existingBox = row.querySelector('.donation-box-front');
+    const rowId = existingBox ? existingBox.getAttribute('data-row') : '';
+	
+    // Get the parent row of the last box with the same data-amount
+    let currentRow = allBoxesOfSameAmount[allBoxesOfSameAmount.length - 1].parentNode;
 
     while (boxesToAdd > 0) {
-        const boxesInThisRow = currentRow.querySelectorAll('.donation-box').length;
+        const boxesInThisRow = currentRow.querySelectorAll(`.donation-box[data-amount="${amount}"]`).length;
         const boxesSpaceInThisRow = 8 - boxesInThisRow;
         const boxesToAppend = Math.min(boxesSpaceInThisRow, boxesToAdd);
-
-        for (let i = 0; i < boxesToAppend; i++) {
+  for (let i = 0; i < boxesToAppend; i++) {
             const box = document.createElement('div');
             box.className = 'donation-box';
             box.setAttribute('data-amount', amount);
@@ -1420,13 +1559,14 @@ function saveChanges() {
             boxInner.appendChild(boxBack);
             box.appendChild(boxInner);
             currentRow.appendChild(box);
+        
         }
 
         boxesToAdd -= boxesToAppend;
 
         if (boxesToAdd > 0) {
             const newRow = document.createElement('div');
-            newRow.className = row.className;
+            newRow.className = currentRow.className;
             currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
             currentRow = newRow;
         }
@@ -1446,7 +1586,6 @@ function saveChanges() {
 }
 
 
-
 	//UPDATE DONATION RUNNING TOTAL
 	function updateTotalDonations() {
     	const totalDonationsLabel = document.querySelector('.donation-row-label b');
@@ -1455,7 +1594,7 @@ function saveChanges() {
 	}
 
 	function addNewRow(amount, numBoxes, position, referenceElement) {
-    	if (numBoxes > 8) {
+    	if (numBoxes > 32) {
 			document.getElementById('addNewModuleModal').style.display = "none";
 			const modal = document.getElementById('errorModule');
     		modal.style.display = "block";
@@ -1468,23 +1607,17 @@ function saveChanges() {
         	return;
     	}
 
-		const row = globalRowLabel.parentElement;
-    	const newRow = document.createElement('div');
-    	newRow.className = 'donation-row';
-	
-	
-	const newRowLabel = document.createElement('div');
-	newRowLabel.className = 'donation-row-label';
-	newRowLabel.innerText = numBoxes + ' x $' + amount;
+		   const baseRow = globalRowLabel.parentElement;
+    let currentRow;
+    let boxesToAdd = numBoxes;
+    let firstRow = null; // Keep track of the first row created in the loop
 
-	// Assign an anonymous function to onclick
-	newRowLabel.onclick = function() {
-  		editNumBoxes(this); // Pass the 'this' context to editNumBoxes
-	};
+    while (boxesToAdd > 0) {
+        const newRow = document.createElement('div');
+        newRow.className = 'donation-row';
 
-	newRow.appendChild(newRowLabel);
-
-    for (let i = 0; i < numBoxes; i++) {
+        const boxesInThisRow = Math.min(8, boxesToAdd);
+        for (let i = 0; i < boxesInThisRow; i++) {
 		// Convert amount to an integer if it's in a string format like "$150,000"
     amount = parseInt(amount.toString().replace(/[$,]/g, ''));
         const box = document.createElement('div');
@@ -1540,15 +1673,37 @@ console.log("Closest amount:", closestAmount);
         newRow.appendChild(box);
     }
 
-    if (position === 'above') {
-        referenceElement.parentNode.insertBefore(newRow, referenceElement);
-    } else {
-        if (referenceElement.nextSibling) {
-            referenceElement.parentNode.insertBefore(newRow, referenceElement.nextSibling);
+    // Decide the position of this new row 
+        if (position === 'above') {
+            referenceElement.parentNode.insertBefore(newRow, referenceElement);
+            referenceElement = newRow.nextSibling;
         } else {
-            referenceElement.parentNode.appendChild(newRow);
+            if (referenceElement.nextSibling) {
+                referenceElement.parentNode.insertBefore(newRow, referenceElement.nextSibling);
+                referenceElement = newRow;
+            } else {
+                referenceElement.parentNode.appendChild(newRow);
+                referenceElement = newRow;
+            }
         }
+
+        if (!firstRow) {
+            firstRow = newRow;
+        }
+
+        boxesToAdd -= boxesInThisRow;
     }
+
+    if (firstRow) {  // If there's a first row, add the label to it
+        const newRowLabel = document.createElement('div');
+        newRowLabel.className = 'donation-row-label';
+        newRowLabel.innerText = numBoxes + ' x $' + numberWithCommas(amount);
+        newRowLabel.onclick = function() {
+            editNumBoxes(this);
+        };
+        firstRow.insertBefore(newRowLabel, firstRow.firstChild);
+    }
+
 		// Update the total donations amount
   		const totalDonationsLabel = document.querySelector('.donation-row-label b');
   		const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
@@ -1864,8 +2019,17 @@ function calculateTotalDonations() {
 
       		// Update row label
       		const rowLabel = row.querySelector('.donation-row-label');
-      		const numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
-      		rowLabel.innerText = (numBoxes - 1) + ' x ' + rowLabel.innerText.split(' ')[2];
+      	
+			let numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+
+  		numBoxes -= 1;  
+if (numBoxes == 0) {
+    rowLabel.style.display = " none";  // Hide the label
+} else {
+    rowLabel.style.display = "";  // Ensure the label is visible
+    rowLabel.innerText = numBoxes + ' x ' + rowLabel.innerText.split(' ')[2];
+}
+
     		}
   		}
 
@@ -2232,7 +2396,7 @@ $output = '
 .donation-meter .meter {
   background-color: white;
   height: 20px;
-  border-radius: 10px;
+  border-radius: 5px;
   margin-top: 8px;
   display: flex;
   justify-content: space-between;
@@ -2240,7 +2404,7 @@ $output = '
 
 .donation-meter .fill {
    transition: width 0.5s ease-out;
-   border-radius: 13px;
+   border-radius: 5px;
    width: ${percent}%;
    position: inherit;
    background:#FFC897;
@@ -2481,13 +2645,15 @@ to { opacity: 1; }
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  margin-left: 130px;
+  width: 50%;
+  height: 50%;
+  margin-left: 30%;
 }
 
 
 .donation-row {
   display: flex;
-  justify-content: center;
+  justify-content: center; 
 }
 
 .donation-row-label {
@@ -2527,8 +2693,8 @@ to { opacity: 1; }
 
 .donation-key {
   position: absolute;
-  top: 40%;
-  right: 30%;
+  top: 35%;
+  right: 35%;
 }
 
   .donation-key-item {
@@ -2539,16 +2705,16 @@ to { opacity: 1; }
 
   .donation-key-item .status-circle {
     display: inline-block;
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
     margin-right: 12px;
-    border-radius: 50%;
+    border-radius: 10px;
 	box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.1);
   }
 
   .donation-key-item .status-label {
     font-weight: normal;
-	font-size: 15px;
+	font-size: 75%;
   }
 
   .donation-key-item .pledged {
@@ -2995,7 +3161,7 @@ tfoot td {
 
 <div id="errorModule" class="modal">
   <div class="modal-content">
-  <label>Error: Maximum number of boxes in a new row is 8.</label>
+  <label>Error: Maximum number of boxes in a new row is 32.</label>
     <button onclick="closeErrorOpenModal()">Ok</button>
 </div>  
 </div>
