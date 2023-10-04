@@ -42,8 +42,8 @@ function donation_toolkit_shortcode($atts) {
 		
 	// Global
 	let donors = [];
-	var displayName;
 	let globalRowLabel;
+	let globalDisplayName = '';
 	var clientLogoURL = '<?php echo $imgurl; ?>';
 		
 	function makeDarker(color, factor) {
@@ -130,6 +130,7 @@ function donation_toolkit_shortcode($atts) {
   		movesManagementTable.style.marginBottom = `${Math.max(remainingSpaceMM, 30)}px`;
   		pledgePendingTables.style.marginBottom = `${Math.max(remainingSpacePP, 20)}px`;
   		const newRow = document.createElement("tr");
+		
   		const cells = Array.from({ length: 10 }, () => document.createElement("td"));
   		// Add dropdown for pledge or pending column
   		const pledgePendingSelect = document.createElement("select");
@@ -186,9 +187,10 @@ function donation_toolkit_shortcode($atts) {
     		return input;
  		});
 		
-const fullNameCheckbox = addCircleCheckbox();
-		const orgNameCheckbox = addCircleCheckbox();
+		const fullNameCheckbox = addCircleCheckbox();
+		const orgNameCheckbox = addCircleCheckbox(); 
 
+     
 		const fullNameContainer = document.createElement("div");
 		fullNameContainer.style.display = "flex";
 		fullNameContainer.style.alignItems = "center";
@@ -208,22 +210,87 @@ const fullNameCheckbox = addCircleCheckbox();
 
 		orgNameContainer.appendChild(orgNameCheckbox);
 		orgNameContainer.appendChild(inputs[1]);
+	 
 		
+		let displayName = '';
 		
-		fullNameCheckbox.addEventListener("change", function () {
-  			if (fullNameCheckbox.checked) {
-    			orgNameCheckbox.checked = false;
-    			displayName = inputs[0].value;
-  			}
-		});
+// Function to show a custom alert
+function showAlertMM(message) {
+  const alertModule = document.getElementById("alertModuleMM");
+  const alertMessage = document.getElementById("alertMessageMM");
+  alertMessage.innerText = message;
+  alertModule.style.display = "block";
+}
 
-		orgNameCheckbox.addEventListener("change", function () {
-  			if (orgNameCheckbox.checked) {
-    			fullNameCheckbox.checked = false;
-    			displayName = inputs[1].value;
-  			}
-		});
-				
+// Function to validate the form
+function validateForm() {
+	if (inputs[0].value.trim() === "" && inputs[1].value.trim() === "" && inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name, Organization Name, and Amount fields with a Checkbox selection are required.");
+    return false;
+	} else if (inputs[0].value.trim() === "" && inputs[1].value.trim() === "" && inputs[2].value.trim() === "") {
+    showAlertMM("Full Name, Organization Name, and Amount fields are required.");
+    return false;
+	} else if (inputs[0].value.trim() === "" && inputs[1].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name and Organization Name fields with a Checkbox selection are required.");
+    return false;
+  } else if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name and Amount fields with a Checkbox selection are required.");
+    return false;
+  } else if (inputs[1].value.trim() === "" && inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Organization Name and Amount fields with a Checkbox selection are required.");
+    return false;
+  } else if (inputs[0].value.trim() === "" && inputs[1].value.trim() === "") {
+    showAlertMM("Full Name and Organization Name fields are required.");
+    return false;
+  } else if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "") {
+    showAlertMM("Full Name and Amount fields are required.");
+    return false;
+  } else if (inputs[1].value.trim() === "" && inputs[2].value.trim() === "") {
+    showAlertMM("Organization Name and Amount fields are required.");
+    return false;
+	  } else if (inputs[0].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name field and a Checkbox selection is required.");
+    return false;
+  } else if (inputs[1].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Organization Name field and a Checkbox selection is required.");
+    return false;
+  } else if (inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Amount field and a Checkbox selection is required.");
+    return false;
+  } else if (inputs[0].value.trim() === "") {
+    showAlertMM("Full Name field is required.");
+    return false;
+  } else if (inputs[1].value.trim() === "") {
+    showAlertMM("Organization Name field is required.");
+    return false;
+  } else if (inputs[2].value.trim() === "") {
+    showAlertMM("Amount field is required.");
+    return false;
+  } else if (!fullNameCheckbox.checked && !orgNameCheckbox.checked) {
+    showAlertMM("Please select at least one checkbox.");
+    return false;
+  }
+  return true;
+}
+
+
+
+fullNameCheckbox.addEventListener("change", function () {
+  if (fullNameCheckbox.checked) {
+    orgNameCheckbox.checked = false;
+    displayName = inputs[0].value;
+  }
+});
+
+orgNameCheckbox.addEventListener("change", function () {
+  if (orgNameCheckbox.checked) {
+    fullNameCheckbox.checked = false;
+    displayName = inputs[1].value;
+  }
+});
+
+
+
   		// Add column to attach files to donation
 		const attachFiles = document.createElement("td");
 		attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
@@ -276,14 +343,265 @@ const fullNameCheckbox = addCircleCheckbox();
 
   		const tableBody = document.querySelector("#moves-management table tbody");
   		tableBody.insertBefore(newRow, tableBody.firstChild);
-	
+
+		// Create a delete button and add it to each row
+const deleteButton = document.createElement("div");
+    deleteButton.className = "delete-button";
+
+    const deleteImage = document.createElement("img");
+    deleteImage.src = "https://freepngtransparent.com/wp-content/uploads/2023/03/X-Png-87.png";
+    deleteButton.appendChild(deleteImage);
+
+// Attach an event listener to the delete button
+deleteButton.addEventListener("click", function handleDeleteButtonClick() {
+    // Check the response from the confirm dialog
+    if (confirm("Are you sure you would like to delete this row?")) {
+        newRow.remove();
+        this.remove(); // Remove the icon when the row is deleted
+		
+		// Populate the totals for Pending
+const pendingCells = Array.from(document.querySelectorAll(".pending-table tbody td:nth-child(2)"));
+const pendingDonations = pendingCells.reduce((acc, curr) => {
+    const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+return isNaN(amount) ? acc : acc + amount;
+}, 0);
+		const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
+		const totalDonations = pledgesCells.reduce((acc, curr) => {
+    const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+   return isNaN(amount) ? acc : acc + amount;
+}, 0);
+		
+		//repop dashboard
+		const goal = <?php echo $goal; ?>;
+		const percent = totalDonations / goal * 100;
+		const meterFill = document.getElementById("donation-meter-fill");
+		meterFill.style.width = `${percent}%`;
+		meterFill.innerHTML = `
+  			<div class="fill" style="width: ${percent}%">
+    		${percent > 100 ? `<p>${percent.toFixed()}%</p>` : ''}
+  			</div>
+		`;
+		const meterText = document.getElementById("donation-meter-text");
+	    const meterTexthead = document.getElementById("donation-meter-head");
+		meterTexthead.innerHTML = `$${totalDonations.toLocaleString()} Raised To-Date (${percent.toFixed()}%)`;
+		meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
+			
+		// Initialize count variables for each donation type
+		let individualCount = 0;
+		let foundationCount = 0;
+		let corporationCount = 0;
+		let publicCount = 0;
+		let boardCount = 0;
+		let otherCount = 0;
+
+		// Select all the rows in the moves management table
+		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
+		
+			
+		// Iterate over each row and update the count variables
+		rowsType.forEach(row => {
+  			const donationTypeSelect = row.querySelector('.donation-type-select');
+ 			const donationTypeValue = donationTypeSelect.value;
+
+  			// Update the count variables based on the donation type value
+  			if (donationTypeValue === "individual") {
+    			individualCount++;
+  			} else if (donationTypeValue === "foundation") {
+    			foundationCount++;
+  			} else if (donationTypeValue === "corporation") {
+    			corporationCount++;
+  			} else if (donationTypeValue === "public") {
+    			publicCount++;
+  			} else if (donationTypeValue === "board") {
+    			boardCount++;
+  			} else if (donationTypeValue === "other") {
+    			otherCount++;
+  			}
+		});
+			
+		const slice1Value = <?php echo $field1name; ?>;
+	const slice2Value = <?php echo $field2name; ?>;
+	const slice3Value = <?php echo $field3name; ?>;
+	var totalBudget = <?php echo $goal; ?>;
+
+	var slice1Amount = <?php echo $field1amount; ?>;
+	var slice2Amount = <?php echo $field2amount; ?>;
+	var slice3Amount = <?php echo $field3amount; ?>;
+
+	var slice1Proportion = (slice1Amount / totalBudget);
+	var slice2Proportion = (slice2Amount / totalBudget);
+	var slice3Proportion = (slice3Amount / totalBudget);
+			
+		const highestCount = Math.max(individualCount, foundationCount, corporationCount, publicCount, boardCount, otherCount);
+			
+        const individualBar = ((individualCount * 180)/(highestCount));
+		const foundationBar = ((foundationCount * 180)/(highestCount));
+		const corporationBar = ((corporationCount * 180)/(highestCount));
+		const publicBar = ((publicCount * 180)/(highestCount));
+		const boardBar = ((boardCount * 180)/(highestCount));
+		const otherBar = ((otherCount * 180)/(highestCount));
+		const formattedGoal = '$' + goal.toLocaleString();
+		const formattedPledged = '$' + totalDonations.toLocaleString();
+		const formattedPending = '$' + pendingDonations.toLocaleString();
+		const pendpledge = pendingDonations + totalDonations;
+		const formattedPP = '$' + pendpledge.toLocaleString();
+		let percentFix = Math.round(percent);
+    	const meterFillStyle = "width: " + percent + "%";
+    	const meterFillContent = `<div class="fill" style="width: ${percent}%">${percent > 100 ? `<p>${Math.round(percent)}%</p>` : ''}</div>`;
+		const dashboard = document.getElementById("dashboard-html");
+		dashboard.innerHTML = `
+       	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
+                        <div style="width: 100%; height: 70px; background-color: #F0F0F0; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+                <!-- Campaign goal box -->
+                <h2 style="color: #00758D; font-size: 41px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedPledged} Pledged (${percentFix}% to Goal)</h2>
+            </div>
+            <div class="dashboard-meter" style="width: 100%; height: 90px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+              
+                    ${meterFillContent}
+         
+            </div>
+            <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pledged box -->
+            		<div>
+               	 		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
+            		</div>
+        		</div>
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pending box -->
+            		<div>
+                		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPP} Pledged & Pending</h3>
+            		</div>
+        		</div>
+    		</div>
+<div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">		
+
+<div style="width: 37%; height: 250px; background-color: rgb(255, 255, 255); border: 5px solid #00758D; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 10px;">
+<div style="width: 100%; display: flex; align-items: center; flex-direction: column;">
+    <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
+        ${formattedGoal} Campaign Goal
+    </h3>
+<div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+    <!-- Pie Chart Using SVG -->
+    <svg width="100%" height="100%" viewBox="0 0 42 42">
+        <!-- Endowment slice -->
+        <path id="endowmentSlice1" d="" fill="#00758D"></path>
+        <text id="endowmentTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="endowmentTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+
+        <!-- Capital slice -->
+        <path id="capitalSlice1" d="" fill="#7866A1"></path>
+        <text id="capitalTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="capitalTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+
+        <!-- Operating slice -->
+        <path id="operatingSlice1" d="" fill="#FF8C00"></path>
+        <text id="operatingTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="operatingTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+    </svg>
+</div>
+   </div>
+   </div>
+
+<!-- Bar graph chart -->
+<div style="width: 61%; height: 250px; background-color: rgb(255,255,255); border: 5px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #FF8C00;"></div>
+        <span style="font-size: 10px; margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: ${individualCount}</span>
+    </div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #00758D;"></div>
+        <span style="font-size: 10px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: ${corporationCount}</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #77C4D5;"></div>
+        <span style="font-size: 10px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: ${foundationCount}</span>
+    </div>
+   
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${boardBar}px; max-height: 100%; background-color: #7866A1"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: ${boardCount}</span>
+    </div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #CBCBCB;"></div>
+        <span style="font-size: 10px;margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: ${publicCount}</span>
+    </div>
+	<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${otherBar}px; max-height: 100%; background-color: #000000;"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: ${otherCount}</span>
+    </div>
+</div>
+
+</div>
+<div style="width: 100%; height: 160px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; padding: 0 20px;">
+    <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); text-align: center; padding: 0 20px;">Top 5 Donors</h2>
+    <div id="donorContainer" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 50%;">
+        <!-- Donors will be populated here by the script -->
+    </div>
+</div>
+
+
+
+        </div>
+    `;
+    
+	// Update pie chart slices
+	createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+		// Sort donorArray in descending order based on donation amount
+    donors.sort((a, b) => b.amount - a.amount);
+	console.log(donors);
+    // Get the donorContainer element
+    const donorContainer = document.getElementById('donorContainer');
+
+    // Populate the top 5 donors into the donorContainer
+    for (let i = 0; i < 5 && i < donors.length; i++) {
+        const donor = donors[i];
+        const donorElement = document.createElement('div');
+donorElement.innerHTML = `
+    <div style="text-align: center; margin: 0 35px;">
+        <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
+        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">$${numberWithCommas(Math.round(donor.amount))}</span></div>
+    </div>`;
+        donorContainer.appendChild(donorElement);
+    }
+    }
+    // If the user clicked "No" or "Cancel", nothing will happen.
+});
+		
+newRow.appendChild(deleteButton);
+
+ 
+
+	/*	 need to fix when changing confirm to a prompt
+const deleteConfirmButton = document.getElementById("deleteConfirmButton");
+const deleteCancelButton = document.getElementById("deleteCancelButton");
+
+
+
+deleteCancelButton.addEventListener("click", function handledeleteCancelClick() {
+    const modal = document.getElementById('deleteModule');
+    modal.style.display = "none"; // Hide the modal
+}); 
+
+*/
+		 
+		
   		saveButton.addEventListener("click", function handleSaveButtonClick() {
 			
+			if (validateForm()) { 
+			
+		deleteButton.remove();
+        console.log("deleteButton removed");
+
     		const values = inputs.map(input => input.value);
 
     		cells.slice(2, 8).forEach((cell, index) => {
       			cell.innerHTML = values[index];
    			});
+				
+			
   
     		const editButton = document.createElement("button");
     		editButton.className = "edit-button";
@@ -292,73 +610,108 @@ const fullNameCheckbox = addCircleCheckbox();
     		cells[9].appendChild(editButton);
     		cells[9].style.textAlign = "center";
     		cells[9].style.verticalAlign = "middle";
-
-    		editButton.addEventListener("click", function handleEditButtonClick() {
 		
-//Remove the donation from the donation pyramid
+			
+		
+    		editButton.addEventListener("click", function handleEditButtonClick() { 
+		// Re-add the delete button after updating the row's content
+        newRow.appendChild(deleteButton);
+// Remove the donation from the donation pyramid
 const pyramidRows = document.querySelectorAll('.donation-row');
 pyramidRows.forEach(row => {
     const boxInner = row.querySelector('.donation-box-inner');
     const frontElement = row.querySelector('.donation-box-front');
     const backElement = row.querySelector('.donation-box-back');
-
+ 
     if (boxInner) {
-        const boxDisplayName = boxInner.innerText.trim().replace(/\s+/g, ' ');
-        if (boxDisplayName === displayName) {
+      const boxDisplayName = frontElement.innerText.replace(/ /g, '');
+const parseName = displayName.replace(/<br\s*\/?>/g, '').replace(/\s+/g, '');
+        if (boxDisplayName === parseName) {
             // Clear the inner text of the front and back elements
             if (frontElement) {
                 frontElement.innerText = '';
-				frontElement.style.backgroundColor = "#d4d4d4";
-            frontElement.style.color = '';
-            frontElement.style.fontWeight = '';
-            frontElement.style.textAlign = '';
-          frontElement.style.display = '';
-            frontElement.style.justifyContent = '';
+                frontElement.style.backgroundColor = "#d4d4d4";
+                frontElement.style.color = '';
+                frontElement.style.fontWeight = '';
+                frontElement.style.textAlign = '';
+                frontElement.style.display = '';
+                frontElement.style.justifyContent = '';
             }
             if (backElement) {
                 backElement.innerText = '';
-				backElement.style.backgroundColor = "#939393;";
-            backElement.style.color = '';
-           backElement.style.fontWeight = '';
-            backElement.style.textAlign = '';
-         backElement.style.display = '';
-            backElement.style.justifyContent = '';
+                backElement.style.backgroundColor = "#d4d4d4";
+                backElement.style.color = '';
+                backElement.style.fontWeight = '';
+                backElement.style.textAlign = '';
+                backElement.style.display = '';
+                backElement.style.justifyContent = '';
             }
         }
     }
 });
-
-
-    			// Remove the donation from the pledges table
-    			const pledgesTable = document.querySelector(".pledges-table tbody");
-    			const pledgesRows = pledgesTable.querySelectorAll("tr");
-    			pledgesRows.forEach(row => {
-        			const donationCell = row.querySelector("td:nth-child(1)");
-        			if (donationCell.innerHTML.trim() === displayName) {
-            			row.remove(); // Remove the row from the table
-        			}
-    			});
-
-    			// Remove the donation from the pending table
-    			const pendingTable = document.querySelector(".pending-table tbody");
-    			const pendingRows = pendingTable.querySelectorAll("tr");
-    			pendingRows.forEach(row => {
-        			const donationCell = row.querySelector("td:nth-child(1)");
-        			if (donationCell.innerHTML.trim() === displayName) {
-            			row.remove(); // Remove the row from the table
-        			}
-	    		});
+const parseName = displayName.replace(/<br\s*\/?>/g, '').replace(/\s+/g, '');
+const formatCurrency = (amount) => {
+    // You can format this as per your requirements
+    return "$" + numberWithCommas(amount);
+};
+				 
+const pledgesTotalElement = document.querySelector(".pledges-total");
+const pendingTotalElement = document.querySelector(".pending-total");
+const pipelineTotalElement = document.querySelector(".pipeline-total");
 				
-				// Remove the donation from the pipeline table
-    			const pipelineTable = document.querySelector(".pipeline-table tbody");
-    			const pipelineRows = pipelineTable.querySelectorAll("tr");
-    			pipelineRows.forEach(row => {
-        			const donationCell = row.querySelector("td:nth-child(1)");
-        			if (donationCell.innerHTML.trim() === displayName) {
-            			row.remove(); // Remove the row from the table
-        			}
-	    		});
-			
+    			// Remove the donation from the pledges table
+const pledgesTable = document.querySelector(".pledges-table tbody");
+const pledgesRows = pledgesTable.querySelectorAll("tr");
+pledgesRows.forEach(row => {
+    const donationCell = row.querySelector("td:nth-child(1)");
+    if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
+        const amountCell = row.querySelector("td:nth-child(2)");
+        const amount = parseFloat(amountCell.innerText.replace(/[^\d.-]/g, ''));
+        if (!isNaN(amount)) {
+            const currentTotal = parseFloat(pledgesTotalElement.innerText.replace(/[^\d.-]/g, '')) || 0;
+            pledgesTotalElement.innerText = formatCurrency(currentTotal - amount);
+        }
+        row.remove(); // Remove the row from the table
+		
+		 // Remove the donation from the array
+        removeDonationFromArray(parseName);
+    }
+});			
+
+// Remove the donation from the pending table
+const pendingTable = document.querySelector(".pending-table tbody");
+const pendingRows = pendingTable.querySelectorAll("tr");
+pendingRows.forEach(row => {
+    const donationCell = row.querySelector("td:nth-child(1)");
+    if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
+        const amountCell = row.querySelector("td:nth-child(2)");
+        const amount = parseFloat(amountCell.innerText.replace(/[^\d.-]/g, ''));
+        if (!isNaN(amount)) {
+            const currentTotal = parseFloat(pendingTotalElement.innerText.replace(/[^\d.-]/g, '')) || 0;
+            pendingTotalElement.innerText = formatCurrency(currentTotal - amount);
+        }
+        row.remove(); // Remove the row from the table
+    }
+});
+
+// Remove the donation from the pipeline table
+const pipelineTable = document.querySelector(".pipeline-table tbody");
+const pipelineRows = pipelineTable.querySelectorAll("tr");
+pipelineRows.forEach(row => {
+    const donationCell = row.querySelector("td:nth-child(1)");
+    if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
+        const amountCell = row.querySelector("td:nth-child(2)");
+        const amount = parseFloat(amountCell.innerText.replace(/[^\d.-]/g, ''));
+        if (!isNaN(amount)) {
+            const currentTotal = parseFloat(pipelineTotalElement.innerText.replace(/[^\d.-]/g, '')) || 0;
+            pipelineTotalElement.innerText = formatCurrency(currentTotal - amount);
+        }
+        row.remove(); // Remove the row from the table
+    }
+});
+
+
+
 				pledgePendingSelect.disabled = false;
 				donationTypeSelect.disabled = false;
 
@@ -394,22 +747,23 @@ pyramidRows.forEach(row => {
 
     			orgNameContainer.appendChild(orgNameCheckbox);
     			orgNameContainer.appendChild(inputs[1]);
-			
-    			fullNameCheckbox.addEventListener("change", function () {
-        			if (fullNameCheckbox.checked) {
-            			orgNameCheckbox.checked = false;
-						displayName = inputs[0].value;
-        			}
-    			});
+		
 
-    			orgNameCheckbox.addEventListener("change", function () {
-        			if (orgNameCheckbox.checked) {
-            			fullNameCheckbox.checked = false;
-						displayName = inputs[1].value;
-        			}
-    			});
+fullNameCheckbox.addEventListener("change", function () {
+  if (fullNameCheckbox.checked) {
+    orgNameCheckbox.checked = false; 
+    displayName = inputs[0].value;
+  }
+});
+
+orgNameCheckbox.addEventListener("change", function () {
+  if (orgNameCheckbox.checked) {
+    fullNameCheckbox.checked = false;
+    displayName = inputs[1].value;
+  }
+});
 				
-				// Set the initial state of the checkboxes
+						// Set the initial state of the checkboxes
     			if (displayName === inputs[0].value) {
         			fullNameCheckbox.checked = true;
         			orgNameCheckbox.checked = false;
@@ -417,6 +771,8 @@ pyramidRows.forEach(row => {
         			fullNameCheckbox.checked = false;
         			orgNameCheckbox.checked = true;
     			}
+				 
+				
 				
       			const saveButton = document.createElement("button");
       			saveButton.className = "save-button";
@@ -425,16 +781,13 @@ pyramidRows.forEach(row => {
       			cells[9].appendChild(saveButton);
       			cells[9].style.textAlign = "center";
       			cells[9].style.verticalAlign = "middle";
-				
+
       			saveButton.addEventListener("click", handleSaveButtonClick);
+	
+    		});	
+		
+	
 				
-				if (fullNameCheckbox.checked) {
-            		displayName = inputs[0].value;
-        		} else if (orgNameCheckbox.checked) {
-            		displayName = inputs[1].value;
-        		}
-    		});
-			
     		pledgePendingSelect.disabled = true;
 			donationTypeSelect.disabled = true;
 			
@@ -481,11 +834,18 @@ pyramidRows.forEach(row => {
 		targetRow.appendChild(targetCells[1]);
 		targetRow.appendChild(targetCells[2]);
 		
-const donationName = values[1];
+							
+				globalDisplayName = displayName;
+
+				
+const donationName = globalDisplayName;
 const donationAmount = parseInt(values[2].replace(/[^0-9.-]+/g, ""));
 
 // Create a new donor object and add to donors array
-
+// Function to remove a donation from the array
+function removeDonationFromArray(name) {
+  donors = donors.filter(donor => donor.name !== name);
+}
 			
 let donationColor = '';
 switch (pledgePendingValue) {
@@ -686,17 +1046,15 @@ if (donationBox) {
   			const tableBody = document.querySelector(".pledges-table tbody");
   			tableBody.insertBefore(targetRow, tableBody.firstChild);
 		}
-		// ... previous code ...
 
 const pledgesTotalElement = document.querySelector(".pledges-total");
 const pendingTotalElement = document.querySelector(".pending-total");
 const pipelineTotalElement = document.querySelector(".pipeline-total");
 
-const formatCurrency = (amount) => {
+		const formatCurrency = (amount) => {
     // You can format this as per your requirements
     return "$" + numberWithCommas(amount);
 };
-
 // Populate the totals for Pledges
 const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
 const totalDonations = pledgesCells.reduce((acc, curr) => {
@@ -942,7 +1300,7 @@ const formatCurrency = (amount) => {
     // You can format this as per your requirements
     return "$" + numberWithCommas(amount);
 };
-
+			
 // Populate the totals for Pledges
 const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
 const totalDonations = pledgesCells.reduce((acc, curr) => {
@@ -1162,7 +1520,7 @@ donorElement.innerHTML = `
     </div>`;
         donorContainer.appendChild(donorElement);
     }
-		
+		}
 		}, 0);
 		
 	}
@@ -1349,7 +1707,7 @@ function generatePDF() {
 
     //ADD NEW DONATION BOX
 	function addDonationBox(row, rowIndex, donationName, donationAmount, donationColor) {
-  		console.log(row);
+  		console.log("DONATION NAME:", donationName);
   		const rowLabel = row.querySelector('.donation-row-label');
   		let numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
 
@@ -1416,16 +1774,16 @@ if (donationBox) {
 }
 
 
-  const words = displayName.split(" ");
+  const words = donationName.split(" ");
   if (words.length === 2) {
-    displayName = words.join("<br>");
+    donationName = words.join("<br>");
   }
 
   const boxWidth = 80;
   const boxHeight = 38;
 
   const span = document.createElement("span");
-  span.innerHTML = displayName;
+  span.innerHTML = donationName;
   document.body.appendChild(span);
 
   let fontSize = 18;
@@ -1442,7 +1800,7 @@ if (donationBox) {
 
   boxFront.style.fontSize = fontSize + "px";
   boxFront.style.padding = "10px";
-  boxFront.innerHTML = displayName;
+  boxFront.innerHTML = donationName;
 
   document.body.removeChild(span);
 	
@@ -2149,6 +2507,11 @@ if (numBoxes == 0) {
 	function redirectToToolkitHome() {
     window.location.href = "https://www.cramerphilanthropy.com/campaign-toolkit-home/";
 }
+		// Function to close the custom alert
+function closeAlert4() {
+  const alertModule = document.getElementById("alertModuleMM");
+  alertModule.style.display = "none";
+}
 
 	</script>
 	<?php
@@ -2541,9 +2904,13 @@ to { opacity: 1; }
   margin-bottom: 283px; //this value should be changing
 }
 
+#moves-management table tr{
+  position: relative;
+}
+
 #moves-management table th {
   background-color: #00758D;
-  font-size: 12px;
+  font-size: 12px; 
   color: white;
   padding: 7px;
   text-align: center;
@@ -2576,8 +2943,39 @@ to { opacity: 1; }
   .table-container {
     display: flex;
     justify-content: center;
-    margin-top: 20px;
+   margin-top: 20px;
+	
   }
+
+.delete-button {  
+    position: absolute;   /* Position the button absolutely within the row */
+    left: -10px;            /* Adjust this to position it correctly */
+    top: -5px;             /* Adjust this to position it correctly */
+    background: #CACACA;
+    border-radius: 50%;
+    border: none;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-button:hover {
+    background: #B3B3B3;
+    transition: background-color 0.3s;
+    box-shadow: none;
+}
+
+.delete-button img {
+    width: 50%;
+    height: auto;
+}
+
 
   .table-column {
     margin: 0 20px;
@@ -2960,6 +3358,14 @@ tfoot td {
     padding: 2px 10px; /* Adjusted padding for better appearance within the 20px height */
     line-height: 16px; /*justed line height to fit better within the given height */
 }
+/* Style for the required field asterisks */
+.required-field {
+  font-size: 11px; /* Adjust the font size as needed */
+  vertical-align: super; /* Move the asterisk to a superscript position */
+  margin-left: 1px; 
+  color: rgb(226,118,118); 
+}
+
 
 </style>
 
@@ -3098,26 +3504,33 @@ tfoot td {
         </div>
     </div>
 <div class="tab" id="moves-management">
-      <h2>Moves Management</h2>
-      <table id="donation-table">
-        <thead>
-          <tr>
-		  	<th>Status</th>
-            <th>Type</th>
-            <th>Full Name</th>
-            <th>Organization</th>
-            <th>Amount</th>
-            <th>Next Step</th>
-            <th>Recent Involvement</th>
-            <th>Notes</th>
-			<th>Documents</th>
-			<th></th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-    </div>
+  <h2>Moves Management</h2>
+  <table id="donation-table">
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Type</th>
+        <th>
+          <div>Full Name <span class="required-field">*</span></div>
+        </th>
+        <th>
+          <div>Organization <span class="required-field">*</span></div>
+        </th>
+        <th>
+          <div>Amount <span class="required-field">*</span></div>
+        </th>
+        <th>Next Step</th>
+        <th>Recent Involvement</th>
+        <th>Notes</th>
+        <th>Documents</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+
 <div class="tab" id="dashboard">
 	<h2>Campaign Dashboard</h2>
 	<div class="fill" id="dashboard-html"></div>
@@ -3212,6 +3625,20 @@ tfoot td {
     </div>
 </div>
 
+<div id="alertModuleMM" class="modal">
+  <div class="modal-content">
+    <label id="alertMessageMM"></label>
+    <button onclick="closeAlert4()">Ok</button>
+  </div>
+</div>
+
+<div id="deleteModule" class="modal">
+    <div class="modal-content">
+        <p>Are you sure you would like to delete this row?</p>
+        <button id="deleteConfirmButton">Yes</button>
+        <button id="deleteCancelButton">Cancel</button>
+  </div>
+</div>
 
 
 </div>
