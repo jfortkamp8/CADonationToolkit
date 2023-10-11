@@ -12,21 +12,18 @@ function donation_toolkit_shortcode($atts) {
 	$imgurl = get_field('client_logo', $campaign_id);
 
 	$campaign_name = get_field('campaign_name', $campaign_id);
-	$slice1 = get_field('slice_1', $campaign_id);
-	$slice2 = get_field('slice_2', $campaign_id);
-	$slice3 = get_field('slice_3', $campaign_id);
 	
-	// Split the input string by ': $' to get two parts
-	$part1 = explode(': $', $slice1);
-	$part2 = explode(': $', $slice2);
-	$part3 = explode(': $', $slice3);
+	$slice1 = get_field('slice_1_name', $campaign_id);
+	$slice2 = get_field('slice_2_name', $campaign_id);
+	$slice3 = get_field('slice_3_name', $campaign_id);
 	
-    $field1name = "'" . trim($part1[0]) . "'";
-    $field1amount = str_replace(',', '', trim($part1[1])); 
-	$field2name = "'" . trim($part2[0]) . "'";
-    $field2amount = str_replace(',', '', trim($part2[1])); 
-	$field3name = "'" . trim($part3[0]) .     "'";
-    $field3amount = str_replace(',', '', trim($part3[1])); 
+    $field1name = "'" . $slice1 . "'";
+	$field2name = "'" . $slice2 . "'";
+	$field3name = "'" . $slice3 . "'";
+
+	$field1amount = preg_replace("/[^0-9]/", "", get_field('slice_1_amount', $campaign_id));
+	$field2amount = preg_replace("/[^0-9]/", "", get_field('slice_2_amount', $campaign_id));
+	$field3amount = preg_replace("/[^0-9]/", "", get_field('slice_3_amount', $campaign_id));
 
     if (filter_var($imgurl, FILTER_VALIDATE_URL) === FALSE)
     {
@@ -102,6 +99,40 @@ function donation_toolkit_shortcode($atts) {
   		return checkbox;
 	}
 		
+function resetRows() {
+    let donationRows = document.querySelectorAll('.donation-row');
+    
+    donationRows.forEach((row) => {
+        // If the row has no child elements
+        if (!row.hasChildNodes()) {
+            row.style.marginTop = '0px';
+        } else {
+            row.style.marginTop = '7px';
+        }
+    });
+}
+
+		
+	function rowSpace(){
+let donationRows = document.querySelectorAll('.donation-row');
+    donationRows.forEach((row, index) => {
+        if (index < donationRows.length - 1) {
+            let currentBox = row.querySelector('.donation-box');
+            let nextBox = donationRows[index + 1].querySelector('.donation-box');
+
+            // Check if both boxes exist
+            if (currentBox && nextBox) {
+                let currentAmount = currentBox.getAttribute('data-amount');
+                let nextAmount = nextBox.getAttribute('data-amount');
+
+                if (currentAmount && nextAmount && currentAmount === nextAmount) {
+                    donationRows[index + 1].style.marginTop = '-5px';
+                }
+            }
+        }
+    });
+	}
+	
 	//MOVES MANAGEMENT AND PP JS
 	function addRow() {
 		
@@ -355,7 +386,7 @@ const deleteButton = document.createElement("div");
 // Attach an event listener to the delete button
 deleteButton.addEventListener("click", function handleDeleteButtonClick() {
     // Check the response from the confirm dialog
-    if (confirm("Are you sure you would like to delete this row?")) {
+    if (confirm("Are you sure you would like to delete this donor?")) {
         newRow.remove();
         this.remove(); // Remove the icon when the row is deleted
 		
@@ -481,23 +512,25 @@ return isNaN(amount) ? acc : acc + amount;
     <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
         ${formattedGoal} Campaign Goal
     </h3>
-<div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+<div id="pieChartPlaceholder" style="width: 80%; height: 80%;">
     <!-- Pie Chart Using SVG -->
-    <svg width="100%" height="100%" viewBox="0 0 42 42">
-        <!-- Endowment slice -->
+    <svg width="150%" height="100%" viewBox="-30 -30 72 72">
         <path id="endowmentSlice1" d="" fill="#00758D"></path>
-        <text id="endowmentTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="endowmentTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
+        <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
 
         <!-- Capital slice -->
         <path id="capitalSlice1" d="" fill="#7866A1"></path>
-        <text id="capitalTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="capitalTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="capitalTextName1" font-size="2" fill="#635387"></text>
+        <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
 
         <!-- Operating slice -->
         <path id="operatingSlice1" d="" fill="#FF8C00"></path>
-        <text id="operatingTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="operatingTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
+        <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
     </svg>
 </div>
    </div>
@@ -546,9 +579,9 @@ return isNaN(amount) ? acc : acc + amount;
     `;
     
 	// Update pie chart slices
-	createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
-	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
-	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+			createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
 	console.log(donors);
@@ -1190,23 +1223,25 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
     <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
         ${formattedGoal} Campaign Goal
     </h3>
-<div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+<div id="pieChartPlaceholder" style="width: 80%; height: 80%;">
     <!-- Pie Chart Using SVG -->
-    <svg width="100%" height="100%" viewBox="0 0 42 42">
-        <!-- Endowment slice -->
+    <svg width="150%" height="100%" viewBox="-30 -30 72 72">
         <path id="endowmentSlice1" d="" fill="#00758D"></path>
-        <text id="endowmentTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="endowmentTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
+        <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
 
         <!-- Capital slice -->
         <path id="capitalSlice1" d="" fill="#7866A1"></path>
-        <text id="capitalTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="capitalTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="capitalTextName1" font-size="2" fill="#635387"></text>
+        <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
 
         <!-- Operating slice -->
         <path id="operatingSlice1" d="" fill="#FF8C00"></path>
-        <text id="operatingTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="operatingTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
+        <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
     </svg>
 </div>
    </div>
@@ -1253,9 +1288,9 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 
         </div>
     `;
-	createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
-	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
-	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+			createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
 	console.log(donors);
@@ -1435,23 +1470,25 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
     <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
         ${formattedGoal} Campaign Goal
     </h3>
-<div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+<div id="pieChartPlaceholder" style="width: 80%; height: 80%;">
     <!-- Pie Chart Using SVG -->
-    <svg width="100%" height="100%" viewBox="0 0 42 42">
-        <!-- Endowment slice -->
+    <svg width="150%" height="100%" viewBox="-30 -30 72 72">
         <path id="endowmentSlice1" d="" fill="#00758D"></path>
-        <text id="endowmentTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="endowmentTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
+        <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
 
         <!-- Capital slice -->
         <path id="capitalSlice1" d="" fill="#7866A1"></path>
-        <text id="capitalTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="capitalTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="capitalTextName1" font-size="2" fill="#635387"></text>
+        <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
 
         <!-- Operating slice -->
         <path id="operatingSlice1" d="" fill="#FF8C00"></path>
-        <text id="operatingTextName1" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="operatingTextAmount1" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
+        <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
     </svg>
 </div>
    </div>
@@ -1500,9 +1537,9 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
     `;
     
 	// Update pie chart slices
-	createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
-	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
-	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+		createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
 	console.log(donors);
@@ -1570,23 +1607,26 @@ donorElement.innerHTML = `
     <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
         ${formattedGoal} Campaign Goal
     </h3>
-<div id="pieChartPlaceholder" style="width: 65%; height: 65%;">
+<div id="pieChartPlaceholder" style="width: 80%; height: 80%;">
     <!-- Pie Chart Using SVG -->
-    <svg width="100%" height="100%" viewBox="0 0 42 42">
+    <svg width="150%" height="100%" viewBox="-30 -30 72 72">
         <!-- Endowment slice -->
         <path id="endowmentSlice" d="" fill="#00758D"></path>
-        <text id="endowmentTextName" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="endowmentTextAmount" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="endowmentTextName" font-size="2" fill="#005D70"></text>
+        <text id="endowmentTextAmount" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="endowmentTextPercent" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
 
         <!-- Capital slice -->
         <path id="capitalSlice" d="" fill="#7866A1"></path>
-        <text id="capitalTextName" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="capitalTextAmount" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="capitalTextName" font-size="2" fill="#635387"></text>
+        <text id="capitalTextAmount" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="capitalTextPercent" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
 
         <!-- Operating slice -->
         <path id="operatingSlice" d="" fill="#FF8C00"></path>
-        <text id="operatingTextName" font-size="2.3" fill="rgb(255,255,255)"></text>
-        <text id="operatingTextAmount" font-size="2.3" fill="rgb(255,255,255)"></text>
+        <text id="operatingTextName" font-size="2" fill="#D17607"></text>
+        <text id="operatingTextAmount" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="operatingTextPercent" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
     </svg>
 </div>
 
@@ -1938,7 +1978,9 @@ function saveChanges() {
             allBoxesOfSameAmount[allBoxesOfSameAmount.length - 1 - i].remove();
         }
     }
-
+	resetRows();
+	rowSpace();
+	
     updateTotalDonations();
     closeModal();
 }
@@ -1973,11 +2015,26 @@ function saveChanges() {
     while (boxesToAdd > 0) {
         const newRow = document.createElement('div');
         newRow.className = 'donation-row';
+		amount = parseInt(amount.toString().replace(/[$,]/g, ''));
+			const matchingBoxData = findClosestMatchingBoxData(amount);
+            if (matchingBoxData) {
+                const newBox = createDonationBox(amount, matchingBoxData);  // Send row amount as the third argument
+                newRow.appendChild(newBox);
+                boxesToAdd--;  // Decrement the boxesToAdd as we added a box using existing data
 
+                // Add another box to the row that lost a box
+                const additionalBox = createNewEmptyBox(amount);
+                matchingBoxData.originalRow.appendChild(additionalBox);
+
+                // Check if the row from which box was taken becomes empty. If so, remove the row.
+                if (!matchingBoxData.originalRow.hasChildNodes()) {
+                    matchingBoxData.originalRow.parentNode.removeChild(matchingBoxData.originalRow);
+                }
+			}
         const boxesInThisRow = Math.min(8, boxesToAdd);
         for (let i = 0; i < boxesInThisRow; i++) {
-		// Convert amount to an integer if it's in a string format like "$150,000"
-    amount = parseInt(amount.toString().replace(/[$,]/g, ''));
+		 
+   
         const box = document.createElement('div');
         box.className = 'donation-box';
         box.setAttribute('data-amount', amount);
@@ -2019,8 +2076,7 @@ console.log("Current amount variable:", amount);
 console.log("Closest amount:", closestAmount);
        const boxFront = document.createElement('div');
 		boxFront.className = 'donation-box-front';
-		boxFront.setAttribute('data-row', rowIndex);
-
+		boxFront.setAttribute('data-row', rowIndex); 
 		
         const boxBack = document.createElement('div');
         boxBack.className = 'donation-box-back';
@@ -2061,13 +2117,114 @@ console.log("Closest amount:", closestAmount);
         };
         firstRow.insertBefore(newRowLabel, firstRow.firstChild);
     }
-
-		// Update the total donations amount
-  		const totalDonationsLabel = document.querySelector('.donation-row-label b');
-  		const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
-  		totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
+		resetRows();
+		rowSpace();
+  		updateTotalDonations();
 	}
+function findClosestMatchingBoxData(targetAmount) {
+    let closestData = null;
+    let closestDifference = Infinity;
+
+    document.querySelectorAll('.donation-box').forEach(box => {
+        const boxAmountElem = box.querySelector('.donation-box-back');
+        if (boxAmountElem) {
+            const boxAmount = parseInt(boxAmountElem.innerText.replace(/[$,]/g, ''));
+            const difference = Math.abs(boxAmount - targetAmount);
+
+            if (difference < closestDifference) {
+                closestDifference = difference;
+                closestData = {
+                    front: box.querySelector('.donation-box-front').cloneNode(true),
+                    back: boxAmountElem.cloneNode(true),
+                    originalRow: box.parentElement
+                };
+
+                // Remove the original box after cloning its data
+                box.parentElement.removeChild(box);
+            }
+        }
+    });
+
+    return closestData;
+}
+function createDonationBox(amount, data) {
+    const box = document.createElement('div');
+    box.className = 'donation-box';
+    box.setAttribute('data-amount', amount);
+
+    const boxInner = document.createElement('div');
+    boxInner.className = 'donation-box-inner';
+
+    // Find the first unfilled donation-box in the newRow (assuming it's the last row in the DOM)
+    const unfilledBox = Array.from(document.querySelectorAll('.donation-row:last-child .donation-box')).find(b => !b.hasChildNodes());
+
+    if (unfilledBox) {
+        const rowValue = unfilledBox.querySelector('.donation-box-front').getAttribute('data-row');
+        data.front.setAttribute('data-row', rowValue);
+    } else {
+        // If no unfilled box is found, fall back to some default behavior
+        data.front.setAttribute('data-row', 'row' + (amount / 1000));
+    }
+
+    boxInner.appendChild(data.front);
+    boxInner.appendChild(data.back);
+    box.appendChild(boxInner); 
+
+    // Any other code for box creation...
+
+    return box;
+}
+
+
+
+function createNewEmptyBox(amount) {
+     const box = document.createElement('div');
+        box.className = 'donation-box';
+        box.setAttribute('data-amount', amount);
+
+        const boxInner = document.createElement('div');
+        boxInner.className = 'donation-box-inner';
+// Get the rows and their amounts from the DOM
+const rows = document.querySelectorAll('.donation-row');
+let donationRowAmounts = [];
+
+document.querySelectorAll('.donation-row').forEach(row => {
+    let box = row.querySelector('.donation-box');
+    if (box) {
+        let amount = parseInt(box.getAttribute('data-amount'));
+        if (!isNaN(amount)) {
+            donationRowAmounts.push(amount);
+        } 
+    }
+});
+    
+
+    // Add the current row's amount to the list of row amounts.
+    donationRowAmounts.push(amount);
+
+    // Sort the array in ascending order
+    donationRowAmounts.sort((a, b) => a - b);
+
+
+    // Find the closest donation amount
+    const closestAmount = donationRowAmounts.reduce((prev, curr) => Math.abs(curr - amount) < Math.abs(prev - amount) ? curr : prev);
+
+    // Use closestAmount to get the closest row
+    const rowIndex = 'row' + closestAmount / 1000;
+
+       const boxFront = document.createElement('div');
+		boxFront.className = 'donation-box-front';
+		boxFront.setAttribute('data-row', rowIndex); 
 		
+        const boxBack = document.createElement('div');
+        boxBack.className = 'donation-box-back';
+
+        boxInner.appendChild(boxFront);
+        boxInner.appendChild(boxBack);
+        box.appendChild(boxInner);
+
+    return box;
+}
 	function openAddNewModule() {
 		closeModal();
     	const modal = document.getElementById('addNewModuleModal');
@@ -2408,101 +2565,132 @@ if (numBoxes == 0) {
 	var slice3Proportion = (slice3Amount / totalBudget);
 
 	// Update pie chart slices
-	createSlice("endowmentSlice", "endowmentTextName", "endowmentTextAmount", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
-	createSlice("capitalSlice", "capitalTextName", "capitalTextAmount", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
-	createSlice("operatingSlice", "operatingTextName", "operatingTextAmount", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+	createSlice("endowmentSlice", "endowmentTextName", "endowmentTextAmount", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent");
+	createSlice("capitalSlice", "capitalTextName", "capitalTextAmount", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent");
+	createSlice("operatingSlice", "operatingTextName", "operatingTextAmount", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent");
 
 		
 	// Function to create a path description for a pie chart slice
-	function createSlice(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue) {
-    	var radius = 18;
-    	var centerX = 21;
-    	var centerY = 21;
+function createSlice(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue, textIdPercent) {
+    var radius = 11;
+    var centerX = -8;  // was 21
+var centerY = -15;  // was 21
 
-    	var startAngle = startProportion * 360;
-    	var endAngle = endProportion * 360;
 
-    	var startRad = (startAngle - 90) * Math.PI / 180;
-    	var endRad = (endAngle - 90) * Math.PI / 180;
+    var startAngle = startProportion * 360;
+    var endAngle = endProportion * 360;
 
-    	var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+    var startRad = (startAngle - 90) * Math.PI / 180;
+    var endRad = (endAngle - 90) * Math.PI / 180;
 
-    	var startX = centerX + radius * Math.cos(startRad);
-    	var startY = centerY + radius * Math.sin(startRad);
+    var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
 
-    	var endX = centerX + radius * Math.cos(endRad);
-    	var endY = centerY + radius * Math.sin(endRad);
+    var startX = centerX + radius * Math.cos(startRad);
+    var startY = centerY + radius * Math.sin(startRad);
 
-    	var pathData = [
-        	"M", centerX, centerY,
-        	"L", startX, startY,
-        	"A", radius, radius, 0, largeArcFlag, 1, endX, endY,
-        	"Z"
-    	].join(" ");
+    var endX = centerX + radius * Math.cos(endRad);
+    var endY = centerY + radius * Math.sin(endRad);
 
-	// Calculate text position outside the pie chart (near the slice)
-	var midAngle = (startAngle + endAngle) / 2;
-	var midRad = (midAngle - 90) * Math.PI / 180;
-	var textX = centerX + (radius - 8) * Math.cos(midRad) - 7;  // Subtracting 5 to shift text to the left
-	var textYName = centerY + (radius - 10) * Math.sin(midRad) - (0.5);  // Adjusted Y position for name to be slightly above
-	var textYAmount = centerY + (radius - 10) * Math.sin(midRad) + (0.5);  // Adjusted Y position for amount to be slightly below
+    var pathData = [
+        "M", centerX, centerY,
+        "L", startX, startY,
+        "A", radius, radius, 0, largeArcFlag, 1, endX, endY,
+        "Z"
+    ].join(" ");
 
-    	// Update slice path and text
-        document.addEventListener("DOMContentLoaded", function () {
-        	document.getElementById(sliceId).setAttribute("d", pathData);
-        	document.getElementById(sliceId).setAttribute("fill", fillColor);
-        	document.getElementById(textIdName).textContent = sliceName;
-        	document.getElementById(textIdName).setAttribute("x", textX);
-        	document.getElementById(textIdName).setAttribute("y", textYName - 1);  // Adjusted Y position for name to be above amount
-        	document.getElementById(textIdAmount).textContent = "$" + numberWithCommas(sliceValue);
-        	document.getElementById(textIdAmount).setAttribute("x", textX);
-        	document.getElementById(textIdAmount).setAttribute("y", textYAmount + 1);  // Adjusted Y position for amount to be below name
-    	});
-	}
+    // Calculate text position outside the pie chart (near the slice)
+    var midAngle = (startAngle + endAngle) / 2;
+    var midRad = (midAngle - 75) * Math.PI / 180;
+    var textRadius = radius + 6;  // Positioning text outside the pie chart
+    var textX = centerX + textRadius * Math.cos(midRad);
+    var textY = centerY + textRadius * Math.sin(midRad);
+	// Calculate the position for the percentage inside the pie chart slice
+    var percentRadius = radius / 2;  // Midway inside the slice
+    var percentX = centerX + percentRadius * Math.cos(midRad);
+    var percentY = centerY + percentRadius * Math.sin(midRad);
+    var slicePercentage = ((endProportion - startProportion) * 100).toFixed(0);  // Convert proportion to percentage
+
+
+    // Update slice path and text
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById(sliceId).setAttribute("d", pathData);
+        document.getElementById(sliceId).setAttribute("fill", fillColor);
+        document.getElementById(textIdName).textContent = sliceName;
+        document.getElementById(textIdName).setAttribute("x", textX - 5);
+        document.getElementById(textIdName).setAttribute("y", textY-1);  // Adjusted Y position for name to be above amount
+        document.getElementById(textIdAmount).textContent = "$" + numberWithCommas(sliceValue);
+        document.getElementById(textIdAmount).setAttribute("x", textX - 5);
+        document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
+		if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
+            var fontSize = slicePercentage < 20 ? "2" : "2.4";  // Adjust font size if percentage is under 20%
+            document.getElementById(textIdPercent).textContent = slicePercentage + "%";
+            document.getElementById(textIdPercent).setAttribute("x", percentX-2);
+            document.getElementById(textIdPercent).setAttribute("y", percentY-.5);
+            document.getElementById(textIdPercent).setAttribute("font-size", fontSize);
+        }
+    });
 	
+} 
+		
 	// Function to create a path description for a pie chart slice
-	function createSlice1(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue) {
-    	var radius = 18;
-    	var centerX = 21;
-    	var centerY = 21;
+function createSlice1(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue, textIdPercent) {
+    var radius = 11;
+    var centerX = -8;  // was 21
+var centerY = -15;  // was 21
 
-    	var startAngle = startProportion * 360;
-    	var endAngle = endProportion * 360;
 
-    	var startRad = (startAngle - 90) * Math.PI / 180;
-    	var endRad = (endAngle - 90) * Math.PI / 180;
+    var startAngle = startProportion * 360;
+    var endAngle = endProportion * 360;
 
-    	var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+    var startRad = (startAngle - 90) * Math.PI / 180;
+    var endRad = (endAngle - 90) * Math.PI / 180;
 
-    	var startX = centerX + radius * Math.cos(startRad);
-    	var startY = centerY + radius * Math.sin(startRad);
+    var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
 
-    	var endX = centerX + radius * Math.cos(endRad);
-    	var endY = centerY + radius * Math.sin(endRad);
+    var startX = centerX + radius * Math.cos(startRad);
+    var startY = centerY + radius * Math.sin(startRad);
 
-    	var pathData = [
-        	"M", centerX, centerY,
-        	"L", startX, startY,
-        	"A", radius, radius, 0, largeArcFlag, 1, endX, endY,
-        	"Z"
-    	].join(" ");
+    var endX = centerX + radius * Math.cos(endRad);
+    var endY = centerY + radius * Math.sin(endRad);
 
-	// Calculate text position outside the pie chart (near the slice)
-	var midAngle = (startAngle + endAngle) / 2;
-	var midRad = (midAngle - 90) * Math.PI / 180;
-	var textX = centerX + (radius - 8) * Math.cos(midRad) - 7;  // Subtracting 5 to shift text to the left
-	var textYName = centerY + (radius - 10) * Math.sin(midRad) - (0.5);  // Adjusted Y position for name to be slightly above
-	var textYAmount = centerY + (radius - 10) * Math.sin(midRad) + (0.5);  // Adjusted Y position for amount to be slightly below
+    var pathData = [
+        "M", centerX, centerY,
+        "L", startX, startY,
+        "A", radius, radius, 0, largeArcFlag, 1, endX, endY,
+        "Z"
+    ].join(" ");
 
-        	document.getElementById(sliceId).setAttribute("d", pathData);
-        	document.getElementById(sliceId).setAttribute("fill", fillColor);
-        	document.getElementById(textIdName).textContent = sliceName;
-        	document.getElementById(textIdName).setAttribute("x", textX);
-        	document.getElementById(textIdName).setAttribute("y", textYName - 1);  // Adjusted Y position for name to be above amount
-        	document.getElementById(textIdAmount).textContent = "$" + numberWithCommas(sliceValue);
-        	document.getElementById(textIdAmount).setAttribute("x", textX);
-        	document.getElementById(textIdAmount).setAttribute("y", textYAmount + 1);  // Adjusted Y position for amount to be below name
-	}
+    // Calculate text position outside the pie chart (near the slice)
+    var midAngle = (startAngle + endAngle) / 2;
+    var midRad = (midAngle - 75) * Math.PI / 180;
+    var textRadius = radius + 6;  // Positioning text outside the pie chart
+    var textX = centerX + textRadius * Math.cos(midRad);
+    var textY = centerY + textRadius * Math.sin(midRad);
+	// Calculate the position for the percentage inside the pie chart slice
+    var percentRadius = radius / 2;  // Midway inside the slice
+    var percentX = centerX + percentRadius * Math.cos(midRad);
+    var percentY = centerY + percentRadius * Math.sin(midRad);
+    var slicePercentage = ((endProportion - startProportion) * 100).toFixed(0);  // Convert proportion to percentage
+
+
+    // Update slice path and text
+        document.getElementById(sliceId).setAttribute("d", pathData);
+        document.getElementById(sliceId).setAttribute("fill", fillColor);
+        document.getElementById(textIdName).textContent = sliceName;
+        document.getElementById(textIdName).setAttribute("x", textX - 5);
+        document.getElementById(textIdName).setAttribute("y", textY-1);  // Adjusted Y position for name to be above amount
+        document.getElementById(textIdAmount).textContent = "$" + numberWithCommas(sliceValue);
+        document.getElementById(textIdAmount).setAttribute("x", textX - 5);
+        document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
+		if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
+            var fontSize = slicePercentage < 20 ? "2" : "2.4";  // Adjust font size if percentage is under 20%
+            document.getElementById(textIdPercent).textContent = slicePercentage + "%";
+            document.getElementById(textIdPercent).setAttribute("x", percentX-2);
+            document.getElementById(textIdPercent).setAttribute("y", percentY-.5);
+            document.getElementById(textIdPercent).setAttribute("font-size", fontSize);
+        }
+	
+} 
 		
 	function redirectToToolkitHome() {
     window.location.href = "https://www.cramerphilanthropy.com/campaign-toolkit-home/";
@@ -2652,7 +2840,7 @@ $output = '
 
 .donation-row-label {
   transition: background-color 0.3s;
-  position: relative;
+  position: flex;
 }
 
 .donation-row-label::after {
@@ -3045,18 +3233,19 @@ to { opacity: 1; }
   justify-content: flex-end;
   width: 50%;
   height: 50%;
-  margin-left: 30%;
+  margin-left: 32%;
 }
 
 
 .donation-row {
+margin-top: 8px;
   display: flex;
   justify-content: center; 
 }
 
 .donation-row-label {
   position: absolute;
-  left: 0;
+  left: -20px;
   margin-top: 17px;
   margin-left: 75px;
   font-size: 15px;
@@ -3170,13 +3359,14 @@ to { opacity: 1; }
             @keyframes fillAnimation {
                 0% { width: 0%; }
                 100% { width: ${percent}%; }
-            }
+} 
 .donation-box {
+
   position: relative;
-  width: 90px;
-  height: 38px;
+  width: 6.5vw;  /* adjusted to viewport width */
+  height: 5vh;  /* adjusted to viewport height */
   border-radius: 25px;
-  margin: 7px;
+  margin: 7px;  /* adjusted margin based on viewport width */
   overflow: hidden;
   cursor: pointer;
   justify-content: center;
@@ -3184,6 +3374,16 @@ to { opacity: 1; }
   text-align: center;
   display: flex;
 }
+
+/* If the screen size is below 600px, adjust the box size */
+@media (max-width: 600px) {
+  .donation-box {
+    width: 15vw;  /* adjusted for smaller screens */
+    height: 7vh;  /* adjusted for smaller screens */
+   
+  }
+}
+
 
 .donation-box-inner {
   position: absolute;
