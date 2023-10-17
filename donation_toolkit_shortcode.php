@@ -37,11 +37,38 @@ function donation_toolkit_shortcode($atts) {
 	?>
 	<script>
 		
+document.body.addEventListener('click', function(event) {
+    let clickedBox = event.target.closest('.donation-box');
+    
+    if (clickedBox) {
+        console.log('Cloned box clicked');
+
+        let boxFront = clickedBox.querySelector('.donation-box-front');
+        let boxBack = clickedBox.querySelector('.donation-box-back');
+
+        if (boxFront && boxBack) {
+            // Check which side (front or back) is currently displayed
+            if (getComputedStyle(boxFront).display !== 'none') {
+                boxFront.style.display = 'none';
+                boxBack.style.display = 'flex';
+            } else {
+                boxFront.style.display = 'flex';
+                boxBack.style.display = 'none';
+            }
+        }
+    }
+});
+
+
 	// Global
 	let donors = [];
 	let globalRowLabel;
 	let globalDisplayName = '';
+	let isEditing = false;
+		// This dictionary will store the removal dates indexed by displayName
+let removalDates = {};
 	var clientLogoURL = '<?php echo $imgurl; ?>';
+		
 		
 	function makeDarker(color, factor) {
   const r = Math.max(0, parseInt(color.substring(1, 3), 16) - factor);
@@ -51,40 +78,60 @@ function donation_toolkit_shortcode($atts) {
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 	function numberWithCommas(number) {
-  		return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-	}
-		
+  const formattedNumber = number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (!formattedNumber.startsWith('$')) {
+    return '$' + formattedNumber;
+  }
+  return formattedNumber;
+}
 
-	//TABS JS
-	function activateTab(){
-		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
-		const tabContents = document.querySelectorAll('.tabbed-content .tab');
+	
 
-		tabLinks.forEach(tabLink => {
-  			tabLink.addEventListener('click', () => {
-    	
-			// Remove active class from all tab links
-    		tabLinks.forEach(link => {
-      			link.classList.remove('active');
-    		});
-    	
-			// Add active class to clicked tab link
-    		tabLink.classList.add('active');
+function activateTab(){
+    const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
+    const tabContents = document.querySelectorAll('.tabbed-content .tab');
 
-    		// Hide all tab contents
-    		tabContents.forEach(content => {
-      			content.classList.remove('active');
-    		});
-    	
-			// Show the tab content corresponding to the clicked tab link
-    		const tabContentId = tabLink.dataset.tab;
-    		const tabContent = document.getElementById(tabContentId);
-    		tabContent.classList.add('active');
-			});
-		});
-	}
-		
-	document.addEventListener('DOMContentLoaded', activateTab);
+    tabLinks.forEach(tabLink => {
+        tabLink.addEventListener('click', function() {
+            // Check if editing is in progress and the clicked tab isn't Moves Management
+            if (isEditing && this.dataset.tab !== 'moves-management') {
+                showAlertTab(); // Display the custom modal
+                return; // Do not proceed with changing tabs
+            }
+            
+            // Remove active class from all tab links
+            tabLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Add active class to clicked tab link
+            this.classList.add('active');
+
+            // Hide all tab contents
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Show the tab content corresponding to the clicked tab link
+            const tabContentId = this.dataset.tab;
+            const tabContent = document.getElementById(tabContentId);
+            tabContent.classList.add('active');
+        });
+    });
+}
+
+function showAlertTab() {
+    const alertModule = document.getElementById('alertModuleTab');
+    alertModule.style.display = 'block'; // Display the modal
+}
+
+function closeAlertTab() {
+    const alertModule = document.getElementById('alertModuleTab');
+    alertModule.style.display = 'none'; // Hide the modal
+}
+
+document.addEventListener('DOMContentLoaded', activateTab);
+
 		
 	//ADD CHECKBOX
 	function addCircleCheckbox() {
@@ -136,6 +183,7 @@ let donationRows = document.querySelectorAll('.donation-row');
 	//MOVES MANAGEMENT AND PP JS
 	function addRow() {
 		
+		isEditing = true;
   		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
   		const tabContents = document.querySelectorAll('.tabbed-content .tab');
   		tabLinks.forEach(link => {
@@ -252,47 +300,46 @@ function showAlertMM(message) {
   alertMessage.innerText = message;
   alertModule.style.display = "block";
 }
+		
+		
 
 // Function to validate the form
 function validateForm() {
-	if (inputs[0].value.trim() === "" && inputs[1].value.trim() === "" && inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
-    showAlertMM("Full Name, Organization Name, and Amount fields with a Checkbox selection are required.");
+	if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name, Amount field, and a Checkbox selection are required.");
     return false;
-	} else if (inputs[0].value.trim() === "" && inputs[1].value.trim() === "" && inputs[2].value.trim() === "") {
-    showAlertMM("Full Name, Organization Name, and Amount fields are required.");
+	} else if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "") {
+    showAlertMM("Full Name and Amount fields are required.");
     return false;
-	} else if (inputs[0].value.trim() === "" && inputs[1].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
-    showAlertMM("Full Name and Organization Name fields with a Checkbox selection are required.");
+	} else if (inputs[0].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name and a Checkbox selection are required.");
     return false;
   } else if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
-    showAlertMM("Full Name and Amount fields with a Checkbox selection are required.");
+    showAlertMM("Full Name and Amount field with a Checkbox selection is required.");
     return false;
-  } else if (inputs[1].value.trim() === "" && inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
-    showAlertMM("Organization Name and Amount fields with a Checkbox selection are required.");
+  } else if ( inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Amount field and a Checkbox selection is required.");
     return false;
-  } else if (inputs[0].value.trim() === "" && inputs[1].value.trim() === "") {
-    showAlertMM("Full Name and Organization Name fields are required.");
+  } else if (inputs[0].value.trim() === "") {
+    showAlertMM("Full Name field is required.");
     return false;
   } else if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "") {
     showAlertMM("Full Name and Amount fields are required.");
     return false;
-  } else if (inputs[1].value.trim() === "" && inputs[2].value.trim() === "") {
-    showAlertMM("Organization Name and Amount fields are required.");
+  } else if ( inputs[2].value.trim() === "") {
+    showAlertMM("Amount field is required.");
     return false;
 	  } else if (inputs[0].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
     showAlertMM("Full Name field and a Checkbox selection is required.");
     return false;
-  } else if (inputs[1].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
-    showAlertMM("Organization Name field and a Checkbox selection is required.");
+  } else if ((!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("A Checkbox selection is required.");
     return false;
   } else if (inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
     showAlertMM("Amount field and a Checkbox selection is required.");
     return false;
   } else if (inputs[0].value.trim() === "") {
     showAlertMM("Full Name field is required.");
-    return false;
-  } else if (inputs[1].value.trim() === "") {
-    showAlertMM("Organization Name field is required.");
     return false;
   } else if (inputs[2].value.trim() === "") {
     showAlertMM("Amount field is required.");
@@ -306,19 +353,6 @@ function validateForm() {
 
 
 
-fullNameCheckbox.addEventListener("change", function () {
-  if (fullNameCheckbox.checked) {
-    orgNameCheckbox.checked = false;
-    displayName = inputs[0].value;
-  }
-});
-
-orgNameCheckbox.addEventListener("change", function () {
-  if (orgNameCheckbox.checked) {
-    fullNameCheckbox.checked = false;
-    displayName = inputs[1].value;
-  }
-});
 
 
 
@@ -372,8 +406,15 @@ orgNameCheckbox.addEventListener("change", function () {
 		
   		cells.forEach(cell => newRow.appendChild(cell));
 
-  		const tableBody = document.querySelector("#moves-management table tbody");
-  		tableBody.insertBefore(newRow, tableBody.firstChild);
+  	// Utility function to parse the donation amount from the cell text
+function parseDonationAmount(text) {
+    return parseFloat(text.replace(/\$|,/g, '').trim() || "0");
+}
+
+const tableBody = document.querySelector("#moves-management table tbody");
+
+// Insert the new row at the top
+tableBody.insertBefore(newRow, tableBody.firstChild);
 
 		// Create a delete button and add it to each row
 const deleteButton = document.createElement("div");
@@ -595,7 +636,7 @@ return isNaN(amount) ? acc : acc + amount;
 donorElement.innerHTML = `
     <div style="text-align: center; margin: 0 35px;">
         <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
-        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">$${numberWithCommas(Math.round(donor.amount))}</span></div>
+        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
     </div>`;
         donorContainer.appendChild(donorElement);
     }
@@ -619,12 +660,27 @@ deleteCancelButton.addEventListener("click", function handledeleteCancelClick() 
 }); 
 
 */
-		 
+
+		fullNameCheckbox.addEventListener("change", function () {
+  if (fullNameCheckbox.checked) {
+    orgNameCheckbox.checked = false;
+    displayName = inputs[0].value;
+  }
+});
+
+orgNameCheckbox.addEventListener("change", function () {
+  if (orgNameCheckbox.checked) {
+    fullNameCheckbox.checked = false;
+    displayName = inputs[1].value;
+  }
+});
+
 		
   		saveButton.addEventListener("click", function handleSaveButtonClick() {
-			
+				isEditing = false;
 			if (validateForm()) { 
 			
+			console.log(isEditing);
 		deleteButton.remove();
         console.log("deleteButton removed");
 
@@ -644,11 +700,30 @@ deleteCancelButton.addEventListener("click", function handledeleteCancelClick() 
     		cells[9].style.textAlign = "center";
     		cells[9].style.verticalAlign = "middle";
 		
-			
+					 // Sort rows based on the donation amount
+Array.from(tableBody.rows)
+    .sort((rowA, rowB) => {
+        const donationA = parseDonationAmount(rowA.cells[4].innerText);
+        const donationB = parseDonationAmount(rowB.cells[4].innerText);
+        
+        // Sorting in descending order (largest donation first)
+        return donationB - donationA;
+    })
+    .forEach(row => tableBody.appendChild(row));
+ 
 		
+				
     		editButton.addEventListener("click", function handleEditButtonClick() { 
+				isEditing = true;
+
+				
+				console.log(isEditing);
+				
+		
+
 		// Re-add the delete button after updating the row's content
         newRow.appendChild(deleteButton);
+				
 // Remove the donation from the donation pyramid
 const pyramidRows = document.querySelectorAll('.donation-row');
 pyramidRows.forEach(row => {
@@ -685,7 +760,7 @@ const parseName = displayName.replace(/<br\s*\/?>/g, '').replace(/\s+/g, '');
 const parseName = displayName.replace(/<br\s*\/?>/g, '').replace(/\s+/g, '');
 const formatCurrency = (amount) => {
     // You can format this as per your requirements
-    return "$" + numberWithCommas(amount);
+    return numberWithCommas(amount);
 };
 				 
 const pledgesTotalElement = document.querySelector(".pledges-total");
@@ -704,6 +779,9 @@ pledgesRows.forEach(row => {
             const currentTotal = parseFloat(pledgesTotalElement.innerText.replace(/[^\d.-]/g, '')) || 0;
             pledgesTotalElement.innerText = formatCurrency(currentTotal - amount);
         }
+		// Save the removal date for this displayName
+        const dateCell = row.querySelector("td:nth-child(3)");
+        removalDates[parseName] = dateCell.innerHTML;
         row.remove(); // Remove the row from the table
 		
 		 // Remove the donation from the array
@@ -723,6 +801,8 @@ pendingRows.forEach(row => {
             const currentTotal = parseFloat(pendingTotalElement.innerText.replace(/[^\d.-]/g, '')) || 0;
             pendingTotalElement.innerText = formatCurrency(currentTotal - amount);
         }
+		const dateCell = row.querySelector("td:nth-child(3)");
+        removalDates[parseName] = dateCell.innerHTML;
         row.remove(); // Remove the row from the table
     }
 });
@@ -739,6 +819,8 @@ pipelineRows.forEach(row => {
             const currentTotal = parseFloat(pipelineTotalElement.innerText.replace(/[^\d.-]/g, '')) || 0;
             pipelineTotalElement.innerText = formatCurrency(currentTotal - amount);
         }
+		const dateCell = row.querySelector("td:nth-child(3)");
+        removalDates[parseName] = dateCell.innerHTML;
         row.remove(); // Remove the row from the table
     }
 });
@@ -781,30 +863,45 @@ pipelineRows.forEach(row => {
     			orgNameContainer.appendChild(orgNameCheckbox);
     			orgNameContainer.appendChild(inputs[1]);
 		
+// Set the initial state of the checkboxes based on current displayName
+function setCheckboxState() {
+    if (displayName === inputs[0].value) {
+        fullNameCheckbox.checked = true;
+        orgNameCheckbox.checked = false;
+    } else if (displayName === inputs[1].value) {
+        fullNameCheckbox.checked = false;
+        orgNameCheckbox.checked = true;
+    }
+}
+
+setCheckboxState();
 
 fullNameCheckbox.addEventListener("change", function () {
-  if (fullNameCheckbox.checked) {
-    orgNameCheckbox.checked = false; 
-    displayName = inputs[0].value;
-  }
+    if (fullNameCheckbox.checked) {
+        orgNameCheckbox.checked = false;
+        displayName = inputs[0].value;
+    }
 });
 
 orgNameCheckbox.addEventListener("change", function () {
-  if (orgNameCheckbox.checked) {
-    fullNameCheckbox.checked = false;
-    displayName = inputs[1].value;
-  }
+    if (orgNameCheckbox.checked) {
+        fullNameCheckbox.checked = false;
+        displayName = inputs[1].value;
+    }
 });
-				
-						// Set the initial state of the checkboxes
-    			if (displayName === inputs[0].value) {
-        			fullNameCheckbox.checked = true;
-        			orgNameCheckbox.checked = false;
-    			} else if (displayName === inputs[1].value) {
-        			fullNameCheckbox.checked = false;
-        			orgNameCheckbox.checked = true;
-    			}
-				 
+
+// When the input values change, update the displayName accordingly
+inputs[0].addEventListener("input", function() {
+    if (fullNameCheckbox.checked) {
+        displayName = inputs[0].value;
+    }
+});
+
+inputs[1].addEventListener("input", function() {
+    if (orgNameCheckbox.checked) {
+        displayName = inputs[1].value;
+    }
+});
 				
 				
       			const saveButton = document.createElement("button");
@@ -845,8 +942,10 @@ orgNameCheckbox.addEventListener("change", function () {
 		];
 		console.log(displayName);
 		targetCells[0].innerHTML = displayName;
-		targetCells[1].innerHTML = values[2];
-		targetCells[2].innerHTML = new Date().toLocaleDateString();
+		targetCells[1].innerHTML = numberWithCommas(values[2]);
+		// Check if there's a stored removal date for this displayName
+const dateForDisplay = removalDates[displayName] || new Date().toLocaleDateString();
+targetCells[2].innerHTML = dateForDisplay;
 
 		// Add event listener to date cell
 		targetCells[2].addEventListener('click', (event) => {
@@ -867,6 +966,27 @@ orgNameCheckbox.addEventListener("change", function () {
 		targetRow.appendChild(targetCells[1]);
 		targetRow.appendChild(targetCells[2]);
 		
+				// Utility function to parse and return the donation amount
+function getDonationAmount(row) {
+  return parseFloat(row.cells[1].innerText.replace(/[$,]/g, ''));
+}
+
+function insertRowInOrder(tableBody, newRow) {
+  const newDonation = getDonationAmount(newRow);
+  
+  for (let i = 0; i < tableBody.rows.length; i++) {
+    const row = tableBody.rows[i];
+    const currentDonation = getDonationAmount(row);
+
+    if (newDonation > currentDonation) {
+      tableBody.insertBefore(newRow, row);
+      return;
+    }
+  }
+
+  // If loop completes without inserting, append at the end
+  tableBody.appendChild(newRow);
+}
 							
 				globalDisplayName = displayName;
 
@@ -888,16 +1008,16 @@ switch (pledgePendingValue) {
   amount: donationAmount
 };
 donors.push(newDonor);
-    donationColor = '#7866A1';
+    donationColor = '#F78D2D';
     break;
-  case 'pending':
+  case 'identified':
     donationColor = '#5DABBC';
     break;
   case 'engaged':
     donationColor = '#00728A';
     break;
-  case 'identified':
-    donationColor = '#F78D2D';
+  case 'pending':
+    donationColor = '#7866A1';
     break;
   default:
     console.log('Invalid value for pledge/pending column');
@@ -963,66 +1083,59 @@ box.style.justifyContent = "center";
 box.style.alignItems = "center";
 
 const backOfBox = box.parentElement.querySelector('.donation-box-back');
-backOfBox.innerHTML = '$' + numberWithCommas(donationAmount);
+backOfBox.innerHTML = numberWithCommas(donationAmount);
 const darkerDonationColor = makeDarker(donationColor, 30); // The factor 30 can be adjusted
 backOfBox.style.backgroundColor = darkerDonationColor;
 
 backOfBox.style.color = "#fff";
 backOfBox.style.fontWeight = "400";
+backOfBox.style.fontSize = "17px";
 backOfBox.style.textAlign = "center";
 backOfBox.style.display = "none";  // Hide the back initially
 
 const donationBox = box.closest('.donation-box');
-if (donationBox) {
-  let flipped = false;  // To keep track of the flip state
-  
-  donationBox.addEventListener('click', function() {
-    console.log("Flip");
 
-    if (flipped) {
-      // Show the front, hide the back
-      box.style.display = "flex";
-      backOfBox.style.display = "none";
-    } else {
-      // Hide the front, show the back
-      box.style.display = "none";
-      backOfBox.style.display = "flex";
+// Assuming 'box' is the DOM element reference of your box
+const computedStyle = window.getComputedStyle(box);
+
+const boxWidth = parseFloat(computedStyle.width);
+const boxHeight = parseFloat(computedStyle.height);
+
+const span = document.createElement("span");
+span.style.display = 'inline-block';
+document.body.appendChild(span);
+
+let fontSize = 20; // Start from a larger font size for better readability
+
+const adjustFontSize = () => {
+    while ((span.offsetHeight > boxHeight || span.offsetWidth > boxWidth) && fontSize > 10) { // Ensuring font size doesn't go below 10px for readability
+        fontSize--;
+        span.style.fontSize = fontSize + "px";
     }
-
-    flipped = !flipped;  // Toggle the state
-  });
 }
 
+// Initially set the displayName without breaks
+span.innerHTML = displayName;
+span.style.fontSize = fontSize + "px";
+adjustFontSize();
 
-  const words = displayName.split(" ");
-  if (words.length === 2) {
-    displayName = words.join("<br>");
-  }
+// If the text still doesn't fit, start adding breaks between words to stack them.
+const words = displayName.split(" ");
+if (fontSize < 30) {  // Adjust this threshold as per your design
+    for (let i = 1; i < words.length && (span.offsetHeight > boxHeight || span.offsetWidth > boxWidth); i++) {
+        span.innerHTML = words.slice(0, i).join(" ") + "<br>" + words.slice(i).join(" ");
+        adjustFontSize();
+    }
+    span.style.lineHeight = "0.9"; // Setting line-height to 0.8 (without units)
+}
 
-  const boxWidth = 80;
-  const boxHeight = 38;
+box.style.fontSize = fontSize + "px";
+box.style.padding = "10px";
+box.innerHTML = span.innerHTML;
+box.style.lineHeight = span.style.lineHeight;
 
-  const span = document.createElement("span");
-  span.innerHTML = displayName;
-  document.body.appendChild(span);
+document.body.removeChild(span);
 
-  let fontSize = 18;
-
-  while (span.offsetHeight > boxHeight) {
-    fontSize--;
-    span.style.fontSize = fontSize + "px";
-  }
-
-  while (span.offsetWidth > boxWidth) {
-    fontSize--;
-    span.style.fontSize = fontSize + "px";
-  }
-
-  box.style.fontSize = fontSize + "px";
-  box.style.padding = "10px";
-  box.innerHTML = displayName;
-
-  document.body.removeChild(span);
 
   const donationBoxAmount = parseInt(donationBox.getAttribute('data-amount'));
   const donationValue = donationAmount < donationBoxAmount ? donationAmount : donationBoxAmount;
@@ -1069,16 +1182,15 @@ if (donationBox) {
         modal.style.display = "none";
 		    	
 		if (pledgePendingValue === "pending") {
-  			const tableBody = document.querySelector(".pending-table tbody");
-  			tableBody.insertBefore(targetRow, tableBody.firstChild);
-		}
-		if (pledgePendingValue === "engaged" || pledgePendingValue === "identified") {
-  			const tableBody = document.querySelector(".pipeline-table tbody");
-  			tableBody.insertBefore(targetRow, tableBody.firstChild);
-		} else if (pledgePendingValue === "pledge") {
-  			const tableBody = document.querySelector(".pledges-table tbody");
-  			tableBody.insertBefore(targetRow, tableBody.firstChild);
-		}
+  const tableBody = document.querySelector(".pending-table tbody");
+  insertRowInOrder(tableBody, targetRow);
+} else if (pledgePendingValue === "engaged" || pledgePendingValue === "identified") {
+  const tableBody = document.querySelector(".pipeline-table tbody");
+  insertRowInOrder(tableBody, targetRow);
+} else if (pledgePendingValue === "pledge") {
+  const tableBody = document.querySelector(".pledges-table tbody");
+  insertRowInOrder(tableBody, targetRow);
+}
 
 const pledgesTotalElement = document.querySelector(".pledges-total");
 const pendingTotalElement = document.querySelector(".pending-total");
@@ -1086,7 +1198,7 @@ const pipelineTotalElement = document.querySelector(".pipeline-total");
 
 		const formatCurrency = (amount) => {
     // You can format this as per your requirements
-    return "$" + numberWithCommas(amount);
+    return numberWithCommas(amount);
 };
 // Populate the totals for Pledges
 const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
@@ -1304,7 +1416,7 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 donorElement.innerHTML = `
     <div style="text-align: center; margin: 0 35px;">
         <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
-        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">$${numberWithCommas(Math.round(donor.amount))}</span></div>
+        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
     </div>`;
         donorContainer.appendChild(donorElement);
     }
@@ -1315,16 +1427,15 @@ donorElement.innerHTML = `
 }
 
     	if (pledgePendingValue === "pending") {
-  			const tableBody = document.querySelector(".pending-table tbody");
-  			tableBody.insertBefore(targetRow, tableBody.firstChild);
-		}
-		if (pledgePendingValue === "engaged" || pledgePendingValue === "identified") {
-  			const tableBody = document.querySelector(".pipeline-table tbody");
-  			tableBody.insertBefore(targetRow, tableBody.firstChild);
-		} else if (pledgePendingValue === "pledge") {
-  			const tableBody = document.querySelector(".pledges-table tbody");
-  			tableBody.insertBefore(targetRow, tableBody.firstChild);
-		}
+  const tableBody = document.querySelector(".pending-table tbody");
+  insertRowInOrder(tableBody, targetRow);
+} else if (pledgePendingValue === "engaged" || pledgePendingValue === "identified") {
+  const tableBody = document.querySelector(".pipeline-table tbody");
+  insertRowInOrder(tableBody, targetRow);
+} else if (pledgePendingValue === "pledge") {
+  const tableBody = document.querySelector(".pledges-table tbody");
+  insertRowInOrder(tableBody, targetRow);
+}
 		// ... previous code ...
 
 const pledgesTotalElement = document.querySelector(".pledges-total");
@@ -1333,7 +1444,7 @@ const pipelineTotalElement = document.querySelector(".pipeline-total");
 
 const formatCurrency = (amount) => {
     // You can format this as per your requirements
-    return "$" + numberWithCommas(amount);
+    return numberWithCommas(amount);
 };
 			
 // Populate the totals for Pledges
@@ -1553,7 +1664,7 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 donorElement.innerHTML = `
     <div style="text-align: center; margin: 0 35px;">
         <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
-        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">$${numberWithCommas(Math.round(donor.amount))}</span></div>
+        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
     </div>`;
         donorContainer.appendChild(donorElement);
     }
@@ -1783,7 +1894,7 @@ box.setAttribute('data-amount', amount);
 
 		  		const boxBack = document.createElement('div');
   		boxBack.className = 'donation-box-back';
-boxBack.innerHTML = '$' + numberWithCommas(donationAmount);
+boxBack.innerHTML = numberWithCommas(donationAmount);
 const darkerDonationColor = makeDarker(donationColor, 30); // The factor 30 can be adjusted
 boxBack.style.backgroundColor = darkerDonationColor;
 
@@ -1793,56 +1904,47 @@ boxBack.style.textAlign = "center";
 boxBack.style.display = "none";  // Hide the back initially
 
 const donationBox = box.closest('.donation-box');
-if (donationBox) {
-  let flipped = false;  // To keep track of the flip state
-  
-  donationBox.addEventListener('click', function() {
-    console.log("Flip");
 
-    if (flipped) {
-      // Show the front, hide the back
-      boxFront.style.display = "flex";
-      boxBack.style.display = "none";
-    } else {
-      // Hide the front, show the back
-      boxFront.style.display = "none";
-      boxBack.style.display = "flex";
+// Assuming 'box' is the DOM element reference of your box
+const computedStyle = window.getComputedStyle(box);
+
+const boxWidth = parseFloat(computedStyle.width);
+const boxHeight = parseFloat(computedStyle.height);
+
+const span = document.createElement("span");
+span.style.display = 'inline-block';
+document.body.appendChild(span);
+
+let fontSize = 20; // Start from a larger font size for better readability
+
+const adjustFontSize = () => {
+    while ((span.offsetHeight > boxHeight || span.offsetWidth > boxWidth) && fontSize > 10) { // Ensuring font size doesn't go below 10px for readability
+        fontSize--;
+        span.style.fontSize = fontSize + "px";
     }
+}
+ 
+// Initially set the displayName without breaks
+span.innerHTML = donationName;
+span.style.fontSize = fontSize + "px";
+adjustFontSize();
 
-    flipped = !flipped;  // Toggle the state
-  });
+// If the text still doesn't fit, start adding breaks between words to stack them.
+const words = donationName.split(" ");
+if (fontSize < 30) {  // Adjust this threshold as per your design
+    for (let i = 1; i < words.length && (span.offsetHeight > boxHeight || span.offsetWidth > boxWidth); i++) {
+        span.innerHTML = words.slice(0, i).join(" ") + "<br>" + words.slice(i).join(" ");
+        adjustFontSize();
+    }
+    span.style.lineHeight = "0.9"; // Setting line-height to 0.8 (without units)
 }
 
+box.style.fontSize = fontSize + "px";
+box.style.padding = "10px";
+box.innerHTML = span.innerHTML;
+box.style.lineHeight = span.style.lineHeight;
 
-  const words = donationName.split(" ");
-  if (words.length === 2) {
-    donationName = words.join("<br>");
-  }
-
-  const boxWidth = 80;
-  const boxHeight = 38;
-
-  const span = document.createElement("span");
-  span.innerHTML = donationName;
-  document.body.appendChild(span);
-
-  let fontSize = 18;
-
-  while (span.offsetHeight > boxHeight) {
-    fontSize--;
-    span.style.fontSize = fontSize + "px";
-  }
-
-  while (span.offsetWidth > boxWidth) {
-    fontSize--;
-    span.style.fontSize = fontSize + "px";
-  }
-
-  boxFront.style.fontSize = fontSize + "px";
-  boxFront.style.padding = "10px";
-  boxFront.innerHTML = donationName;
-
-  document.body.removeChild(span);
+document.body.removeChild(span);
 	
 
   		boxInner.appendChild(boxFront);
@@ -1860,7 +1962,7 @@ if (donationBox) {
   		// Update the total donations amount
   		const totalDonationsLabel = document.querySelector('.donation-row-label b');
   		const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
-  		totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations); // Helper function to add commas to the number
+  		totalDonationsLabel.innerText = 'Total: ' + numberWithCommas(totalDonations); // Helper function to add commas to the number
 	}
 	
 	//DONATION PYRAMID EDIT ROWS
@@ -1990,7 +2092,7 @@ function saveChanges() {
 	function updateTotalDonations() {
     	const totalDonationsLabel = document.querySelector('.donation-row-label b');
     	const totalDonations = calculateTotalDonations();
-    	totalDonationsLabel.innerText = 'Total: $' + numberWithCommas(totalDonations);
+    	totalDonationsLabel.innerText = 'Total:' + numberWithCommas(totalDonations);
 	}
 
 	function addNewRow(amount, numBoxes, position, referenceElement) {
@@ -2015,22 +2117,33 @@ function saveChanges() {
     while (boxesToAdd > 0) {
         const newRow = document.createElement('div');
         newRow.className = 'donation-row';
-		amount = parseInt(amount.toString().replace(/[$,]/g, ''));
-			const matchingBoxData = findClosestMatchingBoxData(amount);
-            if (matchingBoxData) {
-                const newBox = createDonationBox(amount, matchingBoxData);  // Send row amount as the third argument
-                newRow.appendChild(newBox);
-                boxesToAdd--;  // Decrement the boxesToAdd as we added a box using existing data
+        amount = parseInt(amount.toString().replace(/[$,]/g, ''));
+       const matchingBoxesData = findClosestMatchingBoxesData(amount, boxesToAdd);
 
-                // Add another box to the row that lost a box
-                const additionalBox = createNewEmptyBox(amount);
-                matchingBoxData.originalRow.appendChild(additionalBox);
+    matchingBoxesData.forEach(matchingBoxData => {
+        const newBox = createDonationBox(amount, matchingBoxData);
+        newRow.appendChild(newBox);
 
-                // Check if the row from which box was taken becomes empty. If so, remove the row.
-                if (!matchingBoxData.originalRow.hasChildNodes()) {
-                    matchingBoxData.originalRow.parentNode.removeChild(matchingBoxData.originalRow);
-                }
-			}
+        let originalRowAmount;
+        const originalBox = matchingBoxData.originalRow.querySelector('.donation-box');
+        if (originalBox) {
+            originalRowAmount = parseInt(originalBox.getAttribute('data-amount'));
+        }
+
+        if (originalRowAmount !== undefined) {
+            const additionalBox = createNewEmptyBox(originalRowAmount);
+            matchingBoxData.originalRow.appendChild(additionalBox);
+        } else {
+            console.error('Failed to get the original row amount.');
+        }
+
+        if (!matchingBoxData.originalRow.hasChildNodes()) {
+            matchingBoxData.originalRow.parentNode.removeChild(matchingBoxData.originalRow);
+        }
+    });
+
+    boxesToAdd -= matchingBoxesData.length;
+
         const boxesInThisRow = Math.min(8, boxesToAdd);
         for (let i = 0; i < boxesInThisRow; i++) {
 		 
@@ -2111,7 +2224,7 @@ console.log("Closest amount:", closestAmount);
     if (firstRow) {  // If there's a first row, add the label to it
         const newRowLabel = document.createElement('div');
         newRowLabel.className = 'donation-row-label';
-        newRowLabel.innerText = numBoxes + ' x $' + numberWithCommas(amount);
+        newRowLabel.innerText = numBoxes + ' x ' + numberWithCommas(amount);
         newRowLabel.onclick = function() {
             editNumBoxes(this);
         };
@@ -2121,23 +2234,52 @@ console.log("Closest amount:", closestAmount);
 		rowSpace();
   		updateTotalDonations();
 	}
-function findClosestMatchingBoxData(targetAmount) {
-    let closestData = null;
-    let closestDifference = Infinity;
+function findClosestMatchingBoxesData(targetAmount, maxMatches = Infinity) {
+    let matches = [];
+    const donationBoxes = Array.from(document.querySelectorAll('.donation-box')); 
 
-    document.querySelectorAll('.donation-box').forEach(box => {
-        const boxAmountElem = box.querySelector('.donation-box-back');
-        if (boxAmountElem) {
-            const boxAmount = parseInt(boxAmountElem.innerText.replace(/[$,]/g, ''));
+    donationBoxes.forEach(box => {
+        const boxFront = box.querySelector('.donation-box-front');
+        const boxBack = box.querySelector('.donation-box-back');
+
+        if (boxBack) {
+            const boxAmount = parseInt(boxBack.innerText.replace(/[$,]/g, ''));
             const difference = Math.abs(boxAmount - targetAmount);
 
-            if (difference < closestDifference) {
-                closestDifference = difference;
-                closestData = {
-                    front: box.querySelector('.donation-box-front').cloneNode(true),
-                    back: boxAmountElem.cloneNode(true),
+            if (difference === 0 && matches.length < maxMatches) {
+                const clonedFront = boxFront.cloneNode(true);
+                const clonedBack = boxBack.cloneNode(true);
+
+                clonedFront.style.color = "#fff";
+                clonedFront.style.fontWeight = "500";
+                clonedFront.style.textAlign = "center";
+                clonedFront.style.display = "flex";
+                clonedFront.style.justifyContent = "center";
+                clonedFront.style.alignItems = "center";
+
+                clonedBack.style.color = "#fff";
+                clonedBack.style.fontWeight = "400";
+                clonedBack.style.fontSize = "17px";
+                clonedBack.style.textAlign = "center";
+                clonedBack.style.display = "none"; // Hide the back initially
+
+                const clonedDonationBoxInner = document.createElement('div');
+                clonedDonationBoxInner.className = 'donation-box-inner';
+
+                // Appending the cloned elements
+                clonedDonationBoxInner.appendChild(clonedFront);
+                clonedDonationBoxInner.appendChild(clonedBack);
+
+                const clonedDonationBox = document.createElement('div');
+                clonedDonationBox.className = 'donation-box';
+                clonedDonationBox.appendChild(clonedDonationBoxInner); // Append inner box
+
+           matches.push({
+                    box: clonedDonationBox,
+                    front: clonedFront,
+                    back: clonedBack,
                     originalRow: box.parentElement
-                };
+                });
 
                 // Remove the original box after cloning its data
                 box.parentElement.removeChild(box);
@@ -2145,8 +2287,11 @@ function findClosestMatchingBoxData(targetAmount) {
         }
     });
 
-    return closestData;
+    return matches;
 }
+
+ 
+		
 function createDonationBox(amount, data) {
     const box = document.createElement('div');
     box.className = 'donation-box';
@@ -2618,7 +2763,7 @@ var centerY = -15;  // was 21
         document.getElementById(textIdName).textContent = sliceName;
         document.getElementById(textIdName).setAttribute("x", textX - 5);
         document.getElementById(textIdName).setAttribute("y", textY-1);  // Adjusted Y position for name to be above amount
-        document.getElementById(textIdAmount).textContent = "$" + numberWithCommas(sliceValue);
+        document.getElementById(textIdAmount).textContent = numberWithCommas(sliceValue);
         document.getElementById(textIdAmount).setAttribute("x", textX - 5);
         document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
 		if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
@@ -2679,7 +2824,7 @@ var centerY = -15;  // was 21
         document.getElementById(textIdName).textContent = sliceName;
         document.getElementById(textIdName).setAttribute("x", textX - 5);
         document.getElementById(textIdName).setAttribute("y", textY-1);  // Adjusted Y position for name to be above amount
-        document.getElementById(textIdAmount).textContent = "$" + numberWithCommas(sliceValue);
+        document.getElementById(textIdAmount).textContent = numberWithCommas(sliceValue);
         document.getElementById(textIdAmount).setAttribute("x", textX - 5);
         document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
 		if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
@@ -3245,7 +3390,7 @@ margin-top: 8px;
 
 .donation-row-label {
   position: absolute;
-  left: -20px;
+  left: -30px;
   margin-top: 17px;
   margin-left: 75px;
   font-size: 15px;
@@ -3304,11 +3449,11 @@ margin-top: 8px;
 	font-size: 75%;
   }
 
-  .donation-key-item .pledged {
+  .donation-key-item .pending {
     background-color: #7866A1;
   }
 
-  .donation-key-item .pending {
+  .donation-key-item .identified {
     background-color: #77C4D5;
   }
 
@@ -3316,7 +3461,7 @@ margin-top: 8px;
     background-color: #00758D;
   }
 
-  .donation-key-item .identified {
+  .donation-key-item .pledged {
     background-color: #F78D2D;
   }
 	
@@ -3364,8 +3509,8 @@ margin-top: 8px;
 
   position: relative;
   width: 6.5vw;  /* adjusted to viewport width */
-  height: 5vh;  /* adjusted to viewport height */
-  border-radius: 25px;
+  height: 5.3vh;  /* adjusted to viewport height */
+  border-radius: 7px;
   margin: 7px;  /* adjusted margin based on viewport width */
   overflow: hidden;
   cursor: pointer;
@@ -3404,7 +3549,7 @@ margin-top: 8px;
 .donation-box-front {
   background-color: #d4d4d4;
   display: flex;
-  border-radius: 25px;
+  border-radius: 7px;
   justify-content: center;
   align-items: center;
   font-weight: 500;
@@ -3416,7 +3561,7 @@ margin-top: 8px;
 
 .donation-box-back {
   background-color: #d4d4d4;
-  border-radius: 25px;
+  border-radius: 7px;
   justify-content: center;
   align-items: center;
   font-weight: 500;
@@ -3713,9 +3858,7 @@ tfoot td {
         <th>
           <div>Full Name <span class="required-field">*</span></div>
         </th>
-        <th>
-          <div>Organization <span class="required-field">*</span></div>
-        </th>
+		<th>Organization</th>
         <th>
           <div>Amount <span class="required-field">*</span></div>
         </th>
@@ -3828,7 +3971,7 @@ tfoot td {
 <div id="alertModuleMM" class="modal">
   <div class="modal-content">
     <label id="alertMessageMM"></label>
-    <button onclick="closeAlert4()">Ok</button>
+    <button onclick="closeAlert4()">Ok</button> 
   </div>
 </div>
 
@@ -3839,7 +3982,14 @@ tfoot td {
         <button id="deleteCancelButton">Cancel</button>
   </div>
 </div>
+ 
 
+<div id="alertModuleTab" class="modal">
+  <div class="modal-content">
+  <label>Please finish editing in Moves Management before navigating to another tab!</label>
+	<button onclick="closeAlertTab()">Ok</button>
+  </div>
+ </div>
 
 </div>
 ';
