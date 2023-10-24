@@ -1,0 +1,31 @@
+function save_to_toolkit_donor_info() {
+    global $wpdb;
+
+    $table_name = 'toolkit_donor_info';
+    $data = $_POST['donor_data'];
+
+    $wpdb->insert(
+        $table_name,
+        array(
+            'donor_status' => sanitize_text_field($data['donor_status']),
+            'donor_type' => sanitize_text_field($data['donor_type']),
+            'donor_full_name' => sanitize_text_field($data['donor_full_name']),
+            'donor_org_name' => sanitize_text_field($data['donor_org_name']),
+            'donor_amount' => intval($data['donor_amount']),
+            'donor_next_step' => sanitize_text_field($data['donor_next_step']),
+            'donor_involvement' => sanitize_text_field($data['donor_involvement']),
+            'donor_notes' => sanitize_text_field($data['donor_notes']),
+            'donor_docs' => sanitize_text_field($data['donor_docs']),
+        )
+    );
+	
+	if ($wpdb->last_error) {
+    die("Database error: " . $wpdb->last_error);
+}
+
+    echo 'Data Saved!';
+    wp_die(); // this is required to terminate immediately and return a proper response
+}
+
+add_action('wp_ajax_save_to_toolkit_donor_info', 'save_to_toolkit_donor_info'); // If user is logged in
+add_action('wp_ajax_nopriv_save_to_toolkit_donor_info', 'save_to_toolkit_donor_info'); // If user is not logged in
