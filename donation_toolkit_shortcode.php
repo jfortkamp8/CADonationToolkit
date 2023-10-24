@@ -1,6 +1,7 @@
 function donation_toolkit_shortcode($atts) {
 	wp_enqueue_script( 'js-pdf', 'https://cdn.jsdelivr.net/npm/jspdf@latest/dist/jspdf.min.js', array(), 'latest', true );
 	wp_enqueue_script( 'html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.3.2/dist/html2canvas.min.js', array(), 'latest', true );
+	wp_enqueue_script('jquery');
 	$campaign_slug = isset($atts['id']) ? sanitize_text_field($atts['id']) : '';
 	$campaign = get_page_by_path($campaign_slug, OBJECT, 'campaigns');
 	if (!$campaign) {
@@ -37,6 +38,53 @@ function donation_toolkit_shortcode($atts) {
 	?>
 	<script>
 		
+		
+		//LOAD SAVED DONORS
+		//
+document.addEventListener("DOMContentLoaded", function() {
+const ajaxurl = '/wp-admin/admin-ajax.php';
+jQuery(document).ready(function() {
+    jQuery.ajax({
+        url: ajaxurl,
+        type: 'POST',
+        data: {
+            action: 'fetch_toolkit_donor_info',
+        },
+        success: function(response) {
+            let data = JSON.parse(response);
+            populateTable(data);
+        },
+        error: function(error) {
+            console.error("Error fetching data: ", error);
+        }
+    });
+});
+}); 
+
+function populateTable(data) {
+    let tableBody = jQuery("#donation-table tbody"); // Access the tbody inside the donation-table
+    tableBody.empty(); // Clear the current rows
+ 
+    data.forEach(function(item) {
+        let row = "<tr>";
+        row += "<td>" + item.donor_status + "</td>";
+        row += "<td>" + item.donor_type + "</td>";
+        row += "<td>" + item.donor_full_name + "</td>";
+        row += "<td>" + item.donor_org_name + "</td>";
+        row += "<td>" + item.donor_amount + "</td>";
+        row += "<td>" + item.donor_next_step + "</td>";
+        row += "<td>" + item.donor_involvement + "</td>";
+        row += "<td>" + item.donor_notes + "</td>";
+        row += "<td>" + item.donor_docs + "</td>";
+        row += "<td></td>"; // This matches the empty <th> in the HTML
+        row += "</tr>";
+
+        tableBody.append(row);
+    });
+}
+
+		
+		
 document.body.addEventListener('click', function(event) {
     let clickedBox = event.target.closest('.donation-box');
     
@@ -65,10 +113,37 @@ document.body.addEventListener('click', function(event) {
 	let globalRowLabel;
 	let globalDisplayName = '';
 	let isEditing = false;
+		
+		
+	
 		// This dictionary will store the removal dates indexed by displayName
 let removalDates = {};
 	var clientLogoURL = '<?php echo $imgurl; ?>';
 		
+const cleanAmount = (amount) => {
+  return parseFloat(amount.replace(/[$,]/g, ""));
+}	
+		
+function saveDataToDatabase(data) {
+	const ajaxurl = '/wp-admin/admin-ajax.php';
+	jQuery(document).ready(function($) {
+    $.ajax({
+        url: ajaxurl,
+        type: 'POST',
+        data: {
+            action: 'save_to_toolkit_donor_info',
+            donor_data: data
+        },
+        success: function(response) {
+            console.log("Data saved successfully: ", response);
+        },
+        error: function(error) {
+            console.error("Error saving data: ", error);
+        }
+    });
+	});
+}
+
 		
 	function makeDarker(color, factor) {
   const r = Math.max(0, parseInt(color.substring(1, 3), 16) - factor);
@@ -182,7 +257,7 @@ let donationRows = document.querySelectorAll('.donation-row');
 	
 	//MOVES MANAGEMENT AND PP JS
 	function addRow() {
-		
+
 		isEditing = true;
   		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
   		const tabContents = document.querySelectorAll('.tabbed-content .tab');
@@ -213,6 +288,7 @@ let donationRows = document.querySelectorAll('.donation-row');
   		const cells = Array.from({ length: 10 }, () => document.createElement("td"));
   		// Add dropdown for pledge or pending column
   		const pledgePendingSelect = document.createElement("select");
+		pledgePendingSelect.className = "donation-status-select";
   		pledgePendingSelect.innerHTML = `
   			<option value="pledge">Pledged</option>
   			<option value="pending">Pending</option>
@@ -680,6 +756,36 @@ orgNameCheckbox.addEventListener("change", function () {
 				isEditing = false;
 			if (validateForm()) { 
 			
+// Select all the rows in the moves management table
+		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
+		
+			
+		// Iterate over each row and update the count variables
+		rowsType.forEach(row => {
+  			const donationTypeSelect = row.querySelector('.donation-type-select');
+			const donationStatusSelect = row.querySelector('.donation-status-select');
+			
+ 			const donationTypeValue = donationTypeSelect.value;	
+			const donationStatusValue = donationStatusSelect.value;
+			
+			console.log(donationTypeValue);
+			console.log(donationStatusValue); 
+			
+const donorData = {
+    donor_status: donationStatusValue,
+    donor_type: donationTypeValue,
+    donor_full_name: inputs[0].value, 
+    donor_org_name: inputs[1].value,
+    donor_amount: cleanAmount(inputs[2].value), // parsing the amount as integer
+    donor_next_step: inputs[3].value,
+    donor_involvement: inputs[4].value,
+    donor_notes: inputs[5].value,
+    donor_docs: "todo" 
+};
+
+saveDataToDatabase(donorData);
+		 
+});				 
 			console.log(isEditing);
 		deleteButton.remove();
         console.log("deleteButton removed");
@@ -1247,10 +1353,6 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 		let boardCount = 0;
 		let otherCount = 0;
 
-		// Select all the rows in the moves management table
-		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
-		
-			
 		// Iterate over each row and update the count variables
 		rowsType.forEach(row => {
   			const donationTypeSelect = row.querySelector('.donation-type-select');
@@ -1493,9 +1595,6 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 		let publicCount = 0;
 		let boardCount = 0;
 		let otherCount = 0;
-
-		// Select all the rows in the moves management table
-		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
 		
 			
 		// Iterate over each row and update the count variables
@@ -2234,9 +2333,10 @@ console.log("Closest amount:", closestAmount);
 		rowSpace();
   		updateTotalDonations();
 	}
+		
 function findClosestMatchingBoxesData(targetAmount, maxMatches = Infinity) {
-    let matches = [];
-    const donationBoxes = Array.from(document.querySelectorAll('.donation-box')); 
+    const donationBoxes = Array.from(document.querySelectorAll('.donation-box'));
+    const rankedMatches = [];
 
     donationBoxes.forEach(box => {
         const boxFront = box.querySelector('.donation-box-front');
@@ -2246,49 +2346,81 @@ function findClosestMatchingBoxesData(targetAmount, maxMatches = Infinity) {
             const boxAmount = parseInt(boxBack.innerText.replace(/[$,]/g, ''));
             const difference = Math.abs(boxAmount - targetAmount);
 
-            if (difference === 0 && matches.length < maxMatches) {
-                const clonedFront = boxFront.cloneNode(true);
-                const clonedBack = boxBack.cloneNode(true);
-
-                clonedFront.style.color = "#fff";
-                clonedFront.style.fontWeight = "500";
-                clonedFront.style.textAlign = "center";
-                clonedFront.style.display = "flex";
-                clonedFront.style.justifyContent = "center";
-                clonedFront.style.alignItems = "center";
-
-                clonedBack.style.color = "#fff";
-                clonedBack.style.fontWeight = "400";
-                clonedBack.style.fontSize = "17px";
-                clonedBack.style.textAlign = "center";
-                clonedBack.style.display = "none"; // Hide the back initially
-
-                const clonedDonationBoxInner = document.createElement('div');
-                clonedDonationBoxInner.className = 'donation-box-inner';
-
-                // Appending the cloned elements
-                clonedDonationBoxInner.appendChild(clonedFront);
-                clonedDonationBoxInner.appendChild(clonedBack);
-
-                const clonedDonationBox = document.createElement('div');
-                clonedDonationBox.className = 'donation-box';
-                clonedDonationBox.appendChild(clonedDonationBoxInner); // Append inner box
-
-           matches.push({
-                    box: clonedDonationBox,
-                    front: clonedFront,
-                    back: clonedBack,
-                    originalRow: box.parentElement
-                });
-
-                // Remove the original box after cloning its data
-                box.parentElement.removeChild(box);
-            }
+            rankedMatches.push({
+                difference,
+                box,
+                boxFront,
+                boxBack,
+                boxAmount,
+                originalRow: box.parentElement
+            });
         }
     });
 
+    // Sort the matches based on the difference to target amount
+    rankedMatches.sort((a, b) => a.difference - b.difference);
+
+    const matches = [];
+
+    for (let i = 0; i < rankedMatches.length && matches.length < maxMatches; i++) {
+        const match = rankedMatches[i];
+        
+        if (shouldMoveBox(match, targetAmount)) {
+            const { box, boxFront, boxBack } = match;
+            
+            const clonedFront = boxFront.cloneNode(true);
+            const clonedBack = boxBack.cloneNode(true);
+
+            // ... The styling and cloning process ...
+
+            clonedFront.style.color = "#fff";
+            clonedFront.style.fontWeight = "500";
+            clonedFront.style.textAlign = "center";
+            clonedFront.style.display = "flex";
+            clonedFront.style.justifyContent = "center";
+            clonedFront.style.alignItems = "center";
+
+            clonedBack.style.color = "#fff";
+            clonedBack.style.fontWeight = "400";
+            clonedBack.style.fontSize = "17px";
+            clonedBack.style.textAlign = "center";
+            clonedBack.style.display = "none"; // Hide the back initially
+
+            const clonedDonationBoxInner = document.createElement('div');
+            clonedDonationBoxInner.className = 'donation-box-inner';
+
+            // Appending the cloned elements
+            clonedDonationBoxInner.appendChild(clonedFront);
+            clonedDonationBoxInner.appendChild(clonedBack);
+
+            const clonedDonationBox = document.createElement('div');
+            clonedDonationBox.className = 'donation-box';
+            clonedDonationBox.appendChild(clonedDonationBoxInner); // Append inner box
+
+            matches.push({
+                box: clonedDonationBox,
+                front: clonedFront,
+                back: clonedBack,
+                originalRow: match.originalRow
+            });
+
+            // Remove the original box after cloning its data
+            box.parentElement.removeChild(box);
+        }
+    }
+
     return matches;
 }
+
+// Helper function to determine if the box should be moved or not
+function shouldMoveBox(match, targetAmount) {
+    const currentRowAmount = parseInt(match.box.getAttribute('data-amount'));
+    const diffForCurrentRow = Math.abs(match.boxAmount - currentRowAmount);
+    const diffForTargetRow = match.difference; // already calculated for the target row
+
+    return diffForTargetRow < diffForCurrentRow;
+}
+
 
  
 		
