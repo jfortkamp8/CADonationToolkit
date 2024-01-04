@@ -37,51 +37,121 @@ function donation_toolkit_shortcode($atts) {
 
 	?>
 	<script>
-		
-		
-		//LOAD SAVED DONORS
-		//
-document.addEventListener("DOMContentLoaded", function() {
-const ajaxurl = '/wp-admin/admin-ajax.php';
-jQuery(document).ready(function() {
-    jQuery.ajax({
-        url: ajaxurl,
-        type: 'POST',
-        data: {
-            action: 'fetch_toolkit_donor_info',
-        },
-        success: function(response) {
-            let data = JSON.parse(response);
-            populateTable(data);
-        },
-        error: function(error) {
-            console.error("Error fetching data: ", error);
+
+
+	// Global
+	let donors = [];
+	let globalRowLabel;
+	let globalDisplayName = '';
+	let isEditing = false;
+
+function flipBox(){
+document.body.addEventListener('click', function(event) {
+    let clickedBox = event.target.closest('.donation-box');
+    
+    if (clickedBox) {
+        console.log('Cloned box clicked');
+
+        let boxFront = clickedBox.querySelector('.donation-box-front');
+        let boxBack = clickedBox.querySelector('.donation-box-back');
+
+        if (boxFront && boxBack) {
+            // Check which side (front or back) is currently displayed
+            if (getComputedStyle(boxFront).display !== 'none') {
+                boxFront.style.display = 'none';
+                boxBack.style.display = 'flex';
+            } else {
+                boxFront.style.display = 'flex';
+                boxBack.style.display = 'none';
+            }
         }
-    });
-});
-}); 
-
-function populateTable(data) {
-    let tableBody = jQuery("#donation-table tbody"); // Access the tbody inside the donation-table
-    tableBody.empty(); // Clear the current rows
- 
-    data.forEach(function(item) {
-        let row = "<tr>";
-        row += "<td>" + item.donor_status + "</td>";
-        row += "<td>" + item.donor_type + "</td>";
-        row += "<td>" + item.donor_full_name + "</td>";
-        row += "<td>" + item.donor_org_name + "</td>";
-        row += "<td>" + item.donor_amount + "</td>";
-        row += "<td>" + item.donor_next_step + "</td>";
-        row += "<td>" + item.donor_involvement + "</td>";
-        row += "<td>" + item.donor_notes + "</td>";
-        row += "<td>" + item.donor_docs + "</td>";
-        row += "<td></td>"; // This matches the empty <th> in the HTML
-        row += "</tr>";
-
-        tableBody.append(row);
-    });
+    }
+	});	
 }
+		
+flipBox();
+		
+	// Call savePageStateToServer() whenever there is a change in the page state
+	document.addEventListener("DOMContentLoaded", function() {
+	  var deleteStorage = false;
+	  // Call loadPageStateFromServer() when the page loads to render the saved HTML
+		if (deleteStorage == true){
+			localStorage.clear();
+		} else {
+        	// Load saved states if it exists
+        	loadDonationMeterState();
+    		loadPageStateFromLocal();
+			flipBox();
+		}
+	});
+
+		
+		function loadDonationMeterState() {
+    const savedTotalDonations = parseFloat(localStorage.getItem('totalDonations'));
+    const savedPercent = parseFloat(localStorage.getItem('percent'));
+    const goal = <?php echo $goal; ?>; // Your existing goal
+
+    if (!isNaN(savedTotalDonations) && !isNaN(savedPercent)) {
+        // Update the meter with saved values
+        const meterFill = document.getElementById("donation-meter-fill");
+        meterFill.style.width = `${savedPercent}%`;
+        meterFill.innerHTML = `<div class="fill" style="width: ${savedPercent}%">${savedPercent > 100 ? `<p>${savedPercent.toFixed()}%</p>` : ''}</div>`;
+
+        const meterTexthead = document.getElementById("donation-meter-head");
+        meterTexthead.innerHTML = `$${savedTotalDonations.toLocaleString()} Raised To-Date (${savedPercent.toFixed()}%)`;
+
+        const meterText = document.getElementById("donation-meter-text");
+        meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
+		
+		
+    }
+				// Sort donorArray in descending order based on donation amount
+    donors.sort((a, b) => b.amount - a.amount);
+	console.log(donors);
+    // Get the donorContainer element
+    const donorContainer = document.getElementById('donorContainer');
+
+    // Populate the top 5 donors into the donorContainer
+    for (let i = 0; i < 5 && i < donors.length; i++) {
+        const donor = donors[i];
+        const donorElement = document.createElement('div');
+donorElement.innerHTML = `
+    <div style="text-align: center; margin: 0 35px;">
+        <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
+        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
+    </div>`;
+        donorContainer.appendChild(donorElement);
+    }
+}
+
+	  // Function to save the HTML content to localStorage
+	  function savePageStateToLocal() {
+		const pageHTML = document.documentElement.outerHTML;
+		localStorage.setItem('saved_page_html', pageHTML);
+	  }
+
+	  // Function to load and render the saved HTML content from localStorage
+	  function loadPageStateFromLocal() {
+		const savedPageHTML = localStorage.getItem('saved_page_html');
+		const saving = true; 
+		if (savedPageHTML && saving == true) {
+		  document.documentElement.innerHTML = savedPageHTML;
+		  console.log("Page state loaded successfully.");
+		} else {
+		  console.log("No saved page state found in localStorage.");
+		}
+	  }
+
+	// Add event listeners for user interactions to trigger saving the page state
+  document.addEventListener('click', function() {
+    // Example: Save the page state whenever a click event occurs
+    savePageStateToLocal();
+  });
+
+  document.addEventListener('input', function() {
+    // Example: Save the page state whenever an input event occurs (e.g., user types in an input field)
+    savePageStateToLocal();
+  });
 
 		
 		
@@ -106,13 +176,6 @@ document.body.addEventListener('click', function(event) {
         }
     }
 });
-
-
-	// Global
-	let donors = [];
-	let globalRowLabel;
-	let globalDisplayName = '';
-	let isEditing = false;
 		
 		
 	
@@ -123,26 +186,7 @@ let removalDates = {};
 const cleanAmount = (amount) => {
   return parseFloat(amount.replace(/[$,]/g, ""));
 }	
-		
-function saveDataToDatabase(data) {
-	const ajaxurl = '/wp-admin/admin-ajax.php';
-	jQuery(document).ready(function($) {
-    $.ajax({
-        url: ajaxurl,
-        type: 'POST',
-        data: {
-            action: 'save_to_toolkit_donor_info',
-            donor_data: data
-        },
-        success: function(response) {
-            console.log("Data saved successfully: ", response);
-        },
-        error: function(error) {
-            console.error("Error saving data: ", error);
-        }
-    });
-	});
-}
+	
 
 		
 	function makeDarker(color, factor) {
@@ -534,6 +578,10 @@ return isNaN(amount) ? acc : acc + amount;
 		meterTexthead.innerHTML = `$${totalDonations.toLocaleString()} Raised To-Date (${percent.toFixed()}%)`;
 		meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
 			
+		console.log("Saving to localStorage:", totalDonations, percent);
+		localStorage.setItem('totalDonations', totalDonations);
+localStorage.setItem('percent', percent);
+		
 		// Initialize count variables for each donation type
 		let individualCount = 0;
 		let foundationCount = 0;
@@ -770,21 +818,7 @@ orgNameCheckbox.addEventListener("change", function () {
 			
 			console.log(donationTypeValue);
 			console.log(donationStatusValue); 
-			
-const donorData = {
-    donor_status: donationStatusValue,
-    donor_type: donationTypeValue,
-    donor_full_name: inputs[0].value, 
-    donor_org_name: inputs[1].value,
-    donor_amount: cleanAmount(inputs[2].value), // parsing the amount as integer
-    donor_next_step: inputs[3].value,
-    donor_involvement: inputs[4].value,
-    donor_notes: inputs[5].value,
-    donor_docs: "todo" 
-};
-
-saveDataToDatabase(donorData);
-		 
+ 
 });				 
 			console.log(isEditing);
 		deleteButton.remove();
@@ -1345,6 +1379,9 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 		meterTexthead.innerHTML = `$${totalDonations.toLocaleString()} Raised To-Date (${percent.toFixed()}%)`;
 		meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
 			
+		localStorage.setItem('totalDonations', totalDonations);
+localStorage.setItem('percent', percent);
+		
 		// Initialize count variables for each donation type
 		let individualCount = 0;
 		let foundationCount = 0;
@@ -1587,7 +1624,10 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 	    const meterTexthead = document.getElementById("donation-meter-head");
 		meterTexthead.innerHTML = `$${totalDonations.toLocaleString()} Raised To-Date (${percent.toFixed()}%)`;
 		meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
-			
+			console.log("Saving to localStorage:", totalDonations, percent);
+				localStorage.setItem('totalDonations', totalDonations);
+localStorage.setItem('percent', percent);
+				
 		// Initialize count variables for each donation type
 		let individualCount = 0;
 		let foundationCount = 0;
@@ -1772,7 +1812,9 @@ donorElement.innerHTML = `
 		
 	}
 
+		
 	//ADD DASHBOARD ON PAGE LOAD
+	/*
 	document.addEventListener("DOMContentLoaded", function() {
   		const goal = <?php echo $goal; ?>;
   		
@@ -1882,7 +1924,8 @@ donorElement.innerHTML = `
     `;
 
 	});
-function generatePDF() {
+	*/
+		function generatePDF() {
     const tab = document.querySelector('.tab.active');
     const tabTitleElement = tab.querySelector('h2');
     const tabTitle = tabTitleElement.innerText;
@@ -2745,7 +2788,7 @@ function calculateTotalDonations() {
   		});
 	}
 
-  	//applyAnonymousSetting();
+  	//nas/content/live/cramerassoclyAnonymousSetting();
   	applyAppearanceSettings();
 
   	// Close the settings menu after saving
@@ -2885,27 +2928,7 @@ var centerY = -15;  // was 21
     var percentRadius = radius / 2;  // Midway inside the slice
     var percentX = centerX + percentRadius * Math.cos(midRad);
     var percentY = centerY + percentRadius * Math.sin(midRad);
-    var slicePercentage = ((endProportion - startProportion) * 100).toFixed(0);  // Convert proportion to percentage
-
-
-    // Update slice path and text
-    document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById(sliceId).setAttribute("d", pathData);
-        document.getElementById(sliceId).setAttribute("fill", fillColor);
-        document.getElementById(textIdName).textContent = sliceName;
-        document.getElementById(textIdName).setAttribute("x", textX - 5);
-        document.getElementById(textIdName).setAttribute("y", textY-1);  // Adjusted Y position for name to be above amount
-        document.getElementById(textIdAmount).textContent = numberWithCommas(sliceValue);
-        document.getElementById(textIdAmount).setAttribute("x", textX - 5);
-        document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
-		if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
-            var fontSize = slicePercentage < 20 ? "2" : "2.4";  // Adjust font size if percentage is under 20%
-            document.getElementById(textIdPercent).textContent = slicePercentage + "%";
-            document.getElementById(textIdPercent).setAttribute("x", percentX-2);
-            document.getElementById(textIdPercent).setAttribute("y", percentY-.5);
-            document.getElementById(textIdPercent).setAttribute("font-size", fontSize);
-        }
-    });
+    var slicePercentage = ((endProportion - startProportion) * 100).toFixed(0);  // Convert proportion to percentag
 	
 } 
 		
