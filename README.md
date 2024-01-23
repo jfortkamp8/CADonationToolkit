@@ -10,22 +10,4 @@ Color Codes:
 
 Fonts: Warnock Pro, Noto Sans, and Noto Serif.
 
-Team Input Mtg. 5/17/23
-
-* Pipeline
-* Flip card w/ donation amount
-* Dashboard Tab
-* Ability to edit pyramid
-* Settings tab
-  - anonymous mode
-  - admin mode
-  - public/private button
-  - privacy mode
-* Bolder Numbers
-* Viewer Only
-* Add campiagn button in home screen
-* Sum column on donation pyramid
-* Categories tab??
-* Client logo
-* Cramer branding on PDFs
-
+Image Hosting: https://jfortkamp.imgbb.com/
