@@ -45,6 +45,49 @@ function donation_toolkit_shortcode($atts) {
 	let globalDisplayName = '';
 	let isEditing = false;
 
+document.addEventListener('DOMContentLoaded', function() {
+    activateTab();
+    
+    // Function to update active tab and content
+    function updateActiveTab(tabContentId) {
+        // Remove active class from all tab links
+        const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
+        tabLinks.forEach(link => link.classList.remove('active'));
+
+        // Add active class to the current tab link
+        const activeTabLink = document.querySelector(`.tabbed-menu .tab-link[data-tab="${tabContentId}"]`);
+        if (activeTabLink) {
+            activeTabLink.classList.add('active');
+        }
+
+        // Hide all tab contents
+        const tabContents = document.querySelectorAll('.tabbed-content .tab');
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        // Show the current tab content
+        const activeTabContent = document.getElementById(tabContentId);
+        if (activeTabContent) {
+            activeTabContent.classList.add('active');
+        }
+    }
+
+    // Event listeners for navigation buttons
+    const navButtons = document.querySelectorAll('.navigation-button');
+    navButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Hide the overlay
+            const overlay = document.getElementById('navigation-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+
+            // Update the active tab based on the clicked button
+            updateActiveTab(this.dataset.tab);
+        });
+    });
+});
+
+		
 function flipBox(){
 document.body.addEventListener('click', function(event) {
     let clickedBox = event.target.closest('.donation-box');
@@ -73,12 +116,12 @@ flipBox();
 		
 	// Call savePageStateToServer() whenever there is a change in the page state
 	document.addEventListener("DOMContentLoaded", function() {
-	  var deleteStorage = false;
+	  var deleteStorage = true;
 	  // Call loadPageStateFromServer() when the page loads to render the saved HTML
 		if (deleteStorage == true){
 			localStorage.clear();
 		} else {
-        	// Load saved states if it exists
+			loadMMJS();
         	loadDonationMeterState();
     		loadPageStateFromLocal();
 			flipBox();
@@ -86,7 +129,55 @@ flipBox();
 	});
 
 		
-		function loadDonationMeterState() {
+function loadMMJS(){
+	
+	const cells = Array.from({ length: 10 }, () => document.createElement("td"));
+	// Add column to attach files to donation
+		const attachFiles = document.createElement("td");
+		attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
+                        		'<button class="download-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" 								  alt="Download files"></button>';
+		attachFiles.width = '10%';
+		attachFiles.style.textAlign = 'center';
+		attachFiles.style.verticalAlign = 'middle';
+		cells[8] = attachFiles;
+		const attachButton = cells[8].querySelector(".attach-button");
+		const downloadButton = cells[8].querySelector(".download-button");
+  		// Attach button click event listener
+  		attachButton.addEventListener("click", function handleAttachButtonClick() {
+			console.log("attach"); 
+    		const fileInput = document.createElement("input");
+    		fileInput.type = "file";
+    		fileInput.multiple = true;
+    		fileInput.accept = "image/*, .pdf, .doc, .docx";
+    		fileInput.style.display = "none";
+   		 	document.body.appendChild(fileInput);
+    		fileInput.addEventListener("change", function handleFileInputChange() {
+      			const fileList = fileInput.files;
+      			const files = Array.from(fileList);
+      			if (files.length > 0) {
+        			downloadButton.disabled = false;
+        			downloadButton.addEventListener("click", function handleDownloadButtonClick() {
+          				files.forEach(file => {
+            				const url = URL.createObjectURL(file);
+            				const link = document.createElement("a");
+            				link.href = url;
+            				link.download = file.name;
+            				link.style.display = "none";
+            				document.body.appendChild(link);
+            				link.click();
+            				document.body.removeChild(link);
+            				URL.revokeObjectURL(url);
+          				});
+        			});
+      			}
+    		});
+			fileInput.click();
+  		});
+}
+		
+		loadMMJS();
+		
+function loadDonationMeterState() {
     const savedTotalDonations = parseFloat(localStorage.getItem('totalDonations'));
     const savedPercent = parseFloat(localStorage.getItem('percent'));
     const goal = <?php echo $goal; ?>; // Your existing goal
@@ -308,9 +399,16 @@ let donationRows = document.querySelectorAll('.donation-row');
   		tabLinks.forEach(link => {
       		link.classList.remove('active');
     	});
-    	// Add active class to "moves-management" tab link
-    	const movesManagementTabLink = document.querySelector('.tab-link[data-tab="moves-management"]');
-    	movesManagementTabLink.classList.add('active');
+		
+    	  // Add 'active' class to "moves-management" tab link
+    const movesManagementTabLink = document.querySelector('li.tab-link[data-tab="moves-management"]');
+    if (movesManagementTabLink) {
+        movesManagementTabLink.classList.add('active');
+    } else {
+        console.error('Moves Management tab link not found');
+    }
+
+
     	// Hide all tab contents
     	tabContents.forEach(content => {
       		content.classList.remove('active');
@@ -376,15 +474,31 @@ let donationRows = document.querySelectorAll('.donation-row');
 		cells[7].style.verticalAlign = 'middle';
 		
 		const docIndex = Array.from(cells).indexOf(cells[8]);
-		const inputs = cells.slice(2, 9).map(cell => {
-    		const input = document.createElement("input");
-    		input.type = "text";
-    		input.style.fontSize = "11px";
-    		input.style.width = "100%";
-			input.style.boxSizing = "border-box";
-    		cell.appendChild(input);
-    		return input;
- 		});
+const inputs = cells.slice(2, 9).map(cell => {
+    const textarea = document.createElement("textarea");
+    textarea.style.fontSize = "11px";
+    textarea.style.width = "100%";
+    textarea.style.boxSizing = "border-box";
+    textarea.style.overflowY = "hidden";
+    textarea.setAttribute('rows', '1');
+    textarea.style.resize = "none";
+    textarea.style.verticalAlign = "middle"; // Align textareas vertically
+
+    // Function to resize textarea based on content
+    const resizeTextarea = (el) => {
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+    };
+
+    // Resize textarea when the content changes
+    textarea.addEventListener('input', (e) => {
+        resizeTextarea(e.target);
+    });
+
+    cell.appendChild(textarea);
+    return textarea;
+});
+ 
 		
 		const fullNameCheckbox = addCircleCheckbox();
 		const orgNameCheckbox = addCircleCheckbox(); 
@@ -471,61 +585,115 @@ function validateForm() {
   return true;
 }
 
+// Add column to attach files to donation
+const attachFiles = document.createElement("td");
+attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
+                        '<button class="download-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" alt="Download files"></button>';
+attachFiles.width = '10%';
+attachFiles.style.textAlign = 'center';
+attachFiles.style.verticalAlign = 'middle';
+cells[8] = attachFiles;
 
+const attachButton = cells[8].querySelector(".attach-button");
+const downloadButton = cells[8].querySelector(".download-button");
 
+// Create an array to store selected files
+const selectedFiles = [];
 
+// Attach button click event listener
+attachButton.addEventListener("click", function handleAttachButtonClick() {
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.multiple = true;
+  fileInput.accept = "image/*, .pdf, .doc, .docx";
+  fileInput.style.display = "none";
+  document.body.appendChild(fileInput);
+  fileInput.addEventListener("change", function handleFileInputChange() {
+    const fileList = fileInput.files;
+    const files = Array.from(fileList);
+    if (files.length > 0) {
+      downloadButton.disabled = false;
+      selectedFiles.push(...files);
+    }
+  });
+  fileInput.click();
+});
 
+downloadButton.addEventListener("click", function handleDownloadButtonClick() {
+  if (selectedFiles.length > 0) {
+    // Create a popup/modal to display the list of files
+    const popup = document.createElement("div");
+    popup.className = "popup";
+    popup.style.position = "fixed";
+    popup.style.top = "50%";
+    popup.style.left = "50%";
+    popup.style.transform = "translate(-50%, -50%)";
+    popup.style.background = "white";
+    popup.style.padding = "10px";
+    popup.style.borderRadius = "10px";
+    popup.style.boxShadow = "0 4px 8px 0 rgba(0, 0, 0, 0.2)";
+    popup.style.zIndex = "9999";
+    popup.style.textAlign = "center";
 
-  		// Add column to attach files to donation
-		const attachFiles = document.createElement("td");
-		attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
-                        		'<button class="download-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" 								  alt="Download files"></button>';
-		attachFiles.width = '10%';
-		attachFiles.style.textAlign = 'center';
-		attachFiles.style.verticalAlign = 'middle';
-		cells[8] = attachFiles;
-		const attachButton = cells[8].querySelector(".attach-button");
-		const downloadButton = cells[8].querySelector(".download-button");
-  		// Attach button click event listener
-  		attachButton.addEventListener("click", function handleAttachButtonClick() {
-    		const fileInput = document.createElement("input");
-    		fileInput.type = "file";
-    		fileInput.multiple = true;
-    		fileInput.accept = "image/*, .pdf, .doc, .docx";
-    		fileInput.style.display = "none";
-   		 	document.body.appendChild(fileInput);
-    		fileInput.addEventListener("change", function handleFileInputChange() {
-      			const fileList = fileInput.files;
-      			const files = Array.from(fileList);
-      			if (files.length > 0) {
-        			downloadButton.disabled = false;
-        			downloadButton.addEventListener("click", function handleDownloadButtonClick() {
-          				files.forEach(file => {
-            				const url = URL.createObjectURL(file);
-            				const link = document.createElement("a");
-            				link.href = url;
-            				link.download = file.name;
-            				link.style.display = "none";
-            				document.body.appendChild(link);
-            				link.click();
-            				document.body.removeChild(link);
-            				URL.revokeObjectURL(url);
-          				});
-        			});
-      			}
-    		});
-			fileInput.click();
-  		});
+    const fileListContainer = document.createElement("div");
+    fileListContainer.className = "file-list-container";
 
-		const saveButton = document.createElement("button");
-  		saveButton.className = "save-button";
-  		saveButton.innerText = "Save";
-  		cells[9].appendChild(saveButton);
-  		cells[9].style.textAlign = "center";
-  		cells[9].style.verticalAlign = "middle";
+    selectedFiles.forEach((file, index) => {
+      const fileItem = document.createElement("div");
+fileItem.innerText = file.name;
+fileItem.style.marginBottom = "8px"; // Vertical spacing between files
+fileItem.style.backgroundColor = index % 2 === 0 ? "#f5f5f5" : "white"; // Alternating shades of grey and white
+
+const fileIcon = document.createElement("img");
+
+const downloadLink = document.createElement("a");
+downloadLink.href = URL.createObjectURL(file);
+downloadLink.download = file.name;
+
+const downloadIcon = document.createElement("img");
+downloadIcon.src = "https://i.ibb.co/rpdt924/image.png";
+downloadIcon.alt = "Download";
+downloadIcon.style.width = "20px";
+downloadIcon.style.height = "20px";
+downloadIcon.style.marginLeft = "5px"; // Spacing between download icon and file name
+
+downloadIcon.addEventListener("click", () => {
+  // Change the color of the file name to #7866A1
+  fileItem.style.color = "#7866A1";
+  fileItem.style.textDecoration = "underline";
+});
+
+downloadLink.appendChild(downloadIcon);
+
+fileItem.appendChild(downloadLink);
+fileListContainer.appendChild(fileItem);
+
+    });
+
+    const closeButton = document.createElement("button");
+    closeButton.innerText = "Close";
+    closeButton.style.padding = "7.5px 12.5px"; // Smaller close button
+    closeButton.style.marginTop = "10px"; // Space between files and close button
+    closeButton.addEventListener("click", function handleCloseButtonClick() {
+      document.body.removeChild(popup);
+    });
+
+    fileListContainer.appendChild(closeButton);
+    popup.appendChild(fileListContainer);
+    document.body.appendChild(popup);
+  }
+});
+
+const saveButton = document.createElement("button");
+saveButton.className = "save-button";
+saveButton.innerText = "Save";
+cells[9].appendChild(saveButton);
+cells[9].style.textAlign = "center";
+cells[9].style.verticalAlign = "middle";
+
+cells.forEach(cell => newRow.appendChild(cell));
+ 
 		
-  		cells.forEach(cell => newRow.appendChild(cell));
-
   	// Utility function to parse the donation amount from the cell text
 function parseDonationAmount(text) {
     return parseFloat(text.replace(/\$|,/g, '').trim() || "0");
@@ -1925,7 +2093,7 @@ donorElement.innerHTML = `
 
 	});
 	*/
-		function generatePDF() {
+function generatePDF() {
     const tab = document.querySelector('.tab.active');
     const tabTitleElement = tab.querySelector('h2');
     const tabTitle = tabTitleElement.innerText;
@@ -3197,7 +3365,7 @@ $output = '
 .logout-button {
   margin-top: 0;
   position: absolute;
-  top: 165px;
+  top: 180px;
   right: 40px;
   display: flex;
   align-items: center;
@@ -3811,7 +3979,7 @@ margin-top: 8px;
   border-radius: 5px;
   padding: 10px;
   position: absolute;
-  top: 165px;
+  top: 180px;
   right: 160px;
   width: 41px; 
   height: 41px;
@@ -3830,7 +3998,7 @@ margin-top: 8px;
   border-radius: 5px;
   padding: 10px;
   position: absolute;
-  top: 165px;
+  top: 180px;
   right: 210px;
   width: 41px; 
   height: 41px;
@@ -3866,8 +4034,113 @@ tfoot td {
   color: rgb(226,118,118); 
 }
 
+.copyright-box{
+  background-color: #F78D2D;
+  border-radius: 10px;
+  padding: 10px;
+  width: 230px; 
+  text-align: left;
+  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.1);
+}
+
+.copyright-box h2 {
+  color: white;
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.copyright-box p {
+  color: white;
+  margin: 0;
+  font-size: 12px;
+}
+.button-container {
+  margin-top: -200px;
+  display: flex;
+  flex-wrap: wrap; /* Allows buttons to wrap to the next line on smaller screens */
+  justify-content: center; /* Centers buttons horizontally */
+  gap: 20px; /* Adds space between the buttons */
+  align-items: center; /* Centers buttons vertically */
+}
+
+.button-background {
+  margin: 20px;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  background-color: white;
+  height: 210px;
+  position: relative; /* Allows absolute positioning inside */
+  display: flex;
+  flex-direction: column; /* Stack the image and button vertically */
+  align-items: center; /* Center the image and button horizontally */
+  justify-content: center; /* Center the image and button vertically */
+}
+
+.background-image {
+  position: absolute;
+  border-radius: 20px; /* Match the border-radius of the parent */
+  width: 85%;
+  height: 85%;
+  object-fit: contain; /* Change to contain to fit the image inside without cropping */
+  z-index: -1; /* Positions the image behind the button */
+}
+
+.navigation-button {
+  background-color: transparent;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2em;
+  cursor: pointer;
+  position: absolute; /* Position the button absolutely within the parent */
+  bottom: 0; /* Position the button at the bottom of the container */
+  z-index: 0;
+  margin-bottom: -20px; /* Overlap the button slightly on top of the image */
+}
+
+
+  /* Full page overlay styles */
+  .full-page-overlay {
+    position: absolute;
+    width: 100%;
+	left: 0;
+    height: 100%; 
+    background-color:#F1FCFE;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1; /* High z-index to cover everything else */
+} 
+
+
 
 </style>
+
+<div class="toolkit-container">
+
+<!-- Full page overlay navigation menu -->
+<div class="full-page-overlay" id="navigation-overlay">
+  <div class="button-container">
+    <div class="button-background" data-tab="donation-pyramid">
+      <img src="https://i.ibb.co/3sfgsM3/cramer-pyra-1.png" alt="Gift Pyramid" class="button-img">
+      <button class="navigation-button tab-link" data-tab="donation-pyramid">Gift Pyramid</button>
+    </div>
+    <div class="button-background" data-tab="pledges-pending">
+      <img src="https://i.ibb.co/BtN0Pmn/cramer-ppp.png" alt="Pledges Pending" class="button-img">
+      <button class="navigation-button tab-link" data-tab="pledges-pending">Pledges, Pending, Pipeline</button>
+    </div>
+    <div class="button-background" data-tab="moves-management">
+      <img src="https://i.ibb.co/v4P9MvF/cramer-moves-1.png" alt="Moves Management" class="button-img">
+      <button class="navigation-button tab-link" data-tab="moves-management">Moves Management</button>
+    </div>
+    <div class="button-background" data-tab="dashboard">
+      <img src="https://i.ibb.co/dJj5mpq/dash-cramer.png" alt="Dashboard" class="button-img">
+      <button class="navigation-button tab-link" data-tab="dashboard">Dashboard</button>
+    </div> 
+  </div>
+</div>
 
 <div class="home-button" onclick="redirectToToolkitHome()">
 <img src="https://icon-library.com/images/white-home-icon-png/white-home-icon-png-21.jpg" alt="Home" style="width: 20px; height: 20px; align-items: center;  justify-content: center; align-items: center;">
@@ -3925,13 +4198,20 @@ tfoot td {
   </div>
   <div class="logo-container" style="text-align:center; margin-top: 30px;">
     <img src="' . $imgurl . '" alt="Client Logo" style="width: 70%; display: block; margin: 0 auto;">
+	<p style="font-size: 14px;">Produced and Powered by:</p>
+    <img src="https://i.ibb.co/cD1ZLYz/cramer-logo.png" alt="Cramer Logo" style="width: 100%; display: block; margin-top: 0px;">
   </div>
+  
+  
 </div>
 
-
 <div class="tabbed-container">
+<div class="copyright-box">
+<h2>Campaign Toolkit</h2>
+<p>© Cramer & Associates, Inc., 2024</p>
+</div>
   <div class="tabbed-content">
-	<div class="tab active" id="donation-pyramid">
+	<div class="tab" id="donation-pyramid">
       <h2>Gift Pyramid</h2>
       ' . $donation_pyramid . '
     </div>
@@ -4036,7 +4316,7 @@ tfoot td {
 
 <div class="tabbed-menu">
   <ul>
-    <li class="tab-link active" data-tab="donation-pyramid" onclick="activateTab()">Gift Pyramid</li>
+    <li class="tab-link" data-tab="donation-pyramid" onclick="activateTab()">Gift Pyramid</li>
     <li class="tab-link" data-tab="pledges-pending" onclick="activateTab()">Pledges, Pending, & Pipeline</li>
     <li class="tab-link" data-tab="moves-management" onclick="activateTab()">Moves Management</li>
 	<li class="tab-link" data-tab="dashboard" onclick="activateTab()">Campaign Dashboard</li>
@@ -4146,6 +4426,7 @@ tfoot td {
   </div>
  </div>
 
+</div>
 </div>
 ';
 	
