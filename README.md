@@ -11,3 +11,7 @@ Color Codes:
 Fonts: Warnock Pro, Noto Sans, and Noto Serif.
 
 Image Hosting: https://jfortkamp.imgbb.com/
+
+BUG LOG:
+
+* Issue with addDonationBox(), boxes added with this function, do not delete when row is deleted, or edit button is pressed!
