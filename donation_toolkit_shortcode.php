@@ -44,6 +44,8 @@ function donation_toolkit_shortcode($atts) {
 	let globalRowLabel;
 	let globalDisplayName = '';
 	let isEditing = false;
+	const rowsType = document.querySelectorAll('#moves-management table tbody tr');
+		
 
 document.addEventListener('DOMContentLoaded', function() {
     activateTab();
@@ -94,7 +96,6 @@ document.body.addEventListener('click', function(event) {
     
     if (clickedBox) {
         console.log('Cloned box clicked');
-
         let boxFront = clickedBox.querySelector('.donation-box-front');
         let boxBack = clickedBox.querySelector('.donation-box-back');
 
@@ -116,10 +117,28 @@ flipBox();
 		
 	// Call savePageStateToServer() whenever there is a change in the page state
 	document.addEventListener("DOMContentLoaded", function() {
+		
 	  var deleteStorage = true;
 	  // Call loadPageStateFromServer() when the page loads to render the saved HTML
 		if (deleteStorage == true){
 			localStorage.clear();
+			  localStorage.clear();
+
+        // Create and display the message
+        var messageDiv = document.createElement('div');
+        messageDiv.textContent = 'Saving is currently disabled for development purposes!';
+        messageDiv.style.position = 'absolute';
+        messageDiv.style.fontSize = '17px';
+        messageDiv.style.top = '30px'; // Adjust as needed
+        messageDiv.style.left = '30px'; // Adjust as needed
+        messageDiv.style.backgroundColor = 'rgb(189,186,186)'; // Style as needed
+        document.body.appendChild(messageDiv);
+
+        // Hide the message after 3 seconds (3000 milliseconds)
+        setTimeout(function() {
+            messageDiv.style.display = 'none';
+        }, 3000);
+
 		} else {
 			loadMMJS();
         	loadDonationMeterState();
@@ -177,40 +196,46 @@ function loadMMJS(){
 		
 		loadMMJS();
 		
+document.addEventListener('DOMContentLoaded', function() {
+    loadDonationMeterState();
+});
+		
 function loadDonationMeterState() {
-    const savedTotalDonations = parseFloat(localStorage.getItem('totalDonations'));
-    const savedPercent = parseFloat(localStorage.getItem('percent'));
+    // Use parseFloat and || to set default values to 0 if the localStorage items are NaN
+    const savedTotalDonations = parseFloat(localStorage.getItem('totalDonations')) || 0;
+    const savedPercent = parseFloat(localStorage.getItem('percent')) || 0;
     const goal = <?php echo $goal; ?>; // Your existing goal
 
-    if (!isNaN(savedTotalDonations) && !isNaN(savedPercent)) {
-        // Update the meter with saved values
-        const meterFill = document.getElementById("donation-meter-fill");
-        meterFill.style.width = `${savedPercent}%`;
-        meterFill.innerHTML = `<div class="fill" style="width: ${savedPercent}%">${savedPercent > 100 ? `<p>${savedPercent.toFixed()}%</p>` : ''}</div>`;
+    // Always update the meter, regardless of saved values
+    const meterFill = document.getElementById("donation-meter-fill");
+    meterFill.style.width = `${savedPercent}%`;
+    meterFill.innerHTML = `<div class="fill" style="width: ${savedPercent}%">${savedPercent > 100 ? `<p>${savedPercent.toFixed()}%</p>` : ''}</div>`;
 
-        const meterTexthead = document.getElementById("donation-meter-head");
-        meterTexthead.innerHTML = `$${savedTotalDonations.toLocaleString()} Raised To-Date (${savedPercent.toFixed()}%)`;
+    const meterTexthead = document.getElementById("donation-meter-head");
+    meterTexthead.innerHTML = `$${savedTotalDonations.toLocaleString()} Raised To-Date (${savedPercent.toFixed()}%)`;
 
-        const meterText = document.getElementById("donation-meter-text");
-        meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
-		
-		
-    }
-				// Sort donorArray in descending order based on donation amount
+    const meterText = document.getElementById("donation-meter-text");
+    meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
+
+    // Assuming 'donors' is already defined. Ensure this array is defined before this function runs.
     donors.sort((a, b) => b.amount - a.amount);
-	console.log(donors);
+    console.log(donors);
+
     // Get the donorContainer element
     const donorContainer = document.getElementById('donorContainer');
+
+    // Clear existing donor elements before populating
+    donorContainer.innerHTML = '';
 
     // Populate the top 5 donors into the donorContainer
     for (let i = 0; i < 5 && i < donors.length; i++) {
         const donor = donors[i];
         const donorElement = document.createElement('div');
-donorElement.innerHTML = `
-    <div style="text-align: center; margin: 0 35px;">
-        <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
-        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
-    </div>`;
+        donorElement.innerHTML = `
+            <div style="text-align: center; margin: 0 35px;">
+                <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
+                <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
+            </div>`;
         donorContainer.appendChild(donorElement);
     }
 }
@@ -242,32 +267,7 @@ donorElement.innerHTML = `
   document.addEventListener('input', function() {
     // Example: Save the page state whenever an input event occurs (e.g., user types in an input field)
     savePageStateToLocal();
-  });
-
-		
-		
-document.body.addEventListener('click', function(event) {
-    let clickedBox = event.target.closest('.donation-box');
-    
-    if (clickedBox) {
-        console.log('Cloned box clicked');
-
-        let boxFront = clickedBox.querySelector('.donation-box-front');
-        let boxBack = clickedBox.querySelector('.donation-box-back');
-
-        if (boxFront && boxBack) {
-            // Check which side (front or back) is currently displayed
-            if (getComputedStyle(boxFront).display !== 'none') {
-                boxFront.style.display = 'none';
-                boxBack.style.display = 'flex';
-            } else {
-                boxFront.style.display = 'flex';
-                boxBack.style.display = 'none';
-            }
-        }
-    }
-});
-		
+  });	
 		
 	
 		// This dictionary will store the removal dates indexed by displayName
@@ -716,20 +716,36 @@ const deleteButton = document.createElement("div");
 deleteButton.addEventListener("click", function handleDeleteButtonClick() {
     // Check the response from the confirm dialog
     if (confirm("Are you sure you would like to delete this donor?")) {
+		isEditing = false;
         newRow.remove();
         this.remove(); // Remove the icon when the row is deleted
 		
-		// Populate the totals for Pending
+					
+// Populate the totals for Pledges
+const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
+const totalDonations = pledgesCells.reduce((acc, curr) => {
+    const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+   return isNaN(amount) ? acc : acc + amount;
+}, 0);
+
+// Populate the totals for Pending
 const pendingCells = Array.from(document.querySelectorAll(".pending-table tbody td:nth-child(2)"));
 const pendingDonations = pendingCells.reduce((acc, curr) => {
     const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
 return isNaN(amount) ? acc : acc + amount;
 }, 0);
-		const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
-		const totalDonations = pledgesCells.reduce((acc, curr) => {
+
+// Populate the totals for Pipeline
+const pipelineCells = Array.from(document.querySelectorAll(".pipeline-table tbody td:nth-child(2)"));
+const pipelineDonations = pipelineCells.reduce((acc, curr) => {
     const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
-   return isNaN(amount) ? acc : acc + amount;
+  return isNaN(amount) ? acc : acc + amount;
 }, 0);
+
+// Calculate and populate the combined total
+const combinedTotal = totalDonations + pendingDonations + pipelineDonations;
+const combinedTotalElement = document.querySelector(".combined-total-amount");
+combinedTotalElement.innerText = formatCurrency(combinedTotal);
 		
 		//repop dashboard
 		const goal = <?php echo $goal; ?>;
@@ -749,39 +765,43 @@ return isNaN(amount) ? acc : acc + amount;
 		console.log("Saving to localStorage:", totalDonations, percent);
 		localStorage.setItem('totalDonations', totalDonations);
 localStorage.setItem('percent', percent);
+	
+const rowsType = document.querySelectorAll('#moves-management table tbody tr');
 		
 		// Initialize count variables for each donation type
-		let individualCount = 0;
-		let foundationCount = 0;
-		let corporationCount = 0;
-		let publicCount = 0;
-		let boardCount = 0;
-		let otherCount = 0;
+let individualCount = 0;
+let foundationCount = 0;
+let corporationCount = 0;
+let publicCount = 0;
+let boardCount = 0;
+let otherCount = 0;
 
-		// Select all the rows in the moves management table
-		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
-		
-			
-		// Iterate over each row and update the count variables
-		rowsType.forEach(row => {
-  			const donationTypeSelect = row.querySelector('.donation-type-select');
- 			const donationTypeValue = donationTypeSelect.value;
+// Iterate over each row and update the count variables
+rowsType.forEach(row => {
+  const donationTypeSelect = row.querySelector('.donation-type-select');
+  const donationStatusSelect = row.querySelector('.donation-status-select'); // Select the donation status
+  const donationTypeValue = donationTypeSelect.value;
+  const donationStatusValue = donationStatusSelect.value; // Get the donation status value
 
-  			// Update the count variables based on the donation type value
-  			if (donationTypeValue === "individual") {
-    			individualCount++;
-  			} else if (donationTypeValue === "foundation") {
-    			foundationCount++;
-  			} else if (donationTypeValue === "corporation") {
-    			corporationCount++;
-  			} else if (donationTypeValue === "public") {
-    			publicCount++;
-  			} else if (donationTypeValue === "board") {
-    			boardCount++;
-  			} else if (donationTypeValue === "other") {
-    			otherCount++;
-  			}
-		});
+  // Proceed only if the donation status is "pledged"
+  if (donationStatusValue === "pledge") {
+    // Update the count variables based on the donation type value
+    if (donationTypeValue === "individual") {
+      individualCount++;
+    } else if (donationTypeValue === "foundation") {
+      foundationCount++;
+    } else if (donationTypeValue === "corporation") {
+      corporationCount++;
+    } else if (donationTypeValue === "public") {
+      publicCount++;
+    } else if (donationTypeValue === "board") {
+      boardCount++;
+    } else if (donationTypeValue === "other") {
+      otherCount++;
+    }
+  }
+});
+
 			
 		const slice1Value = <?php echo $field1name; ?>;
 	const slice2Value = <?php echo $field2name; ?>;
@@ -971,10 +991,6 @@ orgNameCheckbox.addEventListener("change", function () {
   		saveButton.addEventListener("click", function handleSaveButtonClick() {
 				isEditing = false;
 			if (validateForm()) { 
-			
-// Select all the rows in the moves management table
-		const rowsType = document.querySelectorAll('#moves-management table tbody tr');
-		
 			
 		// Iterate over each row and update the count variables
 		rowsType.forEach(row => {
@@ -1532,6 +1548,10 @@ const pipelineDonations = pipelineCells.reduce((acc, curr) => {
 }, 0);
 pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 
+		// Calculate and populate the combined total
+const combinedTotal = totalDonations + pendingDonations + pipelineDonations;
+const combinedTotalElement = document.querySelector(".combined-total-amount");
+combinedTotalElement.innerText = formatCurrency(combinedTotal);
 		
 		const goal = <?php echo $goal; ?>;
 		const percent = totalDonations / goal * 100;
@@ -1549,35 +1569,42 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 			
 		localStorage.setItem('totalDonations', totalDonations);
 localStorage.setItem('percent', percent);
-		
+	
+const rowsType1 = document.querySelectorAll('#moves-management table tbody tr');
 		// Initialize count variables for each donation type
-		let individualCount = 0;
-		let foundationCount = 0;
-		let corporationCount = 0;
-		let publicCount = 0;
-		let boardCount = 0;
-		let otherCount = 0;
+let individualCount = 0;
+let foundationCount = 0;
+let corporationCount = 0;
+let publicCount = 0;
+let boardCount = 0;
+let otherCount = 0;
 
-		// Iterate over each row and update the count variables
-		rowsType.forEach(row => {
-  			const donationTypeSelect = row.querySelector('.donation-type-select');
- 			const donationTypeValue = donationTypeSelect.value;
+// Iterate over each row and update the count variables
+rowsType1.forEach(row => {
+  const donationTypeSelect = row.querySelector('.donation-type-select');
+  const donationStatusSelect = row.querySelector('.donation-status-select'); // Select the donation status
+  const donationTypeValue = donationTypeSelect.value;
+  const donationStatusValue = donationStatusSelect.value; // Get the donation status value
 
-  			// Update the count variables based on the donation type value
-  			if (donationTypeValue === "individual") {
-    			individualCount++;
-  			} else if (donationTypeValue === "foundation") {
-    			foundationCount++;
-  			} else if (donationTypeValue === "corporation") {
-    			corporationCount++;
-  			} else if (donationTypeValue === "public") {
-    			publicCount++;
-  			} else if (donationTypeValue === "board") {
-    			boardCount++;
-  			} else if (donationTypeValue === "other") {
-    			otherCount++;
-  			}
-		});
+  // Proceed only if the donation status is "pledged"
+  if (donationStatusValue === "pledge") {
+    // Update the count variables based on the donation type value
+    if (donationTypeValue === "individual") {
+      individualCount++;
+    } else if (donationTypeValue === "foundation") {
+      foundationCount++;
+    } else if (donationTypeValue === "corporation") {
+      corporationCount++;
+    } else if (donationTypeValue === "public") {
+      publicCount++;
+    } else if (donationTypeValue === "board") {
+      boardCount++;
+    } else if (donationTypeValue === "other") {
+      otherCount++;
+    }
+  }
+});
+
 	
 		const slice1Value = <?php echo $field1name; ?>;
 	const slice2Value = <?php echo $field2name; ?>;
@@ -1778,6 +1805,10 @@ const pipelineDonations = pipelineCells.reduce((acc, curr) => {
 }, 0);
 pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 
+// Calculate and populate the combined total
+const combinedTotal = totalDonations + pendingDonations + pipelineDonations;
+const combinedTotalElement = document.querySelector(".combined-total-amount");
+combinedTotalElement.innerText = formatCurrency(combinedTotal);
 		
 		const goal = <?php echo $goal; ?>;
 		const percent = totalDonations / goal * 100;
@@ -1795,36 +1826,43 @@ pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
 			console.log("Saving to localStorage:", totalDonations, percent);
 				localStorage.setItem('totalDonations', totalDonations);
 localStorage.setItem('percent', percent);
+	
+const rowsType2 = document.querySelectorAll('#moves-management table tbody tr');
 				
 		// Initialize count variables for each donation type
-		let individualCount = 0;
-		let foundationCount = 0;
-		let corporationCount = 0;
-		let publicCount = 0;
-		let boardCount = 0;
-		let otherCount = 0;
-		
-			
-		// Iterate over each row and update the count variables
-		rowsType.forEach(row => {
-  			const donationTypeSelect = row.querySelector('.donation-type-select');
- 			const donationTypeValue = donationTypeSelect.value;
+let individualCount = 0;
+let foundationCount = 0;
+let corporationCount = 0;
+let publicCount = 0;
+let boardCount = 0;
+let otherCount = 0;
 
-  			// Update the count variables based on the donation type value
-  			if (donationTypeValue === "individual") {
-    			individualCount++;
-  			} else if (donationTypeValue === "foundation") {
-    			foundationCount++;
-  			} else if (donationTypeValue === "corporation") {
-    			corporationCount++;
-  			} else if (donationTypeValue === "public") {
-    			publicCount++;
-  			} else if (donationTypeValue === "board") {
-    			boardCount++;
-  			} else if (donationTypeValue === "other") {
-    			otherCount++;
-  			}
-		});
+// Iterate over each row and update the count variables
+rowsType2.forEach(row => {
+  const donationTypeSelect = row.querySelector('.donation-type-select');
+  const donationStatusSelect = row.querySelector('.donation-status-select'); // Select the donation status
+  const donationTypeValue = donationTypeSelect.value;
+  const donationStatusValue = donationStatusSelect.value; // Get the donation status value
+
+  // Proceed only if the donation status is "pledged"
+  if (donationStatusValue === "pledge") {
+    // Update the count variables based on the donation type value
+    if (donationTypeValue === "individual") {
+      individualCount++;
+    } else if (donationTypeValue === "foundation") {
+      foundationCount++;
+    } else if (donationTypeValue === "corporation") {
+      corporationCount++;
+    } else if (donationTypeValue === "public") {
+      publicCount++;
+    } else if (donationTypeValue === "board") {
+      boardCount++;
+    } else if (donationTypeValue === "other") {
+      otherCount++;
+    }
+  }
+});
+
 			
 		const slice1Value = <?php echo $field1name; ?>;
 	const slice2Value = <?php echo $field2name; ?>;
@@ -1982,10 +2020,23 @@ donorElement.innerHTML = `
 
 		
 	//ADD DASHBOARD ON PAGE LOAD
-	/*
+	
 	document.addEventListener("DOMContentLoaded", function() {
   		const goal = <?php echo $goal; ?>;
   		
+		const slice1Value = <?php echo $field1name; ?>;
+	const slice2Value = <?php echo $field2name; ?>;
+	const slice3Value = <?php echo $field3name; ?>;
+	var totalBudget = <?php echo $goal; ?>;
+
+	var slice1Amount = <?php echo $field1amount; ?>;
+	var slice2Amount = <?php echo $field2amount; ?>;
+	var slice3Amount = <?php echo $field3amount; ?>;
+
+	var slice1Proportion = (slice1Amount / totalBudget);
+	var slice2Proportion = (slice2Amount / totalBudget);
+	var slice3Proportion = (slice3Amount / totalBudget);
+		
 		const meterText = document.getElementById("donation-meter-text");
 		 const meterTexthead = document.getElementById("donation-meter-head");
 		meterTexthead.innerHTML = `$0 Raised To-Date (0%)`;
@@ -2030,23 +2081,22 @@ donorElement.innerHTML = `
 <div id="pieChartPlaceholder" style="width: 80%; height: 80%;">
     <!-- Pie Chart Using SVG -->
     <svg width="150%" height="100%" viewBox="-30 -30 72 72">
-        <!-- Endowment slice -->
-        <path id="endowmentSlice" d="" fill="#00758D"></path>
-        <text id="endowmentTextName" font-size="2" fill="#005D70"></text>
-        <text id="endowmentTextAmount" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="endowmentTextPercent" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
+        <path id="endowmentSlice1" d="" fill="#00758D"></path>
+        <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
+        <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
 
         <!-- Capital slice -->
-        <path id="capitalSlice" d="" fill="#7866A1"></path>
-        <text id="capitalTextName" font-size="2" fill="#635387"></text>
-        <text id="capitalTextAmount" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="capitalTextPercent" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
+        <path id="capitalSlice1" d="" fill="#7866A1"></path>
+        <text id="capitalTextName1" font-size="2" fill="#635387"></text>
+        <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
 
         <!-- Operating slice -->
-        <path id="operatingSlice" d="" fill="#FF8C00"></path>
-        <text id="operatingTextName" font-size="2" fill="#D17607"></text>
-        <text id="operatingTextAmount" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="operatingTextPercent" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
+        <path id="operatingSlice1" d="" fill="#FF8C00"></path>
+        <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
+        <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
     </svg>
 </div>
 
@@ -2090,9 +2140,14 @@ donorElement.innerHTML = `
                 <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">Top 5 Donors</h2>
             </div>
     `;
+		
+		// Update pie chart slices
+		createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
 
 	});
-	*/
+	
 function generatePDF() {
     const tab = document.querySelector('.tab.active');
     const tabTitleElement = tab.querySelector('h2');
@@ -2165,55 +2220,54 @@ function generatePDF() {
     });
 }
 
+// Add new donation box
+function addDonationBox(row, rowIndex, donationName, donationAmount, donationColor) {
+  console.log("DONATION NAME:", donationName);
+  const rowLabel = row.querySelector('.donation-row-label');
+  let numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
 
-    //ADD NEW DONATION BOX
-	function addDonationBox(row, rowIndex, donationName, donationAmount, donationColor) {
-  		console.log("DONATION NAME:", donationName);
-  		const rowLabel = row.querySelector('.donation-row-label');
-  		let numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
+  // Increment the number of boxes
+  numBoxes += 1;
+  rowLabel.innerText = numBoxes + ' x ' + rowLabel.innerText.split(' ')[2];
+  rowLabel.style.display = numBoxes === 0 ? "none" : "";  // Show or hide the label
+	
+	const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
 
-  		numBoxes += 1;  // Increment the number of boxes
-if (numBoxes == 0) {
-    rowLabel.style.display = " none";  // Hide the label
-} else {
-    rowLabel.style.display = "";  // Ensure the label is visible
-    rowLabel.innerText = numBoxes + ' x ' + rowLabel.innerText.split(' ')[2];
-}
+  const box = document.createElement('div');
+  box.className = 'donation-box';
+  box.setAttribute('data-amount', amount);
+  box.style.backgroundColor = donationColor;
+  box.style.color = "#fff"; // Set text color to white
+  box.style.fontWeight = "500";
+  box.style.textAlign = "center";
+  box.style.display = "flex";
+  box.style.justifyContent = "center";
+  box.style.alignItems = "center";
+  box.style.padding = "10px";
+  box.style.borderRadius = "7px"; // Match the border-radius from your image
 
-const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
-const box = document.createElement('div');
-box.className = 'donation-box';
-box.setAttribute('data-amount', amount);
+  // Front side of the box
+  const boxFront = document.createElement('div');
+  boxFront.className = 'donation-box-front';
+  boxFront.innerHTML = donationName;
+  boxFront.style.backgroundColor = donationColor;
+  boxFront.style.color = "#fff"; // Set text color to white
 
+  // Back side of the box
+  const boxBack = document.createElement('div');
+  boxBack.className = 'donation-box-back';
+	  boxBack.style.fontWeight = "400";
+	  boxBack.style.fontSize = "17px";
+  boxBack.innerHTML = numberWithCommas(donationAmount);
+  boxBack.style.backgroundColor = makeDarker(donationColor, 30);
+  boxBack.style.color = "#fff"; // Set text color to white
+  boxBack.style.display = "none";  // Hide the back initially
 
-  		const boxInner = document.createElement('div');
- 		boxInner.className = 'donation-box-inner';
-
- 		const boxFront = document.createElement('div');
- 		boxFront.className = 'donation-box-front';
- 		boxFront.setAttribute('data-row', rowIndex);
-		console.log(donationColor);
-  		boxFront.style.backgroundColor = donationColor;
-  		boxFront.style.color = "#fff";
-  		boxFront.style.fontWeight = "500";
- 		boxFront.style.textAlign = "center";
-  		boxFront.style.display = "flex";
-  		boxFront.style.justifyContent = "center";
-  		boxFront.style.alignItems = "center";
-  		boxFront.innerHTML = donationName;
-
-		  		const boxBack = document.createElement('div');
-  		boxBack.className = 'donation-box-back';
-boxBack.innerHTML = numberWithCommas(donationAmount);
-const darkerDonationColor = makeDarker(donationColor, 30); // The factor 30 can be adjusted
-boxBack.style.backgroundColor = darkerDonationColor;
-
-boxBack.style.color = "#fff";
-boxBack.style.fontWeight = "400";
-boxBack.style.textAlign = "center";
-boxBack.style.display = "none";  // Hide the back initially
-
-const donationBox = box.closest('.donation-box');
+  // Append both sides to the inner container
+  const boxInner = document.createElement('div');
+  boxInner.className = 'donation-box-inner';
+	
+	const donationBox = box.closest('.donation-box');
 
 // Assuming 'box' is the DOM element reference of your box
 const computedStyle = window.getComputedStyle(box);
@@ -2262,18 +2316,17 @@ document.body.removeChild(span);
   		box.appendChild(boxInner);
   		row.appendChild(box);
 	
-		
-		const remainingAmount = removeDonationBoxes(amount);
+	const remainingAmount = removeDonationBoxes(amount);
 		if (remainingAmount > 0) {
   			return;
 		}
-		
+	
+  // Update the total donations amount
+  const totalDonationsLabel = document.querySelector('.donation-row-label b');
+  const totalDonations = calculateTotalDonations();
+  totalDonationsLabel.innerText = 'Total: ' + numberWithCommas(totalDonations);
 
-  		// Update the total donations amount
-  		const totalDonationsLabel = document.querySelector('.donation-row-label b');
-  		const totalDonations = calculateTotalDonations(); // Function to calculate the total donations
-  		totalDonationsLabel.innerText = 'Total: ' + numberWithCommas(totalDonations); // Helper function to add commas to the number
-	}
+}
 	
 	//DONATION PYRAMID EDIT ROWS
 	function editNumBoxes(element) {
@@ -3169,6 +3222,13 @@ function closeAlert4() {
   alertModule.style.display = "none";
 }
 
+function formatCurrency(amount) {
+  return amount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  });
+}
+
 	</script>
 	<?php
 	
@@ -3484,6 +3544,7 @@ $output = '
   margin-left: -110px; /* add margin-left to move container to the left */
   height: 100%;
   width: 91%;
+  
 }
 
 .tabbed-menu {
@@ -3681,7 +3742,7 @@ to { opacity: 1; }
   width: 100%;
   padding: 10px;
   border-collapse: collapse;
-   margin-bottom: 210px; //this value should be changing
+   margin-bottom: 10px; //this value should be changing
 }
 
 #pledges-pending th, #pledges-pending td {
@@ -3704,11 +3765,10 @@ to { opacity: 1; }
   margin-left: 32%;
 }
 
-
 .donation-row {
-margin-top: 8px;
+  margin-top: 8px;
   display: flex;
-  justify-content: center; 
+  justify-content: space-between; /* This will distribute the spacing evenly */
 }
 
 .donation-row-label {
@@ -3719,25 +3779,21 @@ margin-top: 8px;
   font-size: 15px;
 }
 
-
-.donation-box:nth-last-child(2) {
-  margin-right: auto;
-  margin-left: auto;
-}
-
 .donation-row:first-child .donation-box {
   margin-bottom: auto;
 }
 
 .donation-row:last-child .donation-box {
+  display: flex; /* This line is crucial for enabling flexbox properties */
+  justify-content: center; /* Center content horizontally */
+  align-items: center; /* Center content vertically */
   font-size: 13px;
   margin-top: 7px;
-  margin-bottom: 15px; 
-  width: 250px; 
-  height: 38px; /* adjust when i add it back in */
+  margin-bottom: 15px;
+  width: 250px;
+  height: 38px; /* Adjust as needed */
   border: none;
-  background-color: #F3F3F3DB;;
-  
+  background-color: #F3F3F3DB;
 }
 
 .donation-row:last-child .donation-label {
@@ -3828,20 +3884,20 @@ margin-top: 8px;
                 0% { width: 0%; }
                 100% { width: ${percent}%; }
 } 
-.donation-box {
 
+.donation-box {
   position: relative;
-  width: 6.5vw;  /* adjusted to viewport width */
-  height: 5.3vh;  /* adjusted to viewport height */
+  width: 6.5vw;  /* Adjusted to viewport width */
+  height: 5.3vh;  /* Adjusted to viewport height */
   border-radius: 7px;
-  margin: 7px;  /* adjusted margin based on viewport width */
+  margin: 7px 7px; /* Ensure consistent margin on all sides */
   overflow: hidden;
   cursor: pointer;
   justify-content: center;
   align-items: center;
   text-align: center;
-  display: flex;
 }
+
 
 /* If the screen size is below 600px, adjust the box size */
 @media (max-width: 600px) {
@@ -4038,7 +4094,10 @@ tfoot td {
   background-color: #F78D2D;
   border-radius: 10px;
   padding: 10px;
-  width: 230px; 
+  width: 230px;
+  position: absolute; 
+  top: 175px;
+  left: 30px;
   text-align: left;
   box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.1);
 }
@@ -4069,9 +4128,9 @@ tfoot td {
   padding: 20px;
   border-radius: 20px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  width: 300px;
+  width: 250px;
   background-color: white;
-  height: 210px;
+  height: 180px;
   position: relative; /* Allows absolute positioning inside */
   display: flex;
   flex-direction: column; /* Stack the image and button vertically */
@@ -4082,8 +4141,8 @@ tfoot td {
 .background-image {
   position: absolute;
   border-radius: 20px; /* Match the border-radius of the parent */
-  width: 85%;
-  height: 85%;
+  width: 80%;
+  height: 80%;
   object-fit: contain; /* Change to contain to fit the image inside without cropping */
   z-index: -1; /* Positions the image behind the button */
 }
@@ -4105,6 +4164,7 @@ tfoot td {
   .full-page-overlay {
     position: absolute;
     width: 100%;
+	top: 160px;
 	left: 0;
     height: 100%; 
     background-color:#F1FCFE;
@@ -4114,7 +4174,30 @@ tfoot td {
     z-index: 1; /* High z-index to cover everything else */
 } 
 
+.combined-total-bar {
+  position: sticky; /* Stick to the bottom of the viewport */
+  bottom: 5px; /* Align the bar at the bottom of the tab */
+  width: 100%;
+  z-index: 10; /* Make sure it sits above other content */
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.05); /* Optional: adds a slight shadow to the top of the totals bar */
+}
 
+.combined-total-table {
+  width: 100%; /* Full width */
+  margin: 0 auto; /* Center the table */
+  border-collapse: collapse;
+}
+
+.combined-total-table tfoot {
+  background-color: #77C4D5; /* Same color as other totals */
+}
+
+.combined-total-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+  font-weight: bold; /* If you want the combined total to stand out */
+}
 
 </style>
 
@@ -4204,12 +4287,13 @@ tfoot td {
   
   
 </div>
-
-<div class="tabbed-container">
 <div class="copyright-box">
 <h2>Campaign Toolkit</h2>
 <p>© Cramer & Associates, Inc., 2024</p>
-</div>
+</div> 
+
+<div class="tabbed-container">
+
   <div class="tabbed-content">
 	<div class="tab" id="donation-pyramid">
       <h2>Gift Pyramid</h2>
@@ -4282,7 +4366,19 @@ tfoot td {
                 </table>
             </div>
         </div>
+		<!-- Combined Total Bar -->
+    <div class="combined-total-bar">
+        <table class="combined-total-table">
+            <tfoot>
+                <tr>
+                    <td>Combined Total:</td>
+                    <td class="combined-total-amount"></td>
+                    
+                </tr>
+            </tfoot>
+        </table>
     </div>
+</div>
 <div class="tab" id="moves-management">
   <h2>Moves Management</h2>
   <table id="donation-table">
