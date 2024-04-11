@@ -1,6 +1,9 @@
 function donation_toolkit_shortcode($atts) {
 	wp_enqueue_script( 'js-pdf', 'https://cdn.jsdelivr.net/npm/jspdf@latest/dist/jspdf.min.js', array(), 'latest', true );
-	wp_enqueue_script( 'html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.3.2/dist/html2canvas.min.js', array(), 'latest', true );
+	wp_enqueue_script( 'html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.3.2/dist/html2canvas.min.js', array(), 'latest', true );	
+	if( !is_admin() ) {
+    	echo '<script type="text/javascript">var ajaxurl = "' . admin_url('admin-ajax.php') . '";</script>';
+	}
 	wp_enqueue_script('jquery');
 	$campaign_slug = isset($atts['id']) ? sanitize_text_field($atts['id']) : '';
 	$campaign = get_page_by_path($campaign_slug, OBJECT, 'campaigns');
@@ -88,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-
 		
 function flipBox(){
 document.body.addEventListener('click', function(event) {
@@ -392,8 +394,12 @@ let donationRows = document.querySelectorAll('.donation-row');
 	
 	//MOVES MANAGEMENT AND PP JS
 	function addRow() {
-
+		
 		isEditing = true;
+		 // Generate a unique identifier using timestamp and random number
+    	const uniqueId = Math.floor(Date.now() / 10000).toString() + Math.floor(Math.random() * 10).toString();
+
+
   		const tabLinks = document.querySelectorAll('.tabbed-menu .tab-link');
   		const tabContents = document.querySelectorAll('.tabbed-content .tab');
   		tabLinks.forEach(link => {
@@ -426,6 +432,8 @@ let donationRows = document.querySelectorAll('.donation-row');
   		movesManagementTable.style.marginBottom = `${Math.max(remainingSpaceMM, 30)}px`;
   		pledgePendingTables.style.marginBottom = `${Math.max(remainingSpacePP, 20)}px`;
   		const newRow = document.createElement("tr");
+		// Set the UUID as a data attribute on the row
+    	newRow.setAttribute('donor-id', uniqueId);
 		
   		const cells = Array.from({ length: 10 }, () => document.createElement("td"));
   		// Add dropdown for pledge or pending column
@@ -716,9 +724,41 @@ const deleteButton = document.createElement("div");
 deleteButton.addEventListener("click", function handleDeleteButtonClick() {
     // Check the response from the confirm dialog
     if (confirm("Are you sure you would like to delete this donor?")) {
-		isEditing = false;
-        newRow.remove();
-        this.remove(); // Remove the icon when the row is deleted
+        isEditing = false;
+		function getDonorIdFromRowDelete(row) {
+    return row.getAttribute('donor-id');
+}
+        const donorId = getDonorIdFromRowDelete(newRow);
+
+        // Assuming 'ajaxurl' is defined and points to the admin-ajax.php file
+        var donorData = {
+            action: 'delete_donor_info', // Adjusted to target the deletion action hook
+            donor_id: donorId // Sending only the donor_id for deletion
+        };
+
+        fetch(ajaxurl, { 
+            method: 'POST',
+            credentials: 'same-origin', 
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+            },
+            body: new URLSearchParams(donorData).toString() 
+        })
+        .then(response => response.text()) // Assuming the server responds with text
+        .then(responseText => {
+            // Handle the server response here
+            console.log(responseText);
+            // If successful, remove the row from the table
+            if (responseText.includes('successfully')) { // Adjust based on actual success message
+                newRow.remove();
+                this.remove(); // Remove the delete button/icon
+            } else {
+                // Handle error or unsuccessful deletion
+                alert('Failed to delete the donor. Please try again.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    
 		
 					
 // Populate the totals for Pledges
@@ -992,6 +1032,43 @@ orgNameCheckbox.addEventListener("change", function () {
 				isEditing = false;
 			if (validateForm()) { 
 			
+				function getDonorIdFromRow(row) {
+    return row.getAttribute('donor-id');
+}
+				const donorId = getDonorIdFromRow(newRow);
+				
+				console.log(donorId);
+				
+ var donorData = {
+        action: 'insert_donor_info', // The WP action hook to target
+	 	donor_id: donorId,
+        status: pledgePendingSelect.value, 
+        type: donationTypeSelect.value, 
+        full_name: inputs[0].value, 
+        organization: inputs[1].value, 
+        amount: inputs[2].value, 
+        next_step: inputs[3].value, 
+        recent_involvement: inputs[4].value,
+        notes: inputs[5].value, 
+	 // TBD 'documents' need file hosting
+    };
+
+    fetch(ajaxurl, { 
+        method: 'POST',
+        credentials: 'same-origin', 
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+        },
+        body: new URLSearchParams(donorData).toString() 
+    })
+    .then(response => response.text()) // Assuming the server responds with text
+    .then(responseText => {
+        // Handle the server response here
+        console.log(responseText);
+        // Possibly update UI or alert the user of success
+    })
+    .catch(error => console.error('Error:', error));
+				
 		// Iterate over each row and update the count variables
 		rowsType.forEach(row => {
   			const donationTypeSelect = row.querySelector('.donation-type-select');
@@ -4215,8 +4292,8 @@ tfoot td {
       <button class="navigation-button tab-link" data-tab="pledges-pending">Pledges, Pending, Pipeline</button>
     </div>
     <div class="button-background" data-tab="moves-management">
-      <img src="https://i.ibb.co/v4P9MvF/cramer-moves-1.png" alt="Moves Management" class="button-img">
-      <button class="navigation-button tab-link" data-tab="moves-management">Moves Management</button>
+      <img src="https://i.ibb.co/v4P9MvF/cramer-moves-1.png" alt="Relationship Action Plans" class="button-img">
+      <button class="navigation-button tab-link" data-tab="moves-management">Relationship Action Plans</button>
     </div>
     <div class="button-background" data-tab="dashboard">
       <img src="https://i.ibb.co/dJj5mpq/dash-cramer.png" alt="Dashboard" class="button-img">
@@ -4380,7 +4457,7 @@ tfoot td {
     </div>
 </div>
 <div class="tab" id="moves-management">
-  <h2>Moves Management</h2>
+  <h2>Relationship Action Plans</h2>
   <table id="donation-table">
     <thead>
       <tr>
@@ -4414,7 +4491,7 @@ tfoot td {
   <ul>
     <li class="tab-link" data-tab="donation-pyramid" onclick="activateTab()">Gift Pyramid</li>
     <li class="tab-link" data-tab="pledges-pending" onclick="activateTab()">Pledges, Pending, & Pipeline</li>
-    <li class="tab-link" data-tab="moves-management" onclick="activateTab()">Moves Management</li>
+    <li class="tab-link" data-tab="moves-management" onclick="activateTab()">Relationship Action Plans</li>
 	<li class="tab-link" data-tab="dashboard" onclick="activateTab()">Campaign Dashboard</li>
   </ul>
 </div>
@@ -4517,7 +4594,7 @@ tfoot td {
 
 <div id="alertModuleTab" class="modal">
   <div class="modal-content">
-  <label>Please finish editing in Moves Management before navigating to another tab!</label>
+  <label>Please finish editing in the Relationship Action Plans before navigating to another tab!</label>
 	<button onclick="closeAlertTab()">Ok</button>
   </div>
  </div>
