@@ -12,6 +12,10 @@ Fonts: Warnock Pro, Noto Sans, and Noto Serif.
 
 Image Hosting: https://jfortkamp.imgbb.com/
 
-BUG LOG:
+Toolkit TODO:
 
-* Issue with addDonationBox(), boxes added with this function, do not delete when row is deleted, or edit button is pressed!
+Pyramid Algorithm 
+Pie Chart Functionality
+Dashboard Functionality
+PDF
+File Hosting
