@@ -14,8 +14,8 @@ Image Hosting: https://jfortkamp.imgbb.com/
 
 Toolkit TODO:
 
-Pyramid Algorithm 
-Pie Chart Functionality
-Dashboard Functionality
-PDF
-File Hosting
+* Pyramid Algorithm 
+* Pie Chart Functionality
+* Dashboard Functionality
+* PDF
+* File Hosting
