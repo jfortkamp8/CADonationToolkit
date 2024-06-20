@@ -15,6 +15,7 @@ Image Hosting: https://jfortkamp.imgbb.com/
 Toolkit TODO:
 
 * Pyramid Algorithm for smaller goals
+* PPP Tab date added needs fixed
 * Total donations on pyramid tab is funky
 * Pie Chart Functionality when saving
 * Dashboard Functionality when saving
