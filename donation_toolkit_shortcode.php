@@ -2,9 +2,13 @@ function donation_toolkit_shortcode($atts) {
 	wp_enqueue_script( 'js-pdf', 'https://cdn.jsdelivr.net/npm/jspdf@latest/dist/jspdf.min.js', array(), 'latest', true );
 	wp_enqueue_script( 'html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.3.2/dist/html2canvas.min.js', array(), 'latest', true );	
 	if( !is_admin() ) {
-    	echo '<script type="text/javascript">var ajaxurl = "' . admin_url('admin-ajax.php') . '";</script>';
+    	echo '<script type="text/javascript">
+            var ajaxurl = "' . admin_url('admin-ajax.php') . '";
+            var pyramidNonce = "' . wp_create_nonce('pyramid_nonce') . '";
+        </script>';
 	}
 	wp_enqueue_script('jquery');
+
 	$campaign_slug = isset($atts['id']) ? sanitize_text_field($atts['id']) : '';
 	$campaign = get_page_by_path($campaign_slug, OBJECT, 'campaigns');
 	if (!$campaign) {
@@ -387,7 +391,7 @@ let donationRows = document.querySelectorAll('.donation-row');
                 if (currentAmount && nextAmount && currentAmount === nextAmount) {
                     donationRows[index + 1].style.marginTop = '-5px';
                 }
-            }
+            } 
         }
     });
 	}
@@ -1579,7 +1583,7 @@ document.body.removeChild(span);
       
       if (row) {
         // Create and add a new donation box to this row
-        // Note: You'll need to define addDonationBox yourself based on how your HTML is structured
+        
         addDonationBox(row, rowIndex, donationName, donationAmount, donationColor);
       }
     }
@@ -2099,6 +2103,7 @@ donorElement.innerHTML = `
 	}
 		
 document.addEventListener("DOMContentLoaded", function() {
+	loadPyramidHTML().then(() => {
     const campaignId = <?php echo $campaign_id; ?>;
     let donors = [];
 
@@ -2126,8 +2131,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     addDonorToTable(donor);
                     updateDashboard(donor);
                     updateDonationPyramid(donor);
-					
-					
                 });
                 updateTopDonors(); // Ensure top donors are updated after all donors are processed
             } else {
@@ -2136,349 +2139,428 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .catch(error => console.error('Error:', error));
     }
-		
-	function addDonorToTable(donor) {
-    const newRow = document.createElement("tr");
-    newRow.setAttribute('donor-id', donor.donor_id);
 
-    const cells = Array.from({ length: 10 }, () => document.createElement("td"));
+    function addDonorToTable(donor) {
+        const newRow = document.createElement("tr");
+        newRow.setAttribute('donor-id', donor.donor_id);
 
-    const pledgePendingSelect = document.createElement("select");
-    pledgePendingSelect.className = "donation-status-select";
-    pledgePendingSelect.innerHTML = `
-        <option value="pledge">Pledged</option>
-        <option value="pending">Pending</option>
-        <option value="engaged">Engaged</option>
-        <option value="identified">Identified</option>
-        <option value="denied">Declined</option>
-    `;
-    pledgePendingSelect.style.fontSize = "10px";
-    pledgePendingSelect.value = donor.status;
-    pledgePendingSelect.disabled = true;
+        const cells = Array.from({ length: 10 }, () => document.createElement("td"));
 
-    const donationTypeSelect = document.createElement("select");
-    donationTypeSelect.className = "donation-type-select";
-    donationTypeSelect.innerHTML = `
-        <option value="individual">Individuals</option>
-        <option value="foundation">Foundations</option>
-        <option value="corporation">Corporations</option>
-        <option value="public">Public</option>
-        <option value="board">Board</option>
-        <option value="other">Other</option>
-    `;
-    donationTypeSelect.style.fontSize = "10px";
-    donationTypeSelect.value = donor.type;
-    donationTypeSelect.disabled = true;
+        const pledgePendingSelect = document.createElement("select");
+        pledgePendingSelect.className = "donation-status-select";
+        pledgePendingSelect.innerHTML = `
+            <option value="pledge">Pledged</option>
+            <option value="pending">Pending</option>
+            <option value="engaged">Engaged</option>
+            <option value="identified">Identified</option>
+            <option value="denied">Declined</option>
+        `;
+        pledgePendingSelect.style.fontSize = "10px";
+        pledgePendingSelect.value = donor.status;
+        pledgePendingSelect.disabled = true;
 
-    cells[0].style.textAlign = "center";
-    cells[0].style.verticalAlign = "middle";
-    cells[0].appendChild(pledgePendingSelect);
-    cells[1].style.textAlign = "center";
-    cells[1].style.verticalAlign = "middle";
-    cells[1].appendChild(donationTypeSelect);
-    cells[0].width = '12%';
-    cells[1].width = '12%';
+        const donationTypeSelect = document.createElement("select");
+        donationTypeSelect.className = "donation-type-select";
+        donationTypeSelect.innerHTML = `
+            <option value="individual">Individuals</option>
+            <option value="foundation">Foundations</option>
+            <option value="corporation">Corporations</option>
+            <option value="public">Public</option>
+            <option value="board">Board</option>
+            <option value="other">Other</option>
+        `;
+        donationTypeSelect.style.fontSize = "10px";
+        donationTypeSelect.value = donor.type;
+        donationTypeSelect.disabled = true;
 
-    cells[2].width = '14%';
-    cells[3].width = '12%';
-    cells[4].width = '11%';
-    cells[5].width = '9%';
-    cells[6].width = '9%';
-    cells[7].width = '9%';
-    cells[1].style.verticalAlign = 'middle';
-    cells[2].style.verticalAlign = 'middle';
-    cells[3].style.verticalAlign = 'middle';
-    cells[4].style.verticalAlign = 'middle';
-    cells[5].style.verticalAlign = 'middle';
-    cells[6].style.verticalAlign = 'middle';
-    cells[7].style.verticalAlign = 'middle';
+        cells[0].style.textAlign = "center";
+        cells[0].style.verticalAlign = "middle";
+        cells[0].appendChild(pledgePendingSelect);
+        cells[1].style.textAlign = "center";
+        cells[1].style.verticalAlign = "middle";
+        cells[1].appendChild(donationTypeSelect);
+        cells[0].width = '12%';
+        cells[1].width = '12%';
 
-    const inputs = cells.slice(2, 9).map(cell => {
-        const textarea = document.createElement("textarea");
-        textarea.style.fontSize = "12px";
-        textarea.style.width = "100%";
-        textarea.style.boxSizing = "border-box";
-        textarea.style.overflowY = "hidden";
-        textarea.setAttribute('rows', '1');
-        textarea.style.resize = "none";
-        textarea.style.verticalAlign = "middle"; // Align textareas vertically
+        cells[2].width = '14%';
+        cells[3].width = '12%';
+        cells[4].width = '11%';
+        cells[5].width = '9%';
+        cells[6].width = '9%';
+        cells[7].width = '9%';
+        cells[1].style.verticalAlign = 'middle';
+        cells[2].style.verticalAlign = 'middle';
+        cells[3].style.verticalAlign = 'middle';
+        cells[4].style.verticalAlign = 'middle';
+        cells[5].style.verticalAlign = 'middle';
+        cells[6].style.verticalAlign = 'middle';
+        cells[7].style.verticalAlign = 'middle';
 
-        // Function to resize textarea based on content
-        const resizeTextarea = (el) => {
-            el.style.height = 'auto';
-            el.style.height = el.scrollHeight + 'px';
-        };
+        const inputs = cells.slice(2, 9).map(cell => {
+            const textarea = document.createElement("textarea");
+            textarea.style.fontSize = "12px";
+            textarea.style.width = "100%";
+            textarea.style.boxSizing = "border-box";
+            textarea.style.overflowY = "hidden";
+            textarea.setAttribute('rows', '1');
+            textarea.style.resize = "none";
+            textarea.style.verticalAlign = "middle"; // Align textareas vertically
 
-        // Resize textarea when the content changes
-        textarea.addEventListener('input', (e) => {
-            resizeTextarea(e.target);
-        });
-
-        cell.appendChild(textarea);
-        return textarea;
-    });
-
-    // Set cell values to plain text (not editable) and format amount
-    cells[2].textContent = donor.full_name;
-    cells[3].textContent = donor.organization;
-    cells[4].textContent = numberWithCommas(donor.amount);
-    cells[5].textContent = donor.next_step;
-    cells[6].textContent = donor.recent_involvement;
-    cells[7].textContent = donor.notes;
-	cells[2].style.fontSize = "12px";
-	cells[3].style.fontSize = "12px";
-	cells[4].style.fontSize = "12px";
-	cells[5].style.fontSize = "12px";
-	cells[6].style.fontSize = "12px";
-	cells[7].style.fontSize = "12px";
-
-    // Add column to attach files to donation
-    const attachFiles = document.createElement("td");
-    attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
-                            '<button class="download-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" alt="Download files"></button>';
-    attachFiles.width = '10%';
-    attachFiles.style.textAlign = 'center';
-    attachFiles.style.verticalAlign = 'middle';
-    cells[8] = attachFiles;
-
-    const attachButton = cells[8].querySelector(".attach-button");
-    const downloadButton = cells[8].querySelector(".download-button");
-
-    // Create an array to store selected files
-    const selectedFiles = [];
-
-    // Attach button click event listener
-    attachButton.addEventListener("click", function handleAttachButtonClick() {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.multiple = true;
-        fileInput.accept = "image/*, .pdf, .doc, .docx";
-        fileInput.style.display = "none";
-        document.body.appendChild(fileInput);
-        fileInput.addEventListener("change", function handleFileInputChange() {
-            const fileList = fileInput.files;
-            const files = Array.from(fileList);
-            if (files.length > 0) {
-                downloadButton.disabled = false;
-                selectedFiles.push(...files);
-            }
-        });
-        fileInput.click();
-    });
-
-    downloadButton.addEventListener("click", function handleDownloadButtonClick() {
-        if (selectedFiles.length > 0) {
-            // Create a popup/modal to display the list of files
-            const popup = document.createElement("div");
-            popup.className = "popup";
-            popup.style.position = "fixed";
-            popup.style.top = "50%";
-            popup.style.left = "50%";
-            popup.style.transform = "translate(-50%, -50%)";
-            popup.style.background = "white";
-            popup.style.padding = "10px";
-            popup.style.borderRadius = "10px";
-            popup.style.boxShadow = "0 4px 8px 0 rgba(0, 0, 0, 0.2)";
-            popup.style.zIndex = "9999";
-            popup.style.textAlign = "center";
-
-            const fileListContainer = document.createElement("div");
-            fileListContainer.className = "file-list-container";
-
-            selectedFiles.forEach((file, index) => {
-                const fileItem = document.createElement("div");
-                fileItem.innerText = file.name;
-                fileItem.style.marginBottom = "8px"; // Vertical spacing between files
-                fileItem.style.backgroundColor = index % 2 === 0 ? "#f5f5f5" : "white"; // Alternating shades of grey and white
-
-                const fileIcon = document.createElement("img");
-
-                const downloadLink = document.createElement("a");
-                downloadLink.href = URL.createObjectURL(file);
-                downloadLink.download = file.name;
-
-                const downloadIcon = document.createElement("img");
-                downloadIcon.src =
-				                downloadIcon.src = "https://i.ibb.co/rpdt924/image.png";
-                downloadIcon.alt = "Download";
-                downloadIcon.style.width = "20px";
-                downloadIcon.style.height = "20px";
-                downloadIcon.style.marginLeft = "5px"; // Spacing between download icon and file name
-
-                downloadIcon.addEventListener("click", () => {
-                    // Change the color of the file name to #7866A1
-                    fileItem.style.color = "#7866A1";
-                    fileItem.style.textDecoration = "underline";
-                });
-
-                downloadLink.appendChild(downloadIcon);
-
-                fileItem.appendChild(downloadLink);
-                fileListContainer.appendChild(fileItem);
-            });
-
-            const closeButton = document.createElement("button");
-            closeButton.innerText = "Close";
-            closeButton.style.padding = "7.5px 12.5px"; // Smaller close button
-            closeButton.style.marginTop = "10px"; // Space between files and close button
-            closeButton.addEventListener("click", function handleCloseButtonClick() {
-                document.body.removeChild(popup);
-            });
-
-            fileListContainer.appendChild(closeButton);
-            popup.appendChild(fileListContainer);
-            document.body.appendChild(popup);
-        }
-    });
-
-    const editButton = document.createElement("button");
-    editButton.className = "edit-button";
-    editButton.innerText = "Edit";
-    cells[9].appendChild(editButton);
-    cells[9].style.textAlign = "center";
-    cells[9].style.verticalAlign = "middle";
-
-    cells.forEach(cell => newRow.appendChild(cell));
-
-    const tableBody = document.querySelector("#moves-management table tbody");
-    tableBody.insertBefore(newRow, tableBody.firstChild);
-
-    const deleteButton = document.createElement("div");
-    deleteButton.className = "delete-button";
-    const deleteImage = document.createElement("img");
-    deleteImage.src = "https://freepngtransparent.com/wp-content/uploads/2023/03/X-Png-87.png";
-    deleteButton.appendChild(deleteImage);
-
-    // Initially hide the delete button
-    deleteButton.style.display = 'none';
-
-    deleteButton.addEventListener("click", function handleDeleteButtonClick() {
-        if (confirm("Are you sure you would like to delete this donor?")) {
-            function getDonorIdFromRowDelete(row) {
-                return row.getAttribute('donor-id');
-            }
-            const donorId = getDonorIdFromRowDelete(newRow);
-
-            var donorData = {
-                action: 'delete_donor_info',
-                donor_id: donorId
+            // Function to resize textarea based on content
+            const resizeTextarea = (el) => {
+                el.style.height = 'auto';
+                el.style.height = el.scrollHeight + 'px';
             };
 
-            fetch(ajaxurl, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-                },
-                body: new URLSearchParams(donorData).toString()
-            })
-            .then(response => response.text())
-            .then(responseText => {
-                if (responseText.includes('successfully')) {
-                    newRow.remove();
-                    this.remove();
-                } else {
-                    alert('Failed to delete the donor. Please try again.');
+            // Resize textarea when the content changes
+            textarea.addEventListener('input', (e) => {
+                resizeTextarea(e.target);
+            });
+
+            cell.appendChild(textarea);
+            return textarea;
+        });
+
+        // Set cell values to plain text (not editable) and format amount
+        cells[2].textContent = donor.full_name;
+        cells[3].textContent = donor.organization;
+        cells[4].textContent = numberWithCommas(donor.amount);
+        cells[5].textContent = donor.next_step;
+        cells[6].textContent = donor.recent_involvement;
+        cells[7].textContent = donor.notes;
+        cells[2].style.fontSize = "12px";
+        cells[3].style.fontSize = "12px";
+        cells[4].style.fontSize = "12px";
+        cells[5].style.fontSize = "12px";
+        cells[6].style.fontSize = "12px";
+        cells[7].style.fontSize = "12px";
+
+        // Add column to attach files to donation
+        const attachFiles = document.createElement("td");
+        attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
+                                '<button class="download-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" alt="Download files"></button>';
+        attachFiles.width = '10%';
+        attachFiles.style.textAlign = 'center';
+        attachFiles.style.verticalAlign = 'middle';
+        cells[8] = attachFiles;
+
+        const attachButton = cells[8].querySelector(".attach-button");
+        const downloadButton = cells[8].querySelector(".download-button");
+
+        // Create an array to store selected files
+        const selectedFiles = [];
+
+        // Attach button click event listener
+        attachButton.addEventListener("click", function handleAttachButtonClick() {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.multiple = true;
+            fileInput.accept = "image/*, .pdf, .doc, .docx";
+            fileInput.style.display = "none";
+            document.body.appendChild(fileInput);
+            fileInput.addEventListener("change", function handleFileInputChange() {
+                const fileList = fileInput.files;
+                const files = Array.from(fileList);
+                if (files.length > 0) {
+                    downloadButton.disabled = false;
+                    selectedFiles.push(...files);
                 }
-            })
-            .catch(error => console.error('Error:', error));
-        }
-    });
+            });
+            fileInput.click();
+        });
 
-    newRow.appendChild(deleteButton);
+        downloadButton.addEventListener("click", function handleDownloadButtonClick() {
+            if (selectedFiles.length > 0) {
+                // Create a popup/modal to display the list of files
+                const popup = document.createElement("div");
+                popup.className = "popup";
+                popup.style.position = "fixed";
+                popup.style.top = "50%";
+                popup.style.left = "50%";
+                popup.style.transform = "translate(-50%, -50%)";
+                popup.style.background = "white";
+                popup.style.padding = "10px";
+                popup.style.borderRadius = "10px";
+                popup.style.boxShadow = "0 4px 8px 0 rgba(0, 0, 0, 0.2)";
+                popup.style.zIndex = "9999";
+                popup.style.textAlign = "center";
 
-    // Attach event listeners for the save and edit buttons
-    editButton.addEventListener("click", function handleEditButtonClick() {
-        // Show the delete button when edit button is clicked
-        deleteButton.style.display = 'inline-block';
+                const fileListContainer = document.createElement("div");
+                fileListContainer.className = "file-list-container";
 
-        // Enable the select elements for editing
-        pledgePendingSelect.disabled = false;
-        donationTypeSelect.disabled = false;
+                selectedFiles.forEach((file, index) => {
+                    const fileItem = document.createElement("div");
+                    fileItem.innerText = file.name;
+                    fileItem.style.marginBottom = "8px"; // Vertical spacing between files
+                    fileItem.style.backgroundColor = index % 2 === 0 ? "#f5f5f5" : "white"; // Alternating shades of grey and white
 
-        inputs.forEach((input, index) => {
-            if (index !== 6) {
-                const value = cells[index + 2].innerHTML;
-                cells[index + 2].innerHTML = "";
-                cells[index + 2].appendChild(input);
-                input.value = value;
+                    const fileIcon = document.createElement("img");
+
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = URL.createObjectURL(file);
+                    downloadLink.download = file.name;
+
+                    const downloadIcon = document.createElement("img");
+                    downloadIcon.src = "https://i.ibb.co/rpdt924/image.png";
+                    downloadIcon.alt = "Download";
+                    downloadIcon.style.width = "20px";
+                    downloadIcon.style.height = "20px";
+                    downloadIcon.style.marginLeft = "5px"; // Spacing between download icon and file name
+
+                    downloadIcon.addEventListener("click", () => {
+                        // Change the color of the file name to #7866A1
+                        fileItem.style.color = "#7866A1";
+                        fileItem.style.textDecoration = "underline";
+                    });
+
+                    downloadLink.appendChild(downloadIcon);
+
+                    fileItem.appendChild(downloadLink);
+                    fileListContainer.appendChild(fileItem);
+                });
+
+                const closeButton = document.createElement("button");
+                closeButton.innerText = "Close";
+                closeButton.style.padding = "7.5px 12.5px"; // Smaller close button
+                closeButton.style.marginTop = "10px"; // Space between files and close button
+                closeButton.addEventListener("click", function handleCloseButtonClick() {
+                    document.body.removeChild(popup);
+                });
+
+                fileListContainer.appendChild(closeButton);
+                popup.appendChild(fileListContainer);
+                document.body.appendChild(popup);
             }
         });
 
-        const saveButton = document.createElement("button");
-        saveButton.className = "save-button";
-        saveButton.innerText = "Save";
-        cells[9].innerHTML = "";
-        cells[9].appendChild(saveButton);
+        const editButton = document.createElement("button");
+        editButton.className = "edit-button";
+        editButton.innerText = "Edit";
+        cells[9].appendChild(editButton);
         cells[9].style.textAlign = "center";
         cells[9].style.verticalAlign = "middle";
 
-        saveButton.addEventListener("click", function handleSaveButtonClick() {
-            // Update donorData with the new values
-            const donorData = {
-                action: 'insert_donor_info', // The WP action hook to target
-                donor_id: donor.donor_id,
-                campaign_id: campaignId, // Use the campaign ID set by the server-side script
-                status: pledgePendingSelect.value, 
-                type: donationTypeSelect.value, 
-                full_name: inputs[0].value, 
-                organization: inputs[1].value, 
-                amount: inputs[2].value, 
-                next_step: inputs[3].value, 
-                recent_involvement: inputs[4].value,
-                notes: inputs[5].value, 
-                // TBD 'documents' need file hosting
-            };
+        cells.forEach(cell => newRow.appendChild(cell));
 
-            fetch(ajaxurl, { 
-                method: 'POST',
-                credentials: 'same-origin', 
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-                },
-                body: new URLSearchParams(donorData).toString() 
-            })
-            .then(response => response.text()) // Assuming the server responds with text
-            .then(responseText => {
-                // Handle the server response here
-                console.log(responseText);
-                // Possibly update UI or alert the user of success
-            })
-            .catch(error => console.error('Error:', error));
+        const tableBody = document.querySelector("#moves-management table tbody");
+        tableBody.insertBefore(newRow, tableBody.firstChild);
 
-            // Disable the select elements after saving
-            pledgePendingSelect.disabled = true;
-            donationTypeSelect.disabled = true;
+        const deleteButton = document.createElement("div");
+        deleteButton.className = "delete-button";
+        const deleteImage = document.createElement("img");
+        deleteImage.src = "https://freepngtransparent.com/wp-content/uploads/2023/03/X-Png-87.png";
+        deleteButton.appendChild(deleteImage);
 
-            deleteButton.remove();
-            console.log("deleteButton removed");
+        // Initially hide the delete button
+        deleteButton.style.display = 'none';
 
-            const values = inputs.map(input => input.value);
+        deleteButton.addEventListener("click", function handleDeleteButtonClick() {
+            if (confirm("Are you sure you would like to delete this donor?")) {
+                const donorId = donor.donor_id;
 
-            // Format the amount with commas
-            cells.slice(2, 8).forEach((cell, index) => {
-                if (index === 2) {
-                    cell.innerHTML = numberWithCommas(values[index]);
-                } else {
-                    cell.innerHTML = values[index];
+                var donorData = {
+                    action: 'delete_donor_info',
+                    donor_id: donorId
+                };
+
+                fetch(ajaxurl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+                    },
+                    body: new URLSearchParams(donorData).toString()
+                })
+                .then(response => response.text())
+                .then(responseText => {
+                    if (responseText.includes('successfully')) {
+                        newRow.remove();
+                        removeDonorFromTabs(donor);
+                        updateDashboardTotals();
+                    } else {
+                        alert('Failed to delete the donor. Please try again.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+
+        newRow.appendChild(deleteButton);
+
+        editButton.addEventListener("click", function handleEditButtonClick() {
+			removeDonorFromTabs(donor);
+            deleteButton.style.display = 'inline-block';
+            pledgePendingSelect.disabled = false;
+            donationTypeSelect.disabled = false;
+
+
+            inputs.forEach((input, index) => {
+                if (index !== 6) {
+                    const value = cells[index + 2].innerHTML;
+                    cells[index + 2].innerHTML = "";
+                    cells[index + 2].appendChild(input);
+                    input.value = value;
                 }
             });
+			
+			
 
-            const newEditButton = document.createElement("button");
-            newEditButton.className = "edit-button";
-            newEditButton.innerText = "Edit";
+            const saveButton = document.createElement("button");
+            saveButton.className = "save-button";
+            saveButton.innerText = "Save";
             cells[9].innerHTML = "";
-            cells[9].appendChild(newEditButton);
+            cells[9].appendChild(saveButton);
             cells[9].style.textAlign = "center";
             cells[9].style.verticalAlign = "middle";
 
-            newEditButton.addEventListener("click", handleEditButtonClick);
+            saveButton.addEventListener("click", function handleSaveButtonClick() {
+				
+				
+                const updatedDonor = {
+                    donor_id: donor.donor_id,
+                    status: pledgePendingSelect.value,
+                    type: donationTypeSelect.value,
+                    full_name: inputs[0].value,
+                    organization: inputs[1].value,
+                    amount: inputs[2].value,
+                    next_step: inputs[3].value,
+                    recent_involvement: inputs[4].value,
+                    notes: inputs[5].value
+                };
 
-            // Hide the delete button after saving
-            deleteButton.style.display = 'none';
+                var donorData = {
+                    action: 'insert_donor_info',
+                    donor_id: updatedDonor.donor_id,
+                    campaign_id: campaignId,
+                    status: updatedDonor.status,
+                    type: updatedDonor.type,
+                    full_name: updatedDonor.full_name,
+                    organization: updatedDonor.organization,
+                    amount: updatedDonor.amount,
+                    next_step: updatedDonor.next_step,
+                    recent_involvement: updatedDonor.recent_involvement,
+                    notes: updatedDonor.notes
+                };
+
+                fetch(ajaxurl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+                    },
+                    body: new URLSearchParams(donorData).toString()
+                })
+                .then(response => response.text())
+                .then(responseText => {
+                    if (responseText.includes('successfully')) {
+                        updateDashboard(updatedDonor);
+                        updateDonationPyramid(updatedDonor);
+                        updateTopDonors();
+                        updateDashboardTotals();
+                    } else {
+                        console.error('Failed to save the donor. Please try again.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+
+                pledgePendingSelect.disabled = true;
+                donationTypeSelect.disabled = true;
+
+                deleteButton.remove();
+                console.log("deleteButton removed");
+
+                const values = inputs.map(input => input.value);
+
+                cells.slice(2, 8).forEach((cell, index) => {
+                    if (index === 2) {
+                        cell.innerHTML = numberWithCommas(values[index]);
+                    } else {
+                        cell.innerHTML = values[index];
+                    }
+                });
+
+                const newEditButton = document.createElement("button");
+                newEditButton.className = "edit-button";
+                newEditButton.innerText = "Edit";
+                cells[9].innerHTML = "";
+                cells[9].appendChild(newEditButton);
+                cells[9].style.textAlign = "center";
+                cells[9].style.verticalAlign = "middle";
+
+                newEditButton.addEventListener("click", handleEditButtonClick);
+
+                deleteButton.style.display = 'none';
+            });
         });
-    });
-}
+    }
+
+    function removeDonorFromTabs(donor) {
+        const parseName = donor.full_name.replace(/<br\s*\/?>/g, '').replace(/\s+/g, '');
+
+        // Remove the donor from the donation pyramid
+        const pyramidRows = document.querySelectorAll('.donation-row');
+        pyramidRows.forEach(row => {
+            const boxInner = row.querySelector('.donation-box-inner');
+            const frontElement = row.querySelector('.donation-box-front');
+            const backElement = row.querySelector('.donation-box-back');
+
+            if (boxInner) {
+                const boxDisplayName = frontElement.innerText.replace(/ /g, '');
+                if (boxDisplayName === parseName) {
+                    if (frontElement) {
+                        frontElement.innerText = '';
+                        frontElement.style.backgroundColor = "#d4d4d4";
+                        frontElement.style.color = '';
+                        frontElement.style.fontWeight = '';
+                        frontElement.style.textAlign = '';
+                        frontElement.style.display = '';
+                        frontElement.style.justifyContent = '';
+                    }
+                    if (backElement) {
+                        backElement.innerText = '';
+                        backElement.style.backgroundColor = "#d4d4d4";
+                        backElement.style.color = '';
+                        backElement.style.fontWeight = '';
+                        backElement.style.textAlign = '';
+                        backElement.style.display = '';
+                        backElement.style.justifyContent = '';
+                    }
+                }
+            }
+        });
+
+        // Remove the donor from the pledges table
+        const pledgesTable = document.querySelector(".pledges-table tbody");
+        const pledgesRows = pledgesTable.querySelectorAll("tr");
+        pledgesRows.forEach(row => {
+            const donationCell = row.querySelector("td:nth-child(1)");
+            if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
+                row.remove();
+            }
+        });
+
+        // Remove the donor from the pending table
+        const pendingTable = document.querySelector(".pending-table tbody");
+        const pendingRows = pendingTable.querySelectorAll("tr");
+        pendingRows.forEach(row => {
+            const donationCell = row.querySelector("td:nth-child(1)");
+            if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
+                row.remove();
+            }
+        });
+
+        // Remove the donor from the pipeline table
+        const pipelineTable = document.querySelector(".pipeline-table tbody");
+        const pipelineRows = pipelineTable.querySelectorAll("tr");
+        pipelineRows.forEach(row => {
+            const donationCell = row.querySelector("td:nth-child(1)");
+            if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
+                row.remove();
+            }
+        });
+
+        updateDashboardTotals();
+    }
 
     function updateDashboard(donor) {
         const pledgePendingValue = donor.status;
@@ -2538,7 +2620,241 @@ document.addEventListener("DOMContentLoaded", function() {
             insertRowInOrder(tableBody, targetRow);
         }
 
-        updateDashboardTotals();
+ 
+        const pledgesTotalElement = document.querySelector(".pledges-total");
+        const pendingTotalElement = document.querySelector(".pending-total");
+        const pipelineTotalElement = document.querySelector(".pipeline-total");
+
+        const formatCurrency = (amount) => {
+            return numberWithCommas(amount);
+        };
+
+        const pledgesCells = Array.from(document.querySelectorAll(".pledges-table tbody td:nth-child(2)"));
+        const totalDonations = pledgesCells.reduce((acc, curr) => {
+            const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+            return isNaN(amount) ? acc : acc + amount;
+        }, 0);
+        pledgesTotalElement.innerText = formatCurrency(totalDonations);
+
+        const pendingCells = Array.from(document.querySelectorAll(".pending-table tbody td:nth-child(2)"));
+        const pendingDonations = pendingCells.reduce((acc, curr) => {
+            const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+            return isNaN(amount) ? acc : acc + amount;
+        }, 0);
+        pendingTotalElement.innerText = formatCurrency(pendingDonations);
+
+        const pipelineCells = Array.from(document.querySelectorAll(".pipeline-table tbody td:nth-child(2)"));
+        const pipelineDonations = pipelineCells.reduce((acc, curr) => {
+            const amount = parseFloat(curr.innerText.replace(/[^\d.-]/g, ''));
+            return isNaN(amount) ? acc : acc + amount;
+        }, 0);
+        pipelineTotalElement.innerText = formatCurrency(pipelineDonations);
+
+        const combinedTotal = totalDonations + pendingDonations + pipelineDonations;
+        const combinedTotalElement = document.querySelector(".combined-total-amount");
+        combinedTotalElement.innerText = formatCurrency(combinedTotal);
+
+        const goal = <?php echo $goal; ?>;
+        const percent = totalDonations / goal * 100;
+        const meterFill = document.getElementById("donation-meter-fill");
+        meterFill.style.width = `${percent}%`;
+        meterFill.innerHTML = `
+            <div class="fill" style="width: ${percent}%">
+                ${percent > 100 ? `<p>${percent.toFixed()}%</p>` : ''}
+            </div>
+        `;
+        const meterText = document.getElementById("donation-meter-text");
+        const meterTexthead = document.getElementById("donation-meter-head");
+        meterTexthead.innerHTML = `$${totalDonations.toLocaleString()} Raised To-Date (${percent.toFixed()}%)`;
+        meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
+			
+        const rowsType = document.querySelectorAll('#moves-management table tbody tr');
+		
+		// Initialize count variables for each donation type
+let individualCount = 0;
+let foundationCount = 0;
+let corporationCount = 0;
+let publicCount = 0;
+let boardCount = 0;
+let otherCount = 0;
+
+// Iterate over each row and update the count variables
+rowsType.forEach(row => {
+  const donationTypeSelect = row.querySelector('.donation-type-select');
+  const donationStatusSelect = row.querySelector('.donation-status-select'); // Select the donation status
+  const donationTypeValue = donationTypeSelect.value;
+  const donationStatusValue = donationStatusSelect.value; // Get the donation status value
+
+  // Proceed only if the donation status is "pledged"
+  if (donationStatusValue === "pledge") {
+    // Update the count variables based on the donation type value
+    if (donationTypeValue === "individual") {
+      individualCount++;
+    } else if (donationTypeValue === "foundation") {
+      foundationCount++;
+    } else if (donationTypeValue === "corporation") {
+      corporationCount++;
+    } else if (donationTypeValue === "public") {
+      publicCount++;
+    } else if (donationTypeValue === "board") {
+      boardCount++;
+    } else if (donationTypeValue === "other") {
+      otherCount++;
+    }
+  }
+});
+
+			
+		const slice1Value = <?php echo $field1name; ?>;
+	const slice2Value = <?php echo $field2name; ?>;
+	const slice3Value = <?php echo $field3name; ?>;
+	var totalBudget = <?php echo $goal; ?>;
+
+	var slice1Amount = <?php echo $field1amount; ?>;
+	var slice2Amount = <?php echo $field2amount; ?>;
+	var slice3Amount = <?php echo $field3amount; ?>;
+
+	var slice1Proportion = (slice1Amount / totalBudget);
+	var slice2Proportion = (slice2Amount / totalBudget);
+	var slice3Proportion = (slice3Amount / totalBudget);
+			
+		const highestCount = Math.max(individualCount, foundationCount, corporationCount, publicCount, boardCount, otherCount);
+			
+        const individualBar = ((individualCount * 180)/(highestCount));
+		const foundationBar = ((foundationCount * 180)/(highestCount));
+		const corporationBar = ((corporationCount * 180)/(highestCount));
+		const publicBar = ((publicCount * 180)/(highestCount));
+		const boardBar = ((boardCount * 180)/(highestCount));
+		const otherBar = ((otherCount * 180)/(highestCount));
+		const formattedGoal = '$' + goal.toLocaleString();
+		const formattedPledged = '$' + totalDonations.toLocaleString();
+		const formattedPending = '$' + pendingDonations.toLocaleString();
+		const pendpledge = pendingDonations + totalDonations;
+		const formattedPP = '$' + pendpledge.toLocaleString();
+		let percentFix = Math.round(percent);
+    	const meterFillStyle = "width: " + percent + "%";
+    	const meterFillContent = `<div class="fill" style="width: ${percent}%">${percent > 100 ? `<p>${Math.round(percent)}%</p>` : ''}</div>`;
+		const dashboard = document.getElementById("dashboard-html");
+		dashboard.innerHTML = `
+       	 	<div style="display: flex; flex-direction: column; background-color: #F0F0F0; border-radius: 10px; padding: 20px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px;">
+                        <div style="width: 100%; height: 70px; background-color: #F0F0F0; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+                <!-- Campaign goal box -->
+                <h2 style="color: #00758D; font-size: 41px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); padding: 0 20px;">${formattedPledged} Pledged (${percentFix}% to Goal)</h2>
+            </div>
+            <div class="dashboard-meter" style="width: 100%; height: 90px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
+              
+                    ${meterFillContent}
+         
+            </div>
+            <div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pledged box -->
+            		<div>
+               	 		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPending} Pending</h3>
+            		</div>
+        		</div>
+        		<div style="width: 49%; background-color: #FFFFFF; border: 5px solid #00758D; height: 65px; border-radius: 10px; display: flex; justify-content: center; align-items: center; padding: 10px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+            		<!-- Amount pending box -->
+            		<div>
+                		<h3 style="color: #00758D; font-size: 25px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">${formattedPP} Pledged & Pending</h3>
+            		</div>
+        		</div>
+    		</div>
+<div style="display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 15px; align-items: center;">		
+
+<div style="width: 37%; height: 250px; background-color: rgb(255, 255, 255); border: 5px solid #00758D; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 10px;">
+<div style="width: 100%; display: flex; align-items: center; flex-direction: column;">
+    <h3 style="color: #00758D; font-size: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
+        ${formattedGoal} Campaign Goal
+    </h3>
+<div id="pieChartPlaceholder" style="width: 80%; height: 80%;">
+    <!-- Pie Chart Using SVG -->
+    <svg width="150%" height="100%" viewBox="-30 -30 72 72">
+        <path id="endowmentSlice1" d="" fill="#00758D"></path>
+        <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
+        <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
+
+        <!-- Capital slice -->
+        <path id="capitalSlice1" d="" fill="#7866A1"></path>
+        <text id="capitalTextName1" font-size="2" fill="#635387"></text>
+        <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
+
+        <!-- Operating slice -->
+        <path id="operatingSlice1" d="" fill="#FF8C00"></path>
+        <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
+        <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
+		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
+    </svg>
+</div>
+   </div>
+   </div>
+
+<!-- Bar graph chart -->
+<div style="width: 61%; height: 250px; background-color: rgb(255,255,255); border: 5px solid #00758D; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${individualBar}px; max-height: 100%; background-color: #FF8C00;"></div>
+        <span style="font-size: 10px; margin-top: 10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Individuals: ${individualCount}</span>
+    </div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${corporationBar}px; max-height: 100%; background-color: #00758D;"></div>
+        <span style="font-size: 10px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Corporations: ${corporationCount}</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${foundationBar}px; max-height: 100%; background-color: #77C4D5;"></div>
+        <span style="font-size: 10px;margin-top: 10px;  padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Foundations: ${foundationCount}</span>
+    </div>
+   
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${boardBar}px; max-height: 100%; background-color: #7866A1"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Board: ${boardCount}</span>
+    </div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${publicBar}px; max-height: 100%; background-color: #CBCBCB;"></div>
+        <span style="font-size: 10px;margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Public: ${publicCount}</span>
+    </div>
+	<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+        <div style="box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);width: 50px; border-radius: 5px 5px 0 0; height: ${otherBar}px; max-height: 100%; background-color: #000000;"></div>
+        <span style="font-size: 10px; margin-top:10px; padding: 2px; padding-right: 10px; padding-left: 10px; background-color: #EAEAEA ; border-radius: 20px; ">Other: ${otherCount}</span>
+    </div>
+</div>
+
+</div>
+<div style="width: 100%; height: 160px; background-color: #FFFFFF; border: 5px solid #00758D; border-radius: 10px; margin-bottom: 15px; padding: 0 20px;">
+    <h2 style="color: #00758D; font-size: 37px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); text-align: center; padding: 0 20px;">Top 5 Donors</h2>
+    <div id="donorContainer" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 50%;">
+        <!-- Donors will be populated here by the script -->
+    </div>
+</div>
+
+
+
+        </div>
+    `;
+    
+	// Update pie chart slices
+			createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
+		// Sort donorArray in descending order based on donation amount
+    donors.sort((a, b) => b.amount - a.amount);
+	console.log(donors);
+    // Get the donorContainer element
+    const donorContainer = document.getElementById('donorContainer');
+
+    // Populate the top 5 donors into the donorContainer
+    for (let i = 0; i < 5 && i < donors.length; i++) {
+        const donor = donors[i];
+        const donorElement = document.createElement('div');
+donorElement.innerHTML = `
+    <div style="text-align: center; margin: 0 35px;">
+        <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
+        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
+    </div>`;
+        donorContainer.appendChild(donorElement);
+    }
+     
     }
 
     function updateDashboardTotals() {
@@ -2591,8 +2907,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
         localStorage.setItem('totalDonations', totalDonations);
         localStorage.setItem('percent', percent);
-		
-		updateDonationDashboard(goal, totalDonations, pendingDonations, pipelineDonations, percent);
+
+        updateDonationDashboard(goal, totalDonations, pendingDonations, pipelineDonations, percent);
         updateTopDonors();
     }
 
@@ -2915,6 +3231,54 @@ document.addEventListener("DOMContentLoaded", function() {
             donorContainer.appendChild(donorElement);
         }
     }
+	
+	// Function to validate the form
+function validateForm() {
+	if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name, Amount field, and a Checkbox selection are required.");
+    return false;
+	} else if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "") {
+    showAlertMM("Full Name and Amount fields are required.");
+    return false;
+	} else if (inputs[0].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name and a Checkbox selection are required.");
+    return false;
+  } else if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name and Amount field with a Checkbox selection is required.");
+    return false;
+  } else if ( inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Amount field and a Checkbox selection is required.");
+    return false;
+  } else if (inputs[0].value.trim() === "") {
+    showAlertMM("Full Name field is required.");
+    return false;
+  } else if (inputs[0].value.trim() === "" && inputs[2].value.trim() === "") {
+    showAlertMM("Full Name and Amount fields are required.");
+    return false;
+  } else if ( inputs[2].value.trim() === "") {
+    showAlertMM("Amount field is required.");
+    return false;
+	  } else if (inputs[0].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Full Name field and a Checkbox selection is required.");
+    return false;
+  } else if ((!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("A Checkbox selection is required.");
+    return false;
+  } else if (inputs[2].value.trim() === "" && (!fullNameCheckbox.checked && !orgNameCheckbox.checked)) {
+    showAlertMM("Amount field and a Checkbox selection is required.");
+    return false;
+  } else if (inputs[0].value.trim() === "") {
+    showAlertMM("Full Name field is required.");
+    return false;
+  } else if (inputs[2].value.trim() === "") {
+    showAlertMM("Amount field is required.");
+    return false;
+  } else if (!fullNameCheckbox.checked && !orgNameCheckbox.checked) {
+    showAlertMM("Please select at least one checkbox.");
+    return false;
+  }
+  return true;
+}
 
 	function numberWithCommas(number) {
   const formattedNumber = number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -2931,9 +3295,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
+	});
 });
 
-	//ADD DASHBOARD ON PAGE LOAD
+	//ADD DASHBOARD ON PAGE LOAD 
 	
 	document.addEventListener("DOMContentLoaded", function() {
   		const goal = <?php echo $goal; ?>;
@@ -3270,6 +3635,8 @@ donationRows.forEach((row, index) => {
 
 		//SAVE
 function saveChanges() {
+
+	
     const newNumBoxes = parseInt(document.getElementById('numBoxesInput').value);
 
     if (isNaN(newNumBoxes) || newNumBoxes < 0) {
@@ -3359,7 +3726,7 @@ function saveChanges() {
     }
 	resetRows();
 	rowSpace();
-	
+	savePyramidHTML();
     updateTotalDonations();
     closeModal();
 }
@@ -3510,6 +3877,7 @@ console.log("Closest amount:", closestAmount);
 		resetRows();
 		rowSpace();
   		updateTotalDonations();
+	 
 	}
 		
 function findClosestMatchingBoxesData(targetAmount, maxMatches = Infinity) {
@@ -3714,6 +4082,158 @@ document.querySelectorAll('.donation-row').forEach(row => {
         	document.getElementById('addNewModuleModal').style.display = "none";
     	};
 	}
+	
+		function base64Encode(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+} 
+
+function cleanPyramidHTML(htmlContent) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+
+    const boxes = tempDiv.querySelectorAll('.donation-box');
+    boxes.forEach(box => {
+        const frontElement = box.querySelector('.donation-box-front');
+        const backElement = box.querySelector('.donation-box-back');
+
+        // Apply the styling to clear the inner text and set the background color
+        if (frontElement) {
+            frontElement.innerText = '';
+            frontElement.style.backgroundColor = "#d4d4d4";
+        }
+        if (backElement) {
+            backElement.innerText = '';
+            backElement.style.backgroundColor = "#d4d4d4";
+        }
+    });
+
+    return tempDiv.innerHTML;
+}
+		
+		
+	
+function savePyramidHTML() {
+		
+    const campaignId = <?php echo $campaign_id; ?>;
+
+
+    const pyramidContainer = document.querySelector('.donation-pyramid');
+if (pyramidContainer) {
+        let htmlContent = pyramidContainer.innerHTML;
+        htmlContent = cleanPyramidHTML(htmlContent); // Clean up the HTML content
+        const encodedHtmlContent = base64Encode(htmlContent);
+
+        // Prepare data for AJAX request
+        const pyramidData = {
+            action: 'save_pyramid_html',
+            campaign_id: campaignId,
+            html_content: encodedHtmlContent,
+            nonce: pyramidNonce
+        };
+
+        console.log('Sending data:', pyramidData);
+
+        // Send AJAX request
+        fetch(ajaxurl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+            },
+            body: new URLSearchParams(pyramidData).toString()
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                console.log('Pyramid HTML saved:', data);
+            } else {
+                console.error('Error saving pyramid HTML:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving pyramid HTML:', error);
+        });
+    } else {
+        console.error('Pyramid container element not found.');
+    }
+}
+
+function base64Decode(str) {
+    return decodeURIComponent(escape(atob(str)));
+}
+	
+
+		function loadPyramidHTML() {
+			attachEventListeners();
+		
+    const campaignId = <?php echo $campaign_id; ?>;
+// Prepare data for AJAX request
+    // Prepare data for AJAX request
+    const pyramidData = {
+        action: 'load_pyramid_html',
+        campaign_id: campaignId,
+        nonce: pyramidNonce
+    };
+
+    console.log('Loading pyramid data:', pyramidData);
+
+    return new Promise((resolve, reject) => {
+        fetch(ajaxurl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+            },
+            body: new URLSearchParams(pyramidData).toString()
+        })
+        .then(response => {
+            console.log('Pyramid response status:', response.status);
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(response => {
+            console.log('Pyramid response data:', response);
+            if (response.success && response.data) {
+                const pyramidContainer = document.querySelector('.donation-pyramid'); // Adjust selector as needed
+                if (pyramidContainer) {
+                    pyramidContainer.innerHTML = base64Decode(response.data);
+                    resolve(); // Resolve the promise after pyramid is loaded
+                } else {
+                    console.error('Pyramid container element not found.');
+                    reject('Pyramid container element not found.');
+                }
+            } else {
+                console.error('Failed to load pyramid HTML:', response.data);
+                reject('Failed to load pyramid HTML.');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading pyramid HTML:', error);
+            reject(error);
+        });
+    });
+}
+function attachEventListeners() {
+    // Attach event delegation for the side buttons and donation-row-labels
+    const pyramidContainer = document.querySelector('.donation-pyramid');
+
+    if (pyramidContainer) {
+        pyramidContainer.addEventListener('click', function(event) {
+             if (event.target.classList.contains('donation-row-label') && !event.target.classList.contains('donation-row-label b')) {
+                editNumBoxes(event.target); 
+			}
+        });
+    }
+}
 
 	function setButtonHighlighted(button) {
     	button.style.backgroundColor = "#F78D2D";
