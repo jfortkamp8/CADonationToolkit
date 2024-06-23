@@ -14,9 +14,10 @@ Image Hosting: https://jfortkamp.imgbb.com/
 
 Toolkit TODO:
 
-* Pyramid Algorithm for smaller goals
-* Total donations on pyramid tab is funky
-* Pie Chart Functionality when saving
-* Dashboard Functionality when saving
-* PDF
-* File Hosting
+1. Pyramid Algorithm for smaller goals, not creating perfect triangle
+2. Pie Chart Functionality when saving
+3. Dashboard Functionality when saving
+4. Total donations on pyramid tab is funky
+5. Any bug fixing
+6. PDF
+7. File Hosting
