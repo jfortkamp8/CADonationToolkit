@@ -14,7 +14,7 @@ Image Hosting: https://jfortkamp.imgbb.com/
 
 Toolkit TODO:
 
-1. Pyramid Algorithm for smaller goals, not creating perfect triangle
+1. Pyramid Algorithm for smaller goals, not creating perfect triangle ✅
 2. Refactor pie chart field selection in the backend, maybe move to frontend?
 3. Pie Chart Functionality when saving
 4. Dashboard Functionality when saving
