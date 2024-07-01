@@ -15,12 +15,14 @@ Image Hosting: https://jfortkamp.imgbb.com/
 Toolkit TODO:
 
 1. Pyramid Algorithm for smaller goals, not creating perfect triangle ✅
-2. Save version history
-3. Google docs saving
-4. Refactor pie chart field selection in the backend, maybe move to frontend?
-5. Pie Chart Functionality when saving
-6. Dashboard Functionality when saving
-7. Total donations on pyramid tab is funky
-8. Any bug fixing
-9. PDF
-10. File Hosting
+2. patent pending
+3. letter head in pdf
+5. Google docs saving
+6. Refactor pie chart field selection in the backend, maybe move to frontend?
+7. Pie Chart Functionality when saving
+8. Dashboard Functionality when saving
+9. Total donations on pyramid tab is funky
+10. Any bug fixing
+11. PDF
+12. File Hosting
+13. 3. Save version history
