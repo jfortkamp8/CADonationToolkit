@@ -18,17 +18,18 @@ Toolkit TODO:
 2. patent pending ✅
 3. letter head in pdf ✅
 5. Google docs saving ✅
-6. Add new Column 'Lead', right of notes
-7. Enlarge RAP table
-8. Organization and Name should have a saved state to remeber which is picked add checkboxes in saving code
-9. Database parsing weird symbols like /////
-10. Refactor pie chart field selection in the backend, maybe move to frontend?
-11. Pie Chart Functionality when saving 
-12. Dashboard Functionality when saving
-13. Total donations on pyramid tab is funky 
-14. Any bug fixing
-15. File Hosting
-16. Saving - version history
+6. Stick tabs at the bottom of the page
+7. Add new Column 'Lead', right of notes
+8. Enlarge RAP table
+9. Organization and Name should have a saved state to remeber which is picked add checkboxes in saving code
+10. Database parsing weird symbols like /////
+11. Refactor pie chart field selection in the backend, maybe move to frontend?
+12. Pie Chart Functionality when saving 
+13. Dashboard Functionality when saving
+14. Total donations on pyramid tab is funky 
+15. Any bug fixing
+16. File Hosting
+17. Saving - version history
 
 Known Bugs:
 
