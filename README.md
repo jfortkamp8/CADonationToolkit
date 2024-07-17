@@ -19,10 +19,10 @@ Toolkit TODO:
 3. letter head in pdf ✅
 5. Google docs saving ✅
 6. Stick tabs at the bottom of the page ✅
-7. Add new Column 'Lead', right of notes
+7. Add new Column 'Lead', right of notes ✅
 8. Enlarge RAP table ✅
 9. Organization and Name should have a saved state to remeber which is picked add checkboxes in saving code
-10. Database parsing weird symbols like /////
+10. Database parsing weird symbols like ///// ✅
 11. Refactor pie chart field selection in the backend, maybe move to frontend?
 12. Pie Chart Functionality when saving 
 13. Dashboard Functionality when saving
