@@ -14,6 +14,10 @@ Image Hosting: https://jfortkamp.imgbb.com/
 
 Toolkit TODO:
 
+Bugs:
+row not actually deleting when saving
+when editing a user it adds another user thinking you are adding another, one so it is not removing the user when the edit button is pressed??
+
 1. Pyramid Algorithm for smaller goals, not creating perfect triangle ✅
 2. patent pending ✅
 3. letter head in pdf ✅
