@@ -1,6 +1,6 @@
 function donation_toolkit_shortcode($atts) {
 	wp_enqueue_script( 'js-pdf', 'https://cdn.jsdelivr.net/npm/jspdf@latest/dist/jspdf.min.js', array(), 'latest', true );
-	wp_enqueue_script( 'html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.3.2/dist/html2canvas.min.js', array(), 'latest', true );	
+	wp_enqueue_script( 'html2pdf', 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js', array(), 'latest', true );	
 	if( !is_admin() ) {
     	echo '<script type="text/javascript">
             var ajaxurl = "' . admin_url('admin-ajax.php') . '";
@@ -46,11 +46,12 @@ function donation_toolkit_shortcode($atts) {
 	<script>
 
 
-	// Global
+	// Global 
 	let donors = [];
 	let globalRowLabel;
 	let globalDisplayName = '';
 	let isEditing = false;
+	let pollingEnabled = true;
 	const rowsType = document.querySelectorAll('#moves-management table tbody tr');
 		
 
@@ -101,7 +102,6 @@ document.body.addEventListener('click', function(event) {
     let clickedBox = event.target.closest('.donation-box');
     
     if (clickedBox) {
-        console.log('Cloned box clicked');
         let boxFront = clickedBox.querySelector('.donation-box-front');
         let boxBack = clickedBox.querySelector('.donation-box-back');
 
@@ -121,160 +121,7 @@ document.body.addEventListener('click', function(event) {
 		
 flipBox();
 		
-	// Call savePageStateToServer() whenever there is a change in the page state
-	document.addEventListener("DOMContentLoaded", function() {
-		
-	  var deleteStorage = true;
-	  // Call loadPageStateFromServer() when the page loads to render the saved HTML
-		if (deleteStorage == true){
-			localStorage.clear();
-			  localStorage.clear();
 
-        // Create and display the message
-        var messageDiv = document.createElement('div');
-        messageDiv.textContent = 'Saving is currently disabled for development purposes!';
-        messageDiv.style.position = 'absolute';
-        messageDiv.style.fontSize = '17px';
-        messageDiv.style.top = '30px'; // Adjust as needed
-        messageDiv.style.left = '30px'; // Adjust as needed
-        messageDiv.style.backgroundColor = 'rgb(189,186,186)'; // Style as needed
-        document.body.appendChild(messageDiv);
-
-        // Hide the message after 3 seconds (3000 milliseconds)
-        setTimeout(function() {
-            messageDiv.style.display = 'none';
-        }, 3000);
-
-		} else {
-			loadMMJS();
-        	loadDonationMeterState();
-    		loadPageStateFromLocal();
-			flipBox();
-		}
-	});
-
-		
-function loadMMJS(){
-	
-	const cells = Array.from({ length: 10 }, () => document.createElement("td"));
-	// Add column to attach files to donation
-		const attachFiles = document.createElement("td");
-		attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
-                        		'<button class="download-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" 								  alt="Download files"></button>';
-		attachFiles.width = '10%';
-		attachFiles.style.textAlign = 'center';
-		attachFiles.style.verticalAlign = 'middle';
-		cells[8] = attachFiles;
-		const attachButton = cells[8].querySelector(".attach-button");
-		const downloadButton = cells[8].querySelector(".download-button");
-  		// Attach button click event listener
-  		attachButton.addEventListener("click", function handleAttachButtonClick() {
-			console.log("attach"); 
-    		const fileInput = document.createElement("input");
-    		fileInput.type = "file";
-    		fileInput.multiple = true;
-    		fileInput.accept = "image/*, .pdf, .doc, .docx";
-    		fileInput.style.display = "none";
-   		 	document.body.appendChild(fileInput);
-    		fileInput.addEventListener("change", function handleFileInputChange() {
-      			const fileList = fileInput.files;
-      			const files = Array.from(fileList);
-      			if (files.length > 0) {
-        			downloadButton.disabled = false;
-        			downloadButton.addEventListener("click", function handleDownloadButtonClick() {
-          				files.forEach(file => {
-            				const url = URL.createObjectURL(file);
-            				const link = document.createElement("a");
-            				link.href = url;
-            				link.download = file.name;
-            				link.style.display = "none";
-            				document.body.appendChild(link);
-            				link.click();
-            				document.body.removeChild(link);
-            				URL.revokeObjectURL(url);
-          				});
-        			});
-      			}
-    		});
-			fileInput.click();
-  		});
-}
-		
-		loadMMJS();
-		
-document.addEventListener('DOMContentLoaded', function() {
-    loadDonationMeterState();
-});
-		
-function loadDonationMeterState() {
-    // Use parseFloat and || to set default values to 0 if the localStorage items are NaN
-    const savedTotalDonations = parseFloat(localStorage.getItem('totalDonations')) || 0;
-    const savedPercent = parseFloat(localStorage.getItem('percent')) || 0;
-    const goal = <?php echo $goal; ?>; // Your existing goal
-
-    // Always update the meter, regardless of saved values
-    const meterFill = document.getElementById("donation-meter-fill");
-    meterFill.style.width = `${savedPercent}%`;
-    meterFill.innerHTML = `<div class="fill" style="width: ${savedPercent}%">${savedPercent > 100 ? `<p>${savedPercent.toFixed()}%</p>` : ''}</div>`;
-
-    const meterTexthead = document.getElementById("donation-meter-head");
-    meterTexthead.innerHTML = `$${savedTotalDonations.toLocaleString()} Raised To-Date (${savedPercent.toFixed()}%)`;
-
-    const meterText = document.getElementById("donation-meter-text");
-    meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
-
-    // Assuming 'donors' is already defined. Ensure this array is defined before this function runs.
-    donors.sort((a, b) => b.amount - a.amount);
-    console.log(donors);
-
-    // Get the donorContainer element
-    const donorContainer = document.getElementById('donorContainer');
-
-    // Clear existing donor elements before populating
-    donorContainer.innerHTML = '';
-
-    // Populate the top 5 donors into the donorContainer
-    for (let i = 0; i < 5 && i < donors.length; i++) {
-        const donor = donors[i];
-        const donorElement = document.createElement('div');
-        donorElement.innerHTML = `
-            <div style="text-align: center; margin: 0 35px;">
-                <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
-                <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
-            </div>`;
-        donorContainer.appendChild(donorElement);
-    }
-}
-
-	  // Function to save the HTML content to localStorage
-	  function savePageStateToLocal() {
-		const pageHTML = document.documentElement.outerHTML;
-		localStorage.setItem('saved_page_html', pageHTML);
-	  }
-
-	  // Function to load and render the saved HTML content from localStorage
-	  function loadPageStateFromLocal() {
-		const savedPageHTML = localStorage.getItem('saved_page_html');
-		const saving = true; 
-		if (savedPageHTML && saving == true) {
-		  document.documentElement.innerHTML = savedPageHTML;
-		  console.log("Page state loaded successfully.");
-		} else {
-		  console.log("No saved page state found in localStorage.");
-		}
-	  }
-
-	// Add event listeners for user interactions to trigger saving the page state
-  document.addEventListener('click', function() {
-    // Example: Save the page state whenever a click event occurs
-    savePageStateToLocal();
-  });
-
-  document.addEventListener('input', function() {
-    // Example: Save the page state whenever an input event occurs (e.g., user types in an input field)
-    savePageStateToLocal();
-  });	
-		
 	
 		// This dictionary will store the removal dates indexed by displayName
 let removalDates = {};
@@ -397,7 +244,8 @@ let donationRows = document.querySelectorAll('.donation-row');
 	}
 
 			function addRow() {
-		
+		pollingEnabled = false; // Disable polling temporarily
+
 		isEditing = true;
 		 // Generate a unique identifier using timestamp and random number
     	const uniqueId = Math.floor(Date.now() / 10000).toString() + Math.floor(Math.random() * 10).toString();
@@ -438,7 +286,7 @@ let donationRows = document.querySelectorAll('.donation-row');
 		// Set the UUID as a data attribute on the row
     	newRow.setAttribute('donor-id', uniqueId);
 		
-  		const cells = Array.from({ length: 10 }, () => document.createElement("td"));
+  		const cells = Array.from({ length: 11 }, () => document.createElement("td"));
   		// Add dropdown for pledge or pending column
   		const pledgePendingSelect = document.createElement("select");
 		pledgePendingSelect.className = "donation-status-select";
@@ -467,38 +315,45 @@ let donationRows = document.querySelectorAll('.donation-row');
 		cells[1].style.textAlign = "center";
 		cells[1].style.verticalAlign = "middle";
 		cells[1].appendChild(donationTypeSelect);
-  		cells[0].width = '12%';
-  		cells[1].width = '12%';
+  		cells[0].width = '10%';
+  		cells[1].width = '10%';
 
-		cells[2].width = '14%';
-		cells[3].width = '12%';
-		cells[4].width = '11%';
-		cells[5].width = '9%';
-		cells[6].width = '9%';
-		cells[7].width = '9%';
-		cells[1].style.verticalAlign = 'middle';
-		cells[2].style.verticalAlign = 'middle';
-		cells[3].style.verticalAlign = 'middle';
-		cells[4].style.verticalAlign = 'middle';
-		cells[5].style.verticalAlign = 'middle';
-		cells[6].style.verticalAlign = 'middle';
-		cells[7].style.verticalAlign = 'middle';
+		cells[2].width = '10%';
+    cells[3].width = '8%';
+    cells[4].width = '8%';
+    cells[5].width = '18%';
+    cells[6].width = '15%';
+    cells[7].width = '15%';
+	cells[8].width = '9%';
+    cells[1].style.verticalAlign = 'middle';
+    cells[2].style.verticalAlign = 'middle';
+    cells[3].style.verticalAlign = 'middle';
+    cells[4].style.verticalAlign = 'middle';
+    cells[5].style.verticalAlign = 'middle';
+    cells[6].style.verticalAlign = 'middle';
+    cells[7].style.verticalAlign = 'middle';
+	cells[8].style.verticalAlign = 'middle';
 		
-		const docIndex = Array.from(cells).indexOf(cells[8]);
-const inputs = cells.slice(2, 9).map(cell => {
+		const docIndex = Array.from(cells).indexOf(cells[9]);
+const inputs = cells.slice(2, 10).map(cell => {
     const textarea = document.createElement("textarea");
     textarea.style.fontSize = "11px";
     textarea.style.width = "100%";
     textarea.style.boxSizing = "border-box";
     textarea.style.overflowY = "hidden";
-    textarea.setAttribute('rows', '1');
     textarea.style.resize = "none";
     textarea.style.verticalAlign = "middle"; // Align textareas vertically
+    textarea.style.padding = "5px"; // Minimal padding for better readability
+    textarea.style.margin = "0"; // No margin to align with the table cell
+    textarea.style.border = "1px solid #000000"; // Add a border for better visibility
+    textarea.style.borderRadius = "4px"; // Rounded corners for a modern look
+    textarea.style.lineHeight = "1.1"; // Adjust line height for better readability
+	textarea.style.minHeight = "40px"; // Set a minimum height for the text area
 
     // Function to resize textarea based on content
     const resizeTextarea = (el) => {
-        el.style.height = 'auto';
-        el.style.height = el.scrollHeight + 'px';
+        el.style.height = 'auto'; // Reset height
+        el.style.height = el.scrollHeight + 'px'; // Set new height based on scrollHeight
     };
 
     // Resize textarea when the content changes
@@ -506,9 +361,13 @@ const inputs = cells.slice(2, 9).map(cell => {
         resizeTextarea(e.target);
     });
 
+    // Initial resize to fit content if any
+    resizeTextarea(textarea);
+	cell.style.padding = "3px"; // Remove padding from the table cell
     cell.appendChild(textarea);
     return textarea;
 });
+
  
 		
 		const fullNameCheckbox = addCircleCheckbox();
@@ -598,15 +457,33 @@ function validateForm() {
 
 // Add column to attach files to donation
 const attachFiles = document.createElement("td");
-attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
-                        '<button class="download-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" alt="Download files"></button>';
-attachFiles.width = '10%';
 attachFiles.style.textAlign = 'center';
 attachFiles.style.verticalAlign = 'middle';
-cells[8] = attachFiles;
+attachFiles.width = '10%';
 
-const attachButton = cells[8].querySelector(".attach-button");
-const downloadButton = cells[8].querySelector(".download-button");
+// Create a container for the attach and download buttons
+const buttonContainer = document.createElement("div");
+buttonContainer.className = 'attach-download-container';
+
+// Attach button
+const attachButton = document.createElement("button");
+attachButton.className = "attach-button";
+attachButton.style.backgroundColor = "lightgrey";
+attachButton.style.border = "none";
+attachButton.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files">';
+buttonContainer.appendChild(attachButton);
+
+// Download button
+const downloadButton = document.createElement("button");
+downloadButton.className = "download-button";
+downloadButton.style.backgroundColor = "lightgrey";
+downloadButton.style.border = "none";
+downloadButton.innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" alt="Download files">';
+buttonContainer.appendChild(downloadButton);
+
+// Append the container to the table cell
+attachFiles.appendChild(buttonContainer);
+cells[9] = attachFiles;
 
 // Create an array to store selected files
 const selectedFiles = [];
@@ -662,7 +539,7 @@ downloadLink.href = URL.createObjectURL(file);
 downloadLink.download = file.name;
 
 const downloadIcon = document.createElement("img");
-downloadIcon.src = "https://i.ibb.co/rpdt924/image.png";
+downloadIcon.src = "https://imgur.com/Eh4o70Y";
 downloadIcon.alt = "Download";
 downloadIcon.style.width = "20px";
 downloadIcon.style.height = "20px";
@@ -698,9 +575,9 @@ fileListContainer.appendChild(fileItem);
 const saveButton = document.createElement("button");
 saveButton.className = "save-button";
 saveButton.innerText = "Save";
-cells[9].appendChild(saveButton);
-cells[9].style.textAlign = "center";
-cells[9].style.verticalAlign = "middle";
+cells[10].appendChild(saveButton);
+cells[10].style.textAlign = "center";
+cells[10].style.verticalAlign = "middle";
 
 cells.forEach(cell => newRow.appendChild(cell));
  
@@ -750,7 +627,7 @@ deleteButton.addEventListener("click", function handleDeleteButtonClick() {
         .then(response => response.text()) // Assuming the server responds with text
         .then(responseText => {
             // Handle the server response here
-            console.log(responseText);
+        
             // If successful, remove the row from the table
             if (responseText.includes('successfully')) { // Adjust based on actual success message
                 newRow.remove();
@@ -804,10 +681,6 @@ combinedTotalElement.innerText = formatCurrency(combinedTotal);
 	    const meterTexthead = document.getElementById("donation-meter-head");
 		meterTexthead.innerHTML = `$${totalDonations.toLocaleString()} Raised To-Date (${percent.toFixed()}%)`;
 		meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
-			
-		console.log("Saving to localStorage:", totalDonations, percent);
-		localStorage.setItem('totalDonations', totalDonations);
-localStorage.setItem('percent', percent);
 	
 const rowsType = document.querySelectorAll('#moves-management table tbody tr');
 		
@@ -980,7 +853,7 @@ rowsType.forEach(row => {
 	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
-	console.log(donors);
+
     // Get the donorContainer element
     const donorContainer = document.getElementById('donorContainer');
 
@@ -1041,40 +914,42 @@ orgNameCheckbox.addEventListener("change", function () {
 				const donorId = getDonorIdFromRow(newRow);
 				const campaignId = <?php echo $campaign_id; ?>;
 				
-				console.log(donorId);
-				console.log(campaignId);
-				
 				
 var donorData = {
-                action: 'insert_donor_info', // The WP action hook to target
-                donor_id: donorId,
-                campaign_id: campaignId, // Use the campaign ID set by the server-side script
-                status: pledgePendingSelect.value, 
-                type: donationTypeSelect.value, 
-                full_name: inputs[0].value, 
-                organization: inputs[1].value, 
-                amount: inputs[2].value, 
-                next_step: inputs[3].value, 
-                recent_involvement: inputs[4].value,
-                notes: inputs[5].value, 
-                // TBD 'documents' need file hosting
-            };
+    action: 'insert_donor_info', // The WP action hook to target
+    donor_id: donorId,
+    campaign_id: campaignId, // Use the campaign ID set by the server-side script
+    status: pledgePendingSelect.value, 
+    type: donationTypeSelect.value, 
+    full_name: inputs[0].value, 
+    organization: inputs[1].value, 
+    amount: inputs[2].value, 
+    next_step: inputs[3].value, 
+    recent_involvement: inputs[4].value,
+    notes: inputs[5].value,
+	lead: inputs[6].value,
+    // TBD 'documents' need file hosting
+};
 
-    fetch(ajaxurl, { 
-        method: 'POST',
-        credentials: 'same-origin', 
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-        },
-        body: new URLSearchParams(donorData).toString() 
-    })
-    .then(response => response.text()) // Assuming the server responds with text
-    .then(responseText => {
-        // Handle the server response here
-        console.log(responseText);
-        // Possibly update UI or alert the user of success
-    })
-    .catch(error => console.error('Error:', error));
+// Convert donorData to a URL-encoded string
+var encodedData = Object.keys(donorData).map(function(key) {
+    return encodeURIComponent(key) + '=' + encodeURIComponent(donorData[key]);
+}).join('&');
+
+fetch(ajaxurl, { 
+    method: 'POST',
+    credentials: 'same-origin', 
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+    },
+    body: encodedData 
+})
+.then(response => response.text()) // Assuming the server responds with text
+.then(responseText => {
+    // Handle the server response here
+    // Possibly update UI or alert the user of success
+})
+.catch(error => console.error('Error:', error));
 				
 		// Iterate over each row and update the count variables
 		rowsType.forEach(row => {
@@ -1084,17 +959,15 @@ var donorData = {
  			const donationTypeValue = donationTypeSelect.value;	
 			const donationStatusValue = donationStatusSelect.value;
 			
-			console.log(donationTypeValue);
-			console.log(donationStatusValue); 
+	
  
 });				 
-			console.log(isEditing);
+			
 		deleteButton.remove();
-        console.log("deleteButton removed");
-
+     
     		const values = inputs.map(input => input.value);
 
-    		cells.slice(2, 8).forEach((cell, index) => {
+    		cells.slice(2, 9).forEach((cell, index) => {
       			cell.innerHTML = values[index];
    			});
 				
@@ -1103,10 +976,10 @@ var donorData = {
     		const editButton = document.createElement("button");
     		editButton.className = "edit-button";
     		editButton.innerText = "Edit";
-    		cells[9].innerHTML = "";
-    		cells[9].appendChild(editButton);
-    		cells[9].style.textAlign = "center";
-    		cells[9].style.verticalAlign = "middle";
+    		cells[10].innerHTML = "";
+    		cells[10].appendChild(editButton);
+    		cells[10].style.textAlign = "center";
+    		cells[10].style.verticalAlign = "middle";
 		
 					 // Sort rows based on the donation amount
 Array.from(tableBody.rows)
@@ -1123,12 +996,6 @@ Array.from(tableBody.rows)
 				
     		editButton.addEventListener("click", function handleEditButtonClick() { 
 				isEditing = true;
-
-				
-				console.log(isEditing);
-				
-		
-
 		// Re-add the delete button after updating the row's content
         newRow.appendChild(deleteButton);
 				
@@ -1239,7 +1106,7 @@ pipelineRows.forEach(row => {
 				donationTypeSelect.disabled = false;
 
       			inputs.forEach((input, index) => {
-  					if (index !== 6) {
+  					if (index !== 7) {
    						const value = cells[index + 2].innerHTML;
 						cells[index + 2].innerHTML = "";
     					cells[index + 2].appendChild(input);
@@ -1315,10 +1182,10 @@ inputs[1].addEventListener("input", function() {
       			const saveButton = document.createElement("button");
       			saveButton.className = "save-button";
       			saveButton.innerText = "Save";
-      			cells[9].innerHTML = "";
-      			cells[9].appendChild(saveButton);
-      			cells[9].style.textAlign = "center";
-      			cells[9].style.verticalAlign = "middle";
+      			cells[10].innerHTML = "";
+      			cells[10].appendChild(saveButton);
+      			cells[10].style.textAlign = "center";
+      			cells[10].style.verticalAlign = "middle";
 
       			saveButton.addEventListener("click", handleSaveButtonClick);
 	
@@ -1330,7 +1197,7 @@ inputs[1].addEventListener("input", function() {
 			donationTypeSelect.disabled = true;
 			
   		// Set font size for saved values
-  		cells.slice(2, 8).forEach(cell => {
+  		cells.slice(2, 9).forEach(cell => {
     		cell.classList.add("saved-value");
   		});
 			
@@ -1348,7 +1215,7 @@ inputs[1].addEventListener("input", function() {
   			document.createElement("td"),
   			document.createElement("td"),
 		];
-		console.log(displayName);
+
 		targetCells[0].innerHTML = displayName;
 		targetCells[1].innerHTML = numberWithCommas(values[2]);
 		// Check if there's a stored removal date for this displayName
@@ -1428,15 +1295,12 @@ donors.push(newDonor);
     donationColor = '#7866A1';
     break;
   default:
-    console.log('Invalid value for pledge/pending column');
     return;
 }
 
 // Get the rows and their amounts from the DOM
 const rows = document.querySelectorAll('.donation-row');
 let donationRowAmounts = [];
-			
-console.log(donationRowAmounts);
 
 document.querySelectorAll('.donation-row').forEach(row => {
     let box = row.querySelector('.donation-box');
@@ -1469,15 +1333,11 @@ boxes.forEach((box, index) => {
 
 let emptyIndex = -1;
 for (let i = 0; i < boxes.length; i++) {
-  console.log(`Checking box at index ${i}...`);  // Debugging log
   if (!filledBoxes.includes(i)) {
-    console.log(`Found empty box at index ${i}`);  // Debugging log
     emptyIndex = i;
     break;
   }
 }
-console.log('Final emptyIndex:', emptyIndex); 
-	
 
 if (emptyIndex !== -1) {
 const box = boxes[emptyIndex];  // Assuming boxes[emptyIndex] is your .donation-box-front
@@ -1823,7 +1683,7 @@ rowsType1.forEach(row => {
 	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
-	console.log(donors);
+
     // Get the donorContainer element
     const donorContainer = document.getElementById('donorContainer');
 
@@ -1907,9 +1767,6 @@ combinedTotalElement.innerText = formatCurrency(combinedTotal);
 	    const meterTexthead = document.getElementById("donation-meter-head");
 		meterTexthead.innerHTML = `$${totalDonations.toLocaleString()} Raised To-Date (${percent.toFixed()}%)`;
 		meterText.innerHTML = `$${goal.toLocaleString()} Campaign Goal <span class="percent"></span>`;
-			console.log("Saving to localStorage:", totalDonations, percent);
-				localStorage.setItem('totalDonations', totalDonations);
-localStorage.setItem('percent', percent);
 	
 const rowsType2 = document.querySelectorAll('#moves-management table tbody tr');
 				
@@ -2082,7 +1939,7 @@ rowsType2.forEach(row => {
 	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
-	console.log(donors);
+
     // Get the donorContainer element
     const donorContainer = document.getElementById('donorContainer');
 
@@ -2099,7 +1956,10 @@ donorElement.innerHTML = `
     }
 		}
 		}, 0);
-		
+		setTimeout(() => {
+        pollingEnabled = true;
+			
+    }, 5000); // Adjust delay as needed
 	}
 		
 document.addEventListener("DOMContentLoaded", function() {
@@ -2110,461 +1970,584 @@ document.addEventListener("DOMContentLoaded", function() {
     // Fetch donors for the campaign and add them to the table
     fetchDonorsByCampaign(campaignId);
 
-    function fetchDonorsByCampaign(campaignId) {
-        var donorData = {
-            action: 'fetch_donors_by_campaign',
-            campaign_id: campaignId
-        };
+let displayedDonors = new Set(); // Track displayed donors by donor_id
+let lastFetchedDonorIds = new Set(); // Store last fetched donor IDs
 
-        fetch(ajaxurl, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-            },
-            body: new URLSearchParams(donorData).toString()
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                data.data.forEach(donor => {
+function fetchDonorsByCampaign(campaignId) {
+    if (!pollingEnabled) return; // Skip fetching if polling is disabled
+
+    var donorData = {
+        action: 'fetch_donors_by_campaign',
+        campaign_id: campaignId
+    };
+
+    fetch(ajaxurl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+        },
+        body: new URLSearchParams(donorData).toString()
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const newDonorIds = new Set(data.data.map(donor => donor.donor_id));
+
+            // Add new donors
+            data.data.forEach(donor => {
+                if (!displayedDonors.has(donor.donor_id)) {
+                    displayedDonors.add(donor.donor_id);
                     addDonorToTable(donor);
                     updateDashboard(donor);
                     updateDonationPyramid(donor);
-                });
-                updateTopDonors(); // Ensure top donors are updated after all donors are processed
-            } else {
-                console.error(data.data);
+                }
+            });
+
+            // Remove donors if they are missing from the database after the last poll
+            displayedDonors.forEach(donorId => {
+                if (!newDonorIds.has(donorId)) {
+                    const donor = { donor_id: donorId }; // Create a donor object with the missing donorId
+                    removeDonorFromTabs(donor);
+                    updateDashboardTotals();
+                    displayedDonors.delete(donorId); // Remove the donor from the displayed donors set
+                }
+            });
+
+            updateTopDonors(); // Ensure top donors are updated after all donors are processed
+        } else {
+            console.error(data.data);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+
+// Function to start polling
+function startPolling() {
+	
+    fetchDonorsByCampaign(campaignId);
+    setTimeout(() => {
+        if (pollingEnabled) {
+            startPolling(); // Poll every 5 seconds if polling is enabled
+        }
+    }, 1000);
+}
+
+startPolling(); // Start polling on page load
+function addDonorToTable(donor) {
+    const newRow = document.createElement("tr");
+    newRow.setAttribute('donor-id', donor.donor_id);
+
+    const cells = Array.from({ length: 11 }, () => document.createElement("td"));
+
+    const pledgePendingSelect = document.createElement("select");
+    pledgePendingSelect.className = "donation-status-select";
+    pledgePendingSelect.innerHTML = `
+        <option value="pledge">Pledged</option>
+        <option value="pending">Pending</option>
+        <option value="engaged">Engaged</option>
+        <option value="identified">Identified</option>
+        <option value="denied">Declined</option>
+    `;
+    pledgePendingSelect.style.fontSize = "10px";
+    pledgePendingSelect.value = donor.status;
+    pledgePendingSelect.disabled = true;
+
+    const donationTypeSelect = document.createElement("select");
+    donationTypeSelect.className = "donation-type-select";
+    donationTypeSelect.innerHTML = `
+        <option value="individual">Individuals</option>
+        <option value="foundation">Foundations</option>
+        <option value="corporation">Corporations</option>
+        <option value="public">Public</option>
+        <option value="board">Board</option>
+        <option value="other">Other</option> 
+    `;
+    donationTypeSelect.style.fontSize = "10px";
+    donationTypeSelect.value = donor.type;
+    donationTypeSelect.disabled = true;
+
+    cells[0].style.textAlign = "center";
+    cells[0].style.verticalAlign = "middle";
+    cells[0].appendChild(pledgePendingSelect);
+    cells[1].style.textAlign = "center";
+    cells[1].style.verticalAlign = "middle";
+    cells[1].appendChild(donationTypeSelect);
+    cells[0].width = '10%';
+    cells[1].width = '10%';
+
+    cells[2].width = '10%';
+    cells[3].width = '8%';
+    cells[4].width = '8%';
+    cells[5].width = '18%';
+    cells[6].width = '15%';
+    cells[7].width = '15%';
+    cells[8].width = '9%';
+    cells[1].style.verticalAlign = 'middle';
+    cells[2].style.verticalAlign = 'middle';
+    cells[3].style.verticalAlign = 'middle';
+    cells[4].style.verticalAlign = 'middle';
+    cells[5].style.verticalAlign = 'middle';
+    cells[6].style.verticalAlign = 'middle';
+    cells[7].style.verticalAlign = 'middle';
+    cells[8].style.verticalAlign = 'middle';
+
+    const inputs = cells.slice(2, 10).map(cell => {
+        const textarea = document.createElement("textarea");
+        textarea.style.fontSize = "11px";
+        textarea.style.width = "100%";
+        textarea.style.boxSizing = "border-box";
+        textarea.style.overflowY = "hidden";
+        textarea.style.resize = "none";
+        textarea.style.verticalAlign = "middle";
+        textarea.style.padding = "5px";
+        textarea.style.margin = "0";
+        textarea.style.border = "1px solid #000000";
+        textarea.style.borderRadius = "4px";
+        textarea.style.lineHeight = "1.1";
+        textarea.style.minHeight = "40px";
+
+        const resizeTextarea = (el) => {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        };
+
+        textarea.addEventListener('input', (e) => {
+            resizeTextarea(e.target);
+        });
+
+        resizeTextarea(textarea);
+        cell.style.padding = "3px";
+        cell.appendChild(textarea);
+        return textarea;
+    });
+
+    cells[2].textContent = donor.full_name;
+    cells[3].textContent = donor.organization;
+    cells[4].textContent = numberWithCommas(donor.amount);
+    cells[5].textContent = donor.next_step;
+    cells[6].textContent = donor.recent_involvement;
+    cells[7].textContent = donor.notes;
+    cells[8].textContent = donor.lead;
+    cells[2].style.fontSize = "12px";
+    cells[3].style.fontSize = "12px";
+    cells[4].style.fontSize = "12px";
+    cells[5].style.fontSize = "12px";
+    cells[6].style.fontSize = "12px";
+    cells[7].style.fontSize = "12px";
+    cells[8].style.fontSize = "12px";
+
+    const attachFiles = document.createElement("td");
+    attachFiles.style.textAlign = 'center';
+    attachFiles.style.verticalAlign = 'middle';
+    attachFiles.width = '10%';
+
+    const buttonContainer = document.createElement("div");
+    buttonContainer.className = 'attach-download-container';
+
+    const attachButton = document.createElement("button");
+    attachButton.className = "attach-button";
+    attachButton.style.backgroundColor = "lightgrey";
+    attachButton.style.border = "none";
+    attachButton.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files">';
+    buttonContainer.appendChild(attachButton);
+
+    const downloadButton = document.createElement("button");
+    downloadButton.className = "download-button";
+    downloadButton.style.backgroundColor = "lightgrey";
+    downloadButton.style.border = "none";
+    downloadButton.innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" alt="Download files">';
+    buttonContainer.appendChild(downloadButton);
+
+    attachFiles.appendChild(buttonContainer);
+    cells[9] = attachFiles;
+
+    const selectedFiles = [];
+
+    attachButton.addEventListener("click", function handleAttachButtonClick() {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.multiple = true;
+        fileInput.accept = "image/*, .pdf, .doc, .docx";
+        fileInput.style.display = "none";
+        document.body.appendChild(fileInput);
+        fileInput.addEventListener("change", function handleFileInputChange() {
+            const fileList = fileInput.files;
+            const files = Array.from(fileList);
+            if (files.length > 0) {
+                downloadButton.disabled = false;
+                selectedFiles.push(...files);
             }
-        })
-        .catch(error => console.error('Error:', error));
+        });
+        fileInput.click();
+    });
+
+    downloadButton.addEventListener("click", function handleDownloadButtonClick() {
+        if (selectedFiles.length > 0) {
+            const popup = document.createElement("div");
+            popup.className = "popup";
+            popup.style.position = "fixed";
+            popup.style.top = "50%";
+            popup.style.left = "50%";
+            popup.style.transform = "translate(-50%, -50%)";
+            popup.style.background = "white";
+            popup.style.padding = "10px";
+            popup.style.borderRadius = "10px";
+            popup.style.boxShadow = "0 4px 8px 0 rgba(0, 0, 0, 0.2)";
+            popup.style.zIndex = "9999";
+            popup.style.textAlign = "center";
+
+            const fileListContainer = document.createElement("div");
+            fileListContainer.className = "file-list-container";
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement("div");
+                fileItem.innerText = file.name;
+                fileItem.style.marginBottom = "8px";
+                fileItem.style.backgroundColor = index % 2 === 0 ? "#f5f5f5" : "white";
+
+                const fileIcon = document.createElement("img");
+
+                const downloadLink = document.createElement("a");
+                downloadLink.href = URL.createObjectURL(file);
+                downloadLink.download = file.name;
+
+                const downloadIcon = document.createElement("img");
+                downloadIcon.src = "https://imgur.com/Eh4o70Y";
+                downloadIcon.alt = "Download";
+                downloadIcon.style.width = "20px";
+                downloadIcon.style.height = "20px";
+                downloadIcon.style.marginLeft = "5px";
+
+                downloadIcon.addEventListener("click", () => {
+                    fileItem.style.color = "#7866A1";
+                    fileItem.style.textDecoration = "underline";
+                });
+
+                downloadLink.appendChild(downloadIcon);
+
+                fileItem.appendChild(downloadLink);
+                fileListContainer.appendChild(fileItem);
+            });
+
+            const closeButton = document.createElement("button");
+            closeButton.innerText = "Close";
+            closeButton.style.padding = "7.5px 12.5px";
+            closeButton.style.marginTop = "10px";
+            closeButton.addEventListener("click", function handleCloseButtonClick() {
+                document.body.removeChild(popup);
+            });
+
+            fileListContainer.appendChild(closeButton);
+            popup.appendChild(fileListContainer);
+            document.body.appendChild(popup);
+        }
+    });
+
+    const editButton = document.createElement("button");
+    editButton.className = "edit-button";
+    editButton.innerText = "Edit";
+    cells[10].appendChild(editButton);
+    cells[10].style.textAlign = "center";
+    cells[10].style.verticalAlign = "middle";
+
+    cells.forEach(cell => newRow.appendChild(cell));
+
+    const tableBody = document.querySelector("#moves-management table tbody");
+
+    const amount = parseFloat(donor.amount.replace(/[^\d.-]/g, ''));
+    let inserted = false;
+
+    for (let i = 0; i < tableBody.rows.length; i++) {
+        const rowAmount = parseFloat(tableBody.rows[i].cells[4].textContent.replace(/[^\d.-]/g, ''));
+        if (amount > rowAmount) {
+            tableBody.insertBefore(newRow, tableBody.rows[i]);
+            inserted = true;
+            break;
+        }
     }
 
-    function addDonorToTable(donor) {
-        const newRow = document.createElement("tr");
-        newRow.setAttribute('donor-id', donor.donor_id);
+    if (!inserted) {
+        tableBody.appendChild(newRow);
+    }
 
-        const cells = Array.from({ length: 10 }, () => document.createElement("td"));
+    const deleteButton = document.createElement("div");
+    deleteButton.className = "delete-button";
+    const deleteImage = document.createElement("img");
+    deleteImage.src = "https://freepngtransparent.com/wp-content/uploads/2023/03/X-Png-87.png";
+    deleteButton.appendChild(deleteImage);
 
-        const pledgePendingSelect = document.createElement("select");
-        pledgePendingSelect.className = "donation-status-select";
-        pledgePendingSelect.innerHTML = `
-            <option value="pledge">Pledged</option>
-            <option value="pending">Pending</option>
-            <option value="engaged">Engaged</option>
-            <option value="identified">Identified</option>
-            <option value="denied">Declined</option>
-        `;
-        pledgePendingSelect.style.fontSize = "10px";
-        pledgePendingSelect.value = donor.status;
-        pledgePendingSelect.disabled = true;
+    deleteButton.style.display = 'none';
 
-        const donationTypeSelect = document.createElement("select");
-        donationTypeSelect.className = "donation-type-select";
-        donationTypeSelect.innerHTML = `
-            <option value="individual">Individuals</option>
-            <option value="foundation">Foundations</option>
-            <option value="corporation">Corporations</option>
-            <option value="public">Public</option>
-            <option value="board">Board</option>
-            <option value="other">Other</option>
-        `;
-        donationTypeSelect.style.fontSize = "10px";
-        donationTypeSelect.value = donor.type;
-        donationTypeSelect.disabled = true;
+    deleteButton.addEventListener("click", function handleDeleteButtonClick() {
+        if (confirm("Are you sure you would like to delete this donor?")) {
+            const donorId = donor.donor_id;
 
-        cells[0].style.textAlign = "center";
-        cells[0].style.verticalAlign = "middle";
-        cells[0].appendChild(pledgePendingSelect);
-        cells[1].style.textAlign = "center";
-        cells[1].style.verticalAlign = "middle";
-        cells[1].appendChild(donationTypeSelect);
-        cells[0].width = '12%';
-        cells[1].width = '12%';
-
-        cells[2].width = '14%';
-        cells[3].width = '12%';
-        cells[4].width = '11%';
-        cells[5].width = '9%';
-        cells[6].width = '9%';
-        cells[7].width = '9%';
-        cells[1].style.verticalAlign = 'middle';
-        cells[2].style.verticalAlign = 'middle';
-        cells[3].style.verticalAlign = 'middle';
-        cells[4].style.verticalAlign = 'middle';
-        cells[5].style.verticalAlign = 'middle';
-        cells[6].style.verticalAlign = 'middle';
-        cells[7].style.verticalAlign = 'middle';
-
-        const inputs = cells.slice(2, 9).map(cell => {
-            const textarea = document.createElement("textarea");
-            textarea.style.fontSize = "12px";
-            textarea.style.width = "100%";
-            textarea.style.boxSizing = "border-box";
-            textarea.style.overflowY = "hidden";
-            textarea.setAttribute('rows', '1');
-            textarea.style.resize = "none";
-            textarea.style.verticalAlign = "middle"; // Align textareas vertically
-
-            // Function to resize textarea based on content
-            const resizeTextarea = (el) => {
-                el.style.height = 'auto';
-                el.style.height = el.scrollHeight + 'px';
+            var donorData = {
+                action: 'delete_donor_info',
+                donor_id: donorId
             };
 
-            // Resize textarea when the content changes
-            textarea.addEventListener('input', (e) => {
-                resizeTextarea(e.target);
-            });
+            fetch(ajaxurl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+                },
+                body: new URLSearchParams(donorData).toString()
+            })
+            .then(response => response.text())
+            .then(responseText => {
+                if (responseText.includes('successfully')) {
+                    newRow.remove();
+                    removeDonorFromTabs(donor);
+                    updateDashboardTotals();
+                } else {
+                    alert('Failed to delete the donor. Please try again.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    });
 
-            cell.appendChild(textarea);
-            return textarea;
+    newRow.appendChild(deleteButton);
+
+    editButton.addEventListener("click", function handleEditButtonClick() {
+		pollingEnabled = false; // Disable polling temporarily
+        removeDonorFromTabs(donor);
+        deleteButton.style.display = 'flex';
+        pledgePendingSelect.disabled = false;
+        donationTypeSelect.disabled = false;
+
+        const fullNameCheckbox = addCircleCheckbox();
+        const orgNameCheckbox = addCircleCheckbox();
+
+        const fullNameContainer = document.createElement("div");
+        fullNameContainer.style.display = "flex";
+        fullNameContainer.style.alignItems = "center";
+
+        const orgNameContainer = document.createElement("div");
+        orgNameContainer.style.display = "flex";
+        orgNameContainer.style.alignItems = "center";
+
+		inputs.forEach((input, index) => {
+            if (index !== 7) {
+                const value = cells[index + 2].textContent;
+                cells[index + 2].textContent = "";
+                cells[index + 2].appendChild(input);
+                input.value = value;
+            }
         });
 
-        // Set cell values to plain text (not editable) and format amount
-        cells[2].textContent = donor.full_name;
-        cells[3].textContent = donor.organization;
-        cells[4].textContent = numberWithCommas(donor.amount);
-        cells[5].textContent = donor.next_step;
-        cells[6].textContent = donor.recent_involvement;
-        cells[7].textContent = donor.notes;
-        cells[2].style.fontSize = "12px";
-        cells[3].style.fontSize = "12px";
-        cells[4].style.fontSize = "12px";
-        cells[5].style.fontSize = "12px";
-        cells[6].style.fontSize = "12px";
-        cells[7].style.fontSize = "12px";
+        inputs[0].value = donor.full_name;
+		console.log()
+        inputs[1].value = donor.organization;
 
-        // Add column to attach files to donation
-        const attachFiles = document.createElement("td");
-        attachFiles.innerHTML = '<button class="attach-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;margin-right:10px;"><img src="https://cdn-icons-png.flaticon.com/512/6583/6583130.png" alt="Attach files"></button>' +
-                                '<button class="download-button" style="display:inline-block;width:35px;height:35px;background-color:lightgrey;border:none;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/OOjs_UI_icon_download.svg/2048px-OOjs_UI_icon_download.svg.png" alt="Download files"></button>';
-        attachFiles.width = '10%';
-        attachFiles.style.textAlign = 'center';
-        attachFiles.style.verticalAlign = 'middle';
-        cells[8] = attachFiles;
+        cells[2].innerHTML = "";
+        cells[2].appendChild(fullNameContainer);
+        fullNameContainer.appendChild(fullNameCheckbox);
+        fullNameContainer.appendChild(inputs[0]);
 
-        const attachButton = cells[8].querySelector(".attach-button");
-        const downloadButton = cells[8].querySelector(".download-button");
+        cells[3].innerHTML = "";
+        cells[3].appendChild(orgNameContainer);
+        orgNameContainer.appendChild(orgNameCheckbox);
+        orgNameContainer.appendChild(inputs[1]);
 
-        // Create an array to store selected files
-        const selectedFiles = [];
+        if (donor.display_name === donor.full_name) {
+            fullNameCheckbox.checked = true;
+        } else if (donor.display_name === donor.organization) {
+            orgNameCheckbox.checked = true;
+        } else {
+            fullNameCheckbox.checked = true;
+            donor.display_name = donor.full_name;
+        }
 
-        // Attach button click event listener
-        attachButton.addEventListener("click", function handleAttachButtonClick() {
-            const fileInput = document.createElement("input");
-            fileInput.type = "file";
-            fileInput.multiple = true;
-            fileInput.accept = "image/*, .pdf, .doc, .docx";
-            fileInput.style.display = "none";
-            document.body.appendChild(fileInput);
-            fileInput.addEventListener("change", function handleFileInputChange() {
-                const fileList = fileInput.files;
-                const files = Array.from(fileList);
-                if (files.length > 0) {
-                    downloadButton.disabled = false;
-                    selectedFiles.push(...files);
+        fullNameCheckbox.addEventListener("change", function () {
+            if (fullNameCheckbox.checked) {
+                orgNameCheckbox.checked = false;
+                donor.display_name = inputs[0].value;
+            }
+        });
+
+        orgNameCheckbox.addEventListener("change", function () {
+            if (orgNameCheckbox.checked) {
+                fullNameCheckbox.checked = false;
+                donor.display_name = inputs[1].value;
+            }
+        });
+
+        
+        const saveButton = document.createElement("button");
+        saveButton.className = "save-button";
+        saveButton.innerText = "Save";
+        cells[10].innerHTML = "";
+        cells[10].appendChild(saveButton);
+        cells[10].style.textAlign = "center";
+        cells[10].style.verticalAlign = "middle";
+
+		pollingEnabled = true;
+        saveButton.addEventListener("click", function handleSaveButtonClick() {
+            const updatedDonor = {
+                donor_id: donor.donor_id,
+                status: pledgePendingSelect.value,
+                type: donationTypeSelect.value,
+                full_name: inputs[0].value,
+                organization: inputs[1].value,
+                amount: inputs[2].value,
+                next_step: inputs[3].value,
+                recent_involvement: inputs[4].value,
+                notes: inputs[5].value,
+                lead: inputs[6].value,
+                date_added: donor.date_added,
+                display_name: donor.display_name
+            };
+
+            var donorData = {
+                action: 'insert_donor_info',
+                donor_id: updatedDonor.donor_id,
+                campaign_id: campaignId,
+                status: updatedDonor.status,
+                type: updatedDonor.type,
+                full_name: updatedDonor.full_name,
+                organization: updatedDonor.organization,
+                amount: updatedDonor.amount,
+                next_step: updatedDonor.next_step,
+                recent_involvement: updatedDonor.recent_involvement,
+                notes: updatedDonor.notes,
+                lead: updatedDonor.lead,
+                date_added: updatedDonor.date_added,
+                display_name: updatedDonor.display_name
+            };
+
+            fetch(ajaxurl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+                },
+                body: new URLSearchParams(donorData).toString()
+            })
+            .then(response => response.text())
+            .then(responseText => {
+                if (responseText.includes('successfully')) {
+                    updateDashboard(updatedDonor);
+                    updateDonationPyramid(updatedDonor);
+                    updateTopDonors();
+                    updateDashboardTotals();
+                } else {
+                    console.error('Failed to save the donor. Please try again.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+
+            pledgePendingSelect.disabled = true;
+            donationTypeSelect.disabled = true;
+
+            deleteButton.remove();
+
+            const values = inputs.map(input => input.value);
+
+            cells.slice(2, 9).forEach((cell, index) => {
+                if (index === 2) {
+                    cell.innerHTML = values[index];
+                } else {
+                    cell.innerHTML = values[index];
                 }
             });
-            fileInput.click();
+
+            const newEditButton = document.createElement("button");
+            newEditButton.className = "edit-button";
+            newEditButton.innerText = "Edit";
+            cells[10].innerHTML = "";
+            cells[10].appendChild(newEditButton);
+            cells[10].style.textAlign = "center";
+            cells[10].style.verticalAlign = "middle";
+
+            newEditButton.addEventListener("click", handleEditButtonClick);
+
+            deleteButton.style.display = 'none';
         });
+    });
+}
+		
+function removeDonorFromTabs(donor) {
+	
+    const parseName = donor.display_name.replace(/<br\s*\/?>/g, '').replace(/\s+/g, '');
 
-        downloadButton.addEventListener("click", function handleDownloadButtonClick() {
-            if (selectedFiles.length > 0) {
-                // Create a popup/modal to display the list of files
-                const popup = document.createElement("div");
-                popup.className = "popup";
-                popup.style.position = "fixed";
-                popup.style.top = "50%";
-                popup.style.left = "50%";
-                popup.style.transform = "translate(-50%, -50%)";
-                popup.style.background = "white";
-                popup.style.padding = "10px";
-                popup.style.borderRadius = "10px";
-                popup.style.boxShadow = "0 4px 8px 0 rgba(0, 0, 0, 0.2)";
-                popup.style.zIndex = "9999";
-                popup.style.textAlign = "center";
+    // Remove the donor from the donation pyramid
+    console.log("Removing from pryamid");
+    const pyramidRows = document.querySelectorAll('.donation-row');
+    pyramidRows.forEach(row => {
+        const boxInner = row.querySelector('.donation-box-inner');
+        const frontElement = row.querySelector('.donation-box-front');
+        const backElement = row.querySelector('.donation-box-back');
 
-                const fileListContainer = document.createElement("div");
-                fileListContainer.className = "file-list-container";
+        if (boxInner) {
+            const boxDisplayName = frontElement.innerText.replace(/ /g, '');
+           
+            if (boxDisplayName === parseName) {
 
-                selectedFiles.forEach((file, index) => {
-                    const fileItem = document.createElement("div");
-                    fileItem.innerText = file.name;
-                    fileItem.style.marginBottom = "8px"; // Vertical spacing between files
-                    fileItem.style.backgroundColor = index % 2 === 0 ? "#f5f5f5" : "white"; // Alternating shades of grey and white
-
-                    const fileIcon = document.createElement("img");
-
-                    const downloadLink = document.createElement("a");
-                    downloadLink.href = URL.createObjectURL(file);
-                    downloadLink.download = file.name;
-
-                    const downloadIcon = document.createElement("img");
-                    downloadIcon.src = "https://i.ibb.co/rpdt924/image.png";
-                    downloadIcon.alt = "Download";
-                    downloadIcon.style.width = "20px";
-                    downloadIcon.style.height = "20px";
-                    downloadIcon.style.marginLeft = "5px"; // Spacing between download icon and file name
-
-                    downloadIcon.addEventListener("click", () => {
-                        // Change the color of the file name to #7866A1
-                        fileItem.style.color = "#7866A1";
-                        fileItem.style.textDecoration = "underline";
-                    });
-
-                    downloadLink.appendChild(downloadIcon);
-
-                    fileItem.appendChild(downloadLink);
-                    fileListContainer.appendChild(fileItem);
-                });
-
-                const closeButton = document.createElement("button");
-                closeButton.innerText = "Close";
-                closeButton.style.padding = "7.5px 12.5px"; // Smaller close button
-                closeButton.style.marginTop = "10px"; // Space between files and close button
-                closeButton.addEventListener("click", function handleCloseButtonClick() {
-                    document.body.removeChild(popup);
-                });
-
-                fileListContainer.appendChild(closeButton);
-                popup.appendChild(fileListContainer);
-                document.body.appendChild(popup);
-            }
-        });
-
-        const editButton = document.createElement("button");
-        editButton.className = "edit-button";
-        editButton.innerText = "Edit";
-        cells[9].appendChild(editButton);
-        cells[9].style.textAlign = "center";
-        cells[9].style.verticalAlign = "middle";
-
-        cells.forEach(cell => newRow.appendChild(cell));
-
-        const tableBody = document.querySelector("#moves-management table tbody");
-        tableBody.insertBefore(newRow, tableBody.firstChild);
-
-        const deleteButton = document.createElement("div");
-        deleteButton.className = "delete-button";
-        const deleteImage = document.createElement("img");
-        deleteImage.src = "https://freepngtransparent.com/wp-content/uploads/2023/03/X-Png-87.png";
-        deleteButton.appendChild(deleteImage);
-
-        // Initially hide the delete button
-        deleteButton.style.display = 'none';
-
-        deleteButton.addEventListener("click", function handleDeleteButtonClick() {
-            if (confirm("Are you sure you would like to delete this donor?")) {
-                const donorId = donor.donor_id;
-
-                var donorData = {
-                    action: 'delete_donor_info',
-                    donor_id: donorId
-                };
-
-                fetch(ajaxurl, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-                    },
-                    body: new URLSearchParams(donorData).toString()
-                })
-                .then(response => response.text())
-                .then(responseText => {
-                    if (responseText.includes('successfully')) {
-                        newRow.remove();
-                        removeDonorFromTabs(donor);
-                        updateDashboardTotals();
-                    } else {
-                        alert('Failed to delete the donor. Please try again.');
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            }
-        });
-
-        newRow.appendChild(deleteButton);
-
-        editButton.addEventListener("click", function handleEditButtonClick() {
-			removeDonorFromTabs(donor);
-            deleteButton.style.display = 'inline-block';
-            pledgePendingSelect.disabled = false;
-            donationTypeSelect.disabled = false;
-
-
-            inputs.forEach((input, index) => {
-                if (index !== 6) {
-                    const value = cells[index + 2].innerHTML;
-                    cells[index + 2].innerHTML = "";
-                    cells[index + 2].appendChild(input);
-                    input.value = value;
+                if (frontElement) {
+                    frontElement.innerText = '';
+                    frontElement.style.backgroundColor = "#d4d4d4";
+                    frontElement.style.color = '';
+                    frontElement.style.fontWeight = '';
+                    frontElement.style.textAlign = '';
+                    frontElement.style.display = '';
+                    frontElement.style.justifyContent = '';
                 }
-            });
-			
-			
-
-            const saveButton = document.createElement("button");
-            saveButton.className = "save-button";
-            saveButton.innerText = "Save";
-            cells[9].innerHTML = "";
-            cells[9].appendChild(saveButton);
-            cells[9].style.textAlign = "center";
-            cells[9].style.verticalAlign = "middle";
-
-            saveButton.addEventListener("click", function handleSaveButtonClick() {
-				
-				
-                const updatedDonor = {
-                    donor_id: donor.donor_id,
-                    status: pledgePendingSelect.value,
-                    type: donationTypeSelect.value,
-                    full_name: inputs[0].value,
-                    organization: inputs[1].value,
-                    amount: inputs[2].value,
-                    next_step: inputs[3].value,
-                    recent_involvement: inputs[4].value,
-                    notes: inputs[5].value
-                };
-
-                var donorData = {
-                    action: 'insert_donor_info',
-                    donor_id: updatedDonor.donor_id,
-                    campaign_id: campaignId,
-                    status: updatedDonor.status,
-                    type: updatedDonor.type,
-                    full_name: updatedDonor.full_name,
-                    organization: updatedDonor.organization,
-                    amount: updatedDonor.amount,
-                    next_step: updatedDonor.next_step,
-                    recent_involvement: updatedDonor.recent_involvement,
-                    notes: updatedDonor.notes
-                };
-
-                fetch(ajaxurl, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-                    },
-                    body: new URLSearchParams(donorData).toString()
-                })
-                .then(response => response.text())
-                .then(responseText => {
-                    if (responseText.includes('successfully')) {
-                        updateDashboard(updatedDonor);
-                        updateDonationPyramid(updatedDonor);
-                        updateTopDonors();
-                        updateDashboardTotals();
-                    } else {
-                        console.error('Failed to save the donor. Please try again.');
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-
-                pledgePendingSelect.disabled = true;
-                donationTypeSelect.disabled = true;
-
-                deleteButton.remove();
-                console.log("deleteButton removed");
-
-                const values = inputs.map(input => input.value);
-
-                cells.slice(2, 8).forEach((cell, index) => {
-                    if (index === 2) {
-                        cell.innerHTML = numberWithCommas(values[index]);
-                    } else {
-                        cell.innerHTML = values[index];
-                    }
-                });
-
-                const newEditButton = document.createElement("button");
-                newEditButton.className = "edit-button";
-                newEditButton.innerText = "Edit";
-                cells[9].innerHTML = "";
-                cells[9].appendChild(newEditButton);
-                cells[9].style.textAlign = "center";
-                cells[9].style.verticalAlign = "middle";
-
-                newEditButton.addEventListener("click", handleEditButtonClick);
-
-                deleteButton.style.display = 'none';
-            });
-        });
-    }
-
-    function removeDonorFromTabs(donor) {
-        const parseName = donor.full_name.replace(/<br\s*\/?>/g, '').replace(/\s+/g, '');
-
-        // Remove the donor from the donation pyramid
-        const pyramidRows = document.querySelectorAll('.donation-row');
-        pyramidRows.forEach(row => {
-            const boxInner = row.querySelector('.donation-box-inner');
-            const frontElement = row.querySelector('.donation-box-front');
-            const backElement = row.querySelector('.donation-box-back');
-
-            if (boxInner) {
-                const boxDisplayName = frontElement.innerText.replace(/ /g, '');
-                if (boxDisplayName === parseName) {
-                    if (frontElement) {
-                        frontElement.innerText = '';
-                        frontElement.style.backgroundColor = "#d4d4d4";
-                        frontElement.style.color = '';
-                        frontElement.style.fontWeight = '';
-                        frontElement.style.textAlign = '';
-                        frontElement.style.display = '';
-                        frontElement.style.justifyContent = '';
-                    }
-                    if (backElement) {
-                        backElement.innerText = '';
-                        backElement.style.backgroundColor = "#d4d4d4";
-                        backElement.style.color = '';
-                        backElement.style.fontWeight = '';
-                        backElement.style.textAlign = '';
-                        backElement.style.display = '';
-                        backElement.style.justifyContent = '';
-                    }
+                if (backElement) {
+                    backElement.innerText = '';
+                    backElement.style.backgroundColor = "#d4d4d4";
+                    backElement.style.color = '';
+                    backElement.style.fontWeight = '';
+                    backElement.style.textAlign = '';
+                    backElement.style.display = '';
+                    backElement.style.justifyContent = '';
                 }
             }
-        });
+        }
+    });
 
-        // Remove the donor from the pledges table
-        const pledgesTable = document.querySelector(".pledges-table tbody");
-        const pledgesRows = pledgesTable.querySelectorAll("tr");
-        pledgesRows.forEach(row => {
-            const donationCell = row.querySelector("td:nth-child(1)");
-            if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
-                row.remove();
-            }
-        });
+    // Remove the donor from the pledges table
+    const pledgesTable = document.querySelector(".pledges-table tbody");
+    const pledgesRows = pledgesTable.querySelectorAll("tr");
+    pledgesRows.forEach(row => {
+        const donationCell = row.querySelector("td:nth-child(1)");
+        if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
+            row.remove();
+        }
+    });
 
-        // Remove the donor from the pending table
-        const pendingTable = document.querySelector(".pending-table tbody");
-        const pendingRows = pendingTable.querySelectorAll("tr");
-        pendingRows.forEach(row => {
-            const donationCell = row.querySelector("td:nth-child(1)");
-            if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
-                row.remove();
-            }
-        });
+    // Remove the donor from the pending table
+    const pendingTable = document.querySelector(".pending-table tbody");
+    const pendingRows = pendingTable.querySelectorAll("tr");
+    pendingRows.forEach(row => {
+        const donationCell = row.querySelector("td:nth-child(1)");
+        if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
+            row.remove();
+        }
+    });
 
-        // Remove the donor from the pipeline table
-        const pipelineTable = document.querySelector(".pipeline-table tbody");
-        const pipelineRows = pipelineTable.querySelectorAll("tr");
-        pipelineRows.forEach(row => {
-            const donationCell = row.querySelector("td:nth-child(1)");
-            if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
-                row.remove();
-            }
-        });
+    // Remove the donor from the pipeline table
+    const pipelineTable = document.querySelector(".pipeline-table tbody");
+    const pipelineRows = pipelineTable.querySelectorAll("tr");
+    pipelineRows.forEach(row => {
+        const donationCell = row.querySelector("td:nth-child(1)");
+        if (donationCell.innerHTML.replace(/ /g, '') === parseName) {
+            row.remove();
+        }
+    });
 
-        updateDashboardTotals();
-    }
+    updateDashboardTotals();
+}
+ 
 
     function updateDashboard(donor) {
         const pledgePendingValue = donor.status;
-        const displayName = donor.full_name;
+        const displayName = donor.display_name;
+		const dateForDisplay = donor.date_added;
         const donationAmount = parseInt(donor.amount.replace(/[^0-9.-]+/g, ""));
 
         const targetTable = document.querySelector(`.${pledgePendingValue}-table tbody`);
@@ -2578,19 +2561,45 @@ document.addEventListener("DOMContentLoaded", function() {
         targetCells[0].innerHTML = displayName;
         targetCells[1].innerHTML = numberWithCommas(donationAmount);
 
-        const dateForDisplay = new Date().toLocaleDateString();
         targetCells[2].innerHTML = dateForDisplay;
 
         targetCells[2].addEventListener('click', (event) => {
-            event.target.contentEditable = true;
-            event.target.focus();
-            targetCells[2].style.color = '#00758D';
-        });
+        event.target.contentEditable = true;
+        event.target.focus();
+        targetCells[2].style.color = '#00758D';
+    });
 
-        targetCells[2].addEventListener('blur', (event) => {
-            event.target.contentEditable = false;
-            targetCells[2].style.color = '#333';
-        });
+    targetCells[2].addEventListener('blur', (event) => {
+        event.target.contentEditable = false;
+        targetCells[2].style.color = '#333';
+
+        // Capture the edited date and send it to the server
+        const editedDate = event.target.innerText.trim(); // Trim any extra spaces or newline characters
+
+        const donorData = {
+            action: 'update_donor_date',
+            donor_id: donor.donor_id,
+            campaign_id: campaignId,
+            date_added: editedDate
+        };
+
+
+        fetch(ajaxurl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+            },
+            body: new URLSearchParams(donorData).toString()
+        })
+        .then(response => response.text())
+        .then(responseText => {
+            if (!responseText.includes('successfully')) {
+                console.error('Failed to update the donor date. Please try again.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
 
         targetRow.appendChild(targetCells[0]);
         targetRow.appendChild(targetCells[1]);
@@ -2838,22 +2847,7 @@ rowsType.forEach(row => {
 	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
 	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
 		// Sort donorArray in descending order based on donation amount
-    donors.sort((a, b) => b.amount - a.amount);
-	console.log(donors);
-    // Get the donorContainer element
-    const donorContainer = document.getElementById('donorContainer');
-
-    // Populate the top 5 donors into the donorContainer
-    for (let i = 0; i < 5 && i < donors.length; i++) {
-        const donor = donors[i];
-        const donorElement = document.createElement('div');
-donorElement.innerHTML = `
-    <div style="text-align: center; margin: 0 35px;">
-        <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
-        <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
-    </div>`;
-        donorContainer.appendChild(donorElement);
-    }
+    updateTopDonors();
      
     }
 
@@ -2894,7 +2888,7 @@ donorElement.innerHTML = `
         const goal = <?php echo $goal; ?>;
         const percent = totalDonations / goal * 100;
         const meterFill = document.getElementById("donation-meter-fill");
-        meterFill.style.width = `${percent}%`;
+        meterFill.style.width = `${percent}%`; 
         meterFill.innerHTML = `
             <div class="fill" style="width: ${percent}%">
                 ${percent > 100 ? `<p>${percent.toFixed()}%</p>` : ''}
@@ -3056,11 +3050,18 @@ donorElement.innerHTML = `
         `;
 		
 		
+	// Update pie chart slices
+			createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
+	
+		updateTopDonors();
+		
     }
 
     function updateDonationPyramid(donor) {
         const pledgePendingValue = donor.status;
-        const displayName = donor.full_name;
+        const displayName = donor.display_name;
         const donationAmount = parseInt(donor.amount.replace(/[^0-9.-]+/g, ""));
 
         let donationColor = '';
@@ -3083,7 +3084,7 @@ donorElement.innerHTML = `
                 donationColor = '#7866A1';
                 break;
             default:
-                console.log('Invalid value for pledge/pending column');
+             
                 return;
         }
 
@@ -3426,82 +3427,112 @@ function validateForm() {
 	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
 
 	});
-	
 function generatePDF() {
     const tab = document.querySelector('.tab.active');
     const tabTitleElement = tab.querySelector('h2');
-    const tabTitle = tabTitleElement.innerText;
+    const tabTitle = tabTitleElement ? tabTitleElement.innerText : '';
+    const campaignName = "<?php echo $campaign_name; ?>"; // Replace this with the appropriate variable or function to get the campaign name
 
-    // Temporarily hide the h2 element
-    tabTitleElement.style.display = 'none';
+    // Clone the tab content deeply to avoid modifying the original DOM
+    const clonedTab = tab.cloneNode(true);
 
-    html2canvas(tab, { scrollY: -window.scrollY }).then(tabCanvas => {
-        // Restore the h2 element after capturing
-        tabTitleElement.style.display = '';
+    // Create a wrapper div to hold the cloned content and the additional elements
+    const clonedTabWrapper = document.createElement('div');
+    clonedTabWrapper.style.position = 'relative';
+    clonedTabWrapper.style.width = '100%';
+    clonedTabWrapper.style.height = '100%';
+    clonedTabWrapper.appendChild(clonedTab);
 
-        const doc = new jsPDF('l', 'mm');
-        const imgWidth = 290;
-        const marginLeft = 5;
-        const marginTop = 5;
-        const imgHeight = 187;
+    // Create a header div
+    const headerDiv = document.createElement('div');
+    headerDiv.style.textAlign = 'center';
+    headerDiv.style.fontFamily = 'Noto Sans';
+    headerDiv.style.marginBottom = '20px';
 
-        const canvas = document.createElement('canvas');
-        canvas.width = tabCanvas.width;
-        canvas.height = tabCanvas.height + 300;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(tabCanvas, 0, 195);
+    const title = document.createElement('h1');
+    title.innerText = campaignName;
+    title.style.fontSize = '30px';
+    title.style.fontWeight = 'bold';
+    headerDiv.appendChild(title);
 
-        ctx.font = 'bold 50px Noto Sans';
-        ctx.textAlign = 'center';
-        ctx.fillText(tabTitle, canvas.width / 2, 145);
+    const date = document.createElement('div');
+    date.innerText = new Date().toDateString();
+    date.style.fontSize = '20px';
+    date.style.fontStyle = 'italic';
+    headerDiv.appendChild(date);
 
-        ctx.font = '30px Noto Sans';
-		ctx.style = 'italic';
-        ctx.fillText(new Date().toDateString(), canvas.width / 2, 175);
+    // Insert the header at the top of the cloned tab
+    clonedTab.prepend(headerDiv);
 
-        const cramerLogo = new Image();
-        cramerLogo.src = 'https://www.cramerphilanthropy.com/wp-content/uploads/2022/05/CRAMERLOGO-05-1-1024x391.png';
-        cramerLogo.onload = function() {
-            const logoWidth = cramerLogo.width * 0.33;
-            const logoHeight = cramerLogo.height * 0.33;
-            ctx.drawImage(cramerLogo, 20, 10, logoWidth, logoHeight);
+    // Hide the key element in the cloned content
+    const clonedKeyElement = clonedTab.querySelector('.donation-key');
+    if (clonedKeyElement) {
+        clonedKeyElement.style.display = 'none'; // Hide the key element in the cloned content
+    }
 
-            const clientLogo = new Image();
-            clientLogo.src = clientLogoURL;
-            clientLogo.onload = function() {
-                const logoWidth = clientLogo.width * 0.12;
-                const logoHeight = clientLogo.height * 0.12;
-                ctx.drawImage(clientLogo, 1775, -15, logoWidth, logoHeight);
+    // Ensure key element is correctly positioned in the cloned content
+    const originalKeyElement = tab.querySelector('.donation-key');
+    if (originalKeyElement) {
+        const clonedKeyElement = originalKeyElement.cloneNode(true); // Clone the key element
+        clonedKeyElement.style.position = 'absolute';
+        clonedKeyElement.style.top = '35%';
+        clonedKeyElement.style.right = '5%';
+        clonedKeyElement.style.zIndex = '1000';
+        clonedTabWrapper.appendChild(clonedKeyElement); // Append to cloned content
+    }
 
-                ctx.fillStyle = 'red';
-                ctx.font = '70px Noto Serif';
-                ctx.globalAlpha = 0.5; // Making the watermark a bit transparent
-                ctx.textAlign = 'left'; // Align the confidential text to the left side
-                ctx.fillText('CONFIDENTIAL', 10, canvas.height - 5); // Adjust position accordingly
+    // Add watermark diagonally
+    const watermarkDiv = document.createElement('div');
+    watermarkDiv.innerText = 'CONFIDENTIAL';
+    watermarkDiv.style.position = 'fixed';
+    watermarkDiv.style.top = '50%';
+    watermarkDiv.style.left = '50%';
+    watermarkDiv.style.transform = 'translate(-50%, -50%) rotate(-45deg)';
+    watermarkDiv.style.fontSize = '100px';
+    watermarkDiv.style.fontFamily = 'Noto Serif';
+    watermarkDiv.style.color = 'red';
+    watermarkDiv.style.opacity = '0.1'; // Make it more opaque
+    watermarkDiv.style.zIndex = '9999';
+    clonedTabWrapper.appendChild(watermarkDiv);
 
-                const imgData = canvas.toDataURL('image/png');
-                doc.addImage(imgData, 'PNG', marginLeft, marginTop, imgWidth, imgHeight);
-                const pdfBlob = doc.output('blob');
+    // Add the footer
+    const footerDiv = document.createElement('div');
+    footerDiv.style.textAlign = 'center';
+    footerDiv.style.fontFamily = 'Noto Sans';
+    footerDiv.style.fontSize = '14px';
+    footerDiv.style.marginTop = '20px';
+    footerDiv.style.borderTop = '2px solid #007C92';
+    footerDiv.style.paddingTop = '10px';
+    footerDiv.style.color = '#A3A3A3';
+    footerDiv.innerHTML = `
+        <span>(614) 766-4483</span>
+        <span style="padding: 0 10px;">|</span>
+        <span>18 S High St</span>
+        <span style="padding: 0 10px;">|</span>
+        <span>Dublin, OH 43017</span>
+        <span style="padding: 0 10px;">|</span>
+        <a href="http://CramerPhilanthropy.com" target="_blank" style="color: #007C92; text-decoration: none;">CramerPhilanthropy.com</a>
+    `;
+    clonedTabWrapper.appendChild(footerDiv);
 
-                // Construct the filename
-                const campaignName = "<?php echo $campaign_name; ?>"; // Replace this with the appropriate variable or function to get the campaign name
-                const filename = `${campaignName}_${tabTitle}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    // Convert the cloned tab to PDF
+    const options = {
+        margin: 10,
+        filename: `${campaignName}_${tabTitle}_${new Date().toISOString().slice(0, 10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
 
-                // Create a temporary anchor to initiate a download
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(pdfBlob);
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            };
-        };
+    html2pdf().from(clonedTabWrapper).set(options).save().then(() => {
+        // Original key element remains unchanged
     });
 }
 
-// Add new donation box
+	
+
+// Add new donation box 
 function addDonationBox(row, rowIndex, donationName, donationAmount, donationColor) {
-  console.log("DONATION NAME:", donationName);
   const rowLabel = row.querySelector('.donation-row-label');
   let numBoxes = parseInt(rowLabel.innerText.split(' ')[0]);
 
@@ -3668,6 +3699,7 @@ function saveChanges() {
         document.getElementById('customModal').style.display = "none";
         const modalDelete = document.getElementById('errorModule4');
         modalDelete.style.display = "block";
+
         return;
     }
 
@@ -3726,8 +3758,8 @@ function saveChanges() {
     }
 	resetRows();
 	rowSpace();
-	savePyramidHTML();
     updateTotalDonations();
+	savePyramidHTML();
     closeModal();
 }
 
@@ -3819,18 +3851,12 @@ document.querySelectorAll('.donation-row').forEach(row => {
     // Sort the array in ascending order
     donationRowAmounts.sort((a, b) => a - b);
 
-    console.log("Sorted Donation Row Amounts:", donationRowAmounts);  // Debugging log
-
     // Find the closest donation amount
     const closestAmount = donationRowAmounts.reduce((prev, curr) => Math.abs(curr - amount) < Math.abs(prev - amount) ? curr : prev);
 
     // Use closestAmount to get the closest row
     const rowIndex = 'row' + closestAmount / 1000;
 
-			
-	console.log("Donation Row Amounts:", donationRowAmounts);
-console.log("Current amount variable:", amount);
-console.log("Closest amount:", closestAmount);
        const boxFront = document.createElement('div');
 		boxFront.className = 'donation-box-front';
 		boxFront.setAttribute('data-row', rowIndex); 
@@ -3877,7 +3903,7 @@ console.log("Closest amount:", closestAmount);
 		resetRows();
 		rowSpace();
   		updateTotalDonations();
-	 
+	 	savePyramidHTML();
 	}
 		
 function findClosestMatchingBoxesData(targetAmount, maxMatches = Infinity) {
@@ -4131,8 +4157,6 @@ if (pyramidContainer) {
             nonce: pyramidNonce
         };
 
-        console.log('Sending data:', pyramidData);
-
         // Send AJAX request
         fetch(ajaxurl, {
             method: 'POST',
@@ -4143,16 +4167,16 @@ if (pyramidContainer) {
             body: new URLSearchParams(pyramidData).toString()
         })
         .then(response => {
-            console.log('Response status:', response.status);
+           
             if (!response.ok) {
                 throw new Error('Network response was not ok: ' + response.statusText);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Response data:', data);
+            
             if (data.success) {
-                console.log('Pyramid HTML saved:', data);
+               
             } else {
                 console.error('Error saving pyramid HTML:', data);
             }
@@ -4169,12 +4193,10 @@ function base64Decode(str) {
     return decodeURIComponent(escape(atob(str)));
 }
 	
+function loadPyramidHTML() {
+    attachEventListeners();
 
-		function loadPyramidHTML() {
-			attachEventListeners();
-		
     const campaignId = <?php echo $campaign_id; ?>;
-// Prepare data for AJAX request
     // Prepare data for AJAX request
     const pyramidData = {
         action: 'load_pyramid_html',
@@ -4182,9 +4204,7 @@ function base64Decode(str) {
         nonce: pyramidNonce
     };
 
-    console.log('Loading pyramid data:', pyramidData);
-
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         fetch(ajaxurl, {
             method: 'POST',
             credentials: 'same-origin',
@@ -4194,34 +4214,35 @@ function base64Decode(str) {
             body: new URLSearchParams(pyramidData).toString()
         })
         .then(response => {
-            console.log('Pyramid response status:', response.status);
+   
             if (!response.ok) {
                 throw new Error('Network response was not ok: ' + response.statusText);
             }
             return response.json();
         })
         .then(response => {
-            console.log('Pyramid response data:', response);
+  
             if (response.success && response.data) {
                 const pyramidContainer = document.querySelector('.donation-pyramid'); // Adjust selector as needed
                 if (pyramidContainer) {
                     pyramidContainer.innerHTML = base64Decode(response.data);
-                    resolve(); // Resolve the promise after pyramid is loaded
+                    resolve('Pyramid HTML loaded successfully.');
                 } else {
-                    console.error('Pyramid container element not found.');
-                    reject('Pyramid container element not found.');
+                    console.warn('Pyramid container element not found.');
+                    resolve('Pyramid container element not found.');
                 }
             } else {
-                console.error('Failed to load pyramid HTML:', response.data);
-                reject('Failed to load pyramid HTML.');
+                console.warn('Failed to load pyramid HTML:', response.data);
+                resolve('Failed to load pyramid HTML.');
             }
         })
         .catch(error => {
-            console.error('Error loading pyramid HTML:', error);
-            reject(error);
+            console.warn('Error loading pyramid HTML:', error);
+            resolve('Error loading pyramid HTML.');
         });
     });
 }
+		
 function attachEventListeners() {
     // Attach event delegation for the side buttons and donation-row-labels
     const pyramidContainer = document.querySelector('.donation-pyramid');
@@ -4286,6 +4307,7 @@ function attachEventListeners() {
             const tempRow = nextRow;
             nextRow = nextRow.nextElementSibling;
             tempRow.remove();
+			savePyramidHTML();
         }
 	document.getElementById('errorModule4').style.display = "none";
     updateTotalDonations();
@@ -4544,108 +4566,154 @@ if (numBoxes == 0) {
 	createSlice("capitalSlice", "capitalTextName", "capitalTextAmount", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent");
 	createSlice("operatingSlice", "operatingTextName", "operatingTextAmount", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent");
 
-		
-	// Function to create a path description for a pie chart slice
+// Function to create a path description for a pie chart slice
 function createSlice(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue, textIdPercent) {
     var radius = 11;
     var centerX = -8;  // was 21
-var centerY = -15;  // was 21
+    var centerY = -15;  // was 21
 
+    // Handle the case where the slice is 100%
+    if (startProportion === 0 && endProportion === 1) {
+        var pathData = [
+            "M", centerX, centerY,
+            "m", -radius, 0,
+            "a", radius, radius, 0, 1, 0, radius * 2, 0,
+            "a", radius, radius, 0, 1, 0, -(radius * 2), 0
+        ].join(" ");
+        
+        // Position text at the center of the full circle
+        var textX = centerX - 15;
+        var textY = centerY - 10;
+        var percentX = centerX - 1;
+        var percentY = centerY + 1;
+        var slicePercentage = "100";
+    } else {
+        var startAngle = startProportion * 360;
+        var endAngle = endProportion * 360;
 
-    var startAngle = startProportion * 360;
-    var endAngle = endProportion * 360;
+        var startRad = (startAngle - 90) * Math.PI / 180;
+        var endRad = (endAngle - 90) * Math.PI / 180;
 
-    var startRad = (startAngle - 90) * Math.PI / 180;
-    var endRad = (endAngle - 90) * Math.PI / 180;
+        var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
 
-    var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+        var startX = centerX + radius * Math.cos(startRad);
+        var startY = centerY + radius * Math.sin(startRad);
 
-    var startX = centerX + radius * Math.cos(startRad);
-    var startY = centerY + radius * Math.sin(startRad);
+        var endX = centerX + radius * Math.cos(endRad);
+        var endY = centerY + radius * Math.sin(endRad);
 
-    var endX = centerX + radius * Math.cos(endRad);
-    var endY = centerY + radius * Math.sin(endRad);
+        var pathData = [
+            "M", centerX, centerY,
+            "L", startX, startY,
+            "A", radius, radius, 0, largeArcFlag, 1, endX, endY,
+            "Z"
+        ].join(" ");
 
-    var pathData = [
-        "M", centerX, centerY,
-        "L", startX, startY,
-        "A", radius, radius, 0, largeArcFlag, 1, endX, endY,
-        "Z"
-    ].join(" ");
+        // Calculate text position outside the pie chart (near the slice)
+        var midAngle = (startAngle + endAngle) / 2;
+        var midRad = (midAngle - 75) * Math.PI / 180;
+        var textRadius = radius + 6;  // Positioning text outside the pie chart
+        var textX = centerX + textRadius * Math.cos(midRad);
+        var textY = centerY + textRadius * Math.sin(midRad);
+        // Calculate the position for the percentage inside the pie chart slice
+        var percentRadius = radius / 2;  // Midway inside the slice
+        var percentX = centerX + percentRadius * Math.cos(midRad);
+        var percentY = centerY + percentRadius * Math.sin(midRad);
+        var slicePercentage = ((endProportion - startProportion) * 100).toFixed(0);  // Convert proportion to percentage
+    }
 
-    // Calculate text position outside the pie chart (near the slice)
-    var midAngle = (startAngle + endAngle) / 2;
-    var midRad = (midAngle - 75) * Math.PI / 180;
-    var textRadius = radius + 6;  // Positioning text outside the pie chart
-    var textX = centerX + textRadius * Math.cos(midRad);
-    var textY = centerY + textRadius * Math.sin(midRad);
-	// Calculate the position for the percentage inside the pie chart slice
-    var percentRadius = radius / 2;  // Midway inside the slice
-    var percentX = centerX + percentRadius * Math.cos(midRad);
-    var percentY = centerY + percentRadius * Math.sin(midRad);
-    var slicePercentage = ((endProportion - startProportion) * 100).toFixed(0);  // Convert proportion to percentag
-	
-} 
-		
-	// Function to create a path description for a pie chart slice
+    // Update slice path and text
+    document.getElementById(sliceId).setAttribute("d", pathData);
+    document.getElementById(sliceId).setAttribute("fill", fillColor);
+    document.getElementById(textIdName).textContent = sliceName;
+    document.getElementById(textIdName).setAttribute("x", textX - 5);
+    document.getElementById(textIdName).setAttribute("y", textY - 1);  // Adjusted Y position for name to be above amount
+    document.getElementById(textIdAmount).textContent = numberWithCommas(sliceValue);
+    document.getElementById(textIdAmount).setAttribute("x", textX - 5);
+    document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
+    if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
+        var fontSize = slicePercentage < 20 ? "2" : "2.4";  // Adjust font size if percentage is under 20%
+        document.getElementById(textIdPercent).textContent = slicePercentage + "%";
+        document.getElementById(textIdPercent).setAttribute("x", percentX - 2);
+        document.getElementById(textIdPercent).setAttribute("y", percentY - 0.5);
+        document.getElementById(textIdPercent).setAttribute("font-size", fontSize);
+    }
+}
+
+// Function to create a path description for a pie chart slice
 function createSlice1(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue, textIdPercent) {
     var radius = 11;
     var centerX = -8;  // was 21
-var centerY = -15;  // was 21
+    var centerY = -15;  // was 21
 
+    // Handle the case where the slice is 100%
+    if (startProportion === 0 && endProportion === 1) {
+        var pathData = [
+            "M", centerX, centerY,
+            "m", -radius, 0,
+            "a", radius, radius, 0, 1, 0, radius * 2, 0,
+            "a", radius, radius, 0, 1, 0, -(radius * 2), 0
+        ].join(" ");
+        
+        // Position text at the center of the full circle
+        var textX = centerX - 15;
+        var textY = centerY - 10;
+        var percentX = centerX - 1;
+        var percentY = centerY + 1;
+        var slicePercentage = "100";
+    } else {
+        var startAngle = startProportion * 360;
+        var endAngle = endProportion * 360;
 
-    var startAngle = startProportion * 360;
-    var endAngle = endProportion * 360;
+        var startRad = (startAngle - 90) * Math.PI / 180;
+        var endRad = (endAngle - 90) * Math.PI / 180;
 
-    var startRad = (startAngle - 90) * Math.PI / 180;
-    var endRad = (endAngle - 90) * Math.PI / 180;
+        var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
 
-    var largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+        var startX = centerX + radius * Math.cos(startRad);
+        var startY = centerY + radius * Math.sin(startRad);
 
-    var startX = centerX + radius * Math.cos(startRad);
-    var startY = centerY + radius * Math.sin(startRad);
+        var endX = centerX + radius * Math.cos(endRad);
+        var endY = centerY + radius * Math.sin(endRad);
 
-    var endX = centerX + radius * Math.cos(endRad);
-    var endY = centerY + radius * Math.sin(endRad);
+        var pathData = [
+            "M", centerX, centerY,
+            "L", startX, startY,
+            "A", radius, radius, 0, largeArcFlag, 1, endX, endY,
+            "Z"
+        ].join(" ");
 
-    var pathData = [
-        "M", centerX, centerY,
-        "L", startX, startY,
-        "A", radius, radius, 0, largeArcFlag, 1, endX, endY,
-        "Z"
-    ].join(" ");
-
-    // Calculate text position outside the pie chart (near the slice)
-    var midAngle = (startAngle + endAngle) / 2;
-    var midRad = (midAngle - 75) * Math.PI / 180;
-    var textRadius = radius + 6;  // Positioning text outside the pie chart
-    var textX = centerX + textRadius * Math.cos(midRad);
-    var textY = centerY + textRadius * Math.sin(midRad);
-	// Calculate the position for the percentage inside the pie chart slice
-    var percentRadius = radius / 2;  // Midway inside the slice
-    var percentX = centerX + percentRadius * Math.cos(midRad);
-    var percentY = centerY + percentRadius * Math.sin(midRad);
-    var slicePercentage = ((endProportion - startProportion) * 100).toFixed(0);  // Convert proportion to percentage
-
+        // Calculate text position outside the pie chart (near the slice)
+        var midAngle = (startAngle + endAngle) / 2;
+        var midRad = (midAngle - 75) * Math.PI / 180;
+        var textRadius = radius + 6;  // Positioning text outside the pie chart
+        var textX = centerX + textRadius * Math.cos(midRad);
+        var textY = centerY + textRadius * Math.sin(midRad);
+        // Calculate the position for the percentage inside the pie chart slice
+        var percentRadius = radius / 2;  // Midway inside the slice
+        var percentX = centerX + percentRadius * Math.cos(midRad);
+        var percentY = centerY + percentRadius * Math.sin(midRad);
+        var slicePercentage = ((endProportion - startProportion) * 100).toFixed(0);  // Convert proportion to percentage
+    }
 
     // Update slice path and text
-        document.getElementById(sliceId).setAttribute("d", pathData);
-        document.getElementById(sliceId).setAttribute("fill", fillColor);
-        document.getElementById(textIdName).textContent = sliceName;
-        document.getElementById(textIdName).setAttribute("x", textX - 5);
-        document.getElementById(textIdName).setAttribute("y", textY-1);  // Adjusted Y position for name to be above amount
-        document.getElementById(textIdAmount).textContent = numberWithCommas(sliceValue);
-        document.getElementById(textIdAmount).setAttribute("x", textX - 5);
-        document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
-		if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
-            var fontSize = slicePercentage < 20 ? "2" : "2.4";  // Adjust font size if percentage is under 20%
-            document.getElementById(textIdPercent).textContent = slicePercentage + "%";
-            document.getElementById(textIdPercent).setAttribute("x", percentX-2);
-            document.getElementById(textIdPercent).setAttribute("y", percentY-.5);
-            document.getElementById(textIdPercent).setAttribute("font-size", fontSize);
-        }
-	
-} 
+    document.getElementById(sliceId).setAttribute("d", pathData);
+    document.getElementById(sliceId).setAttribute("fill", fillColor);
+    document.getElementById(textIdName).textContent = sliceName;
+    document.getElementById(textIdName).setAttribute("x", textX - 5);
+    document.getElementById(textIdName).setAttribute("y", textY - 1);  // Adjusted Y position for name to be above amount
+    document.getElementById(textIdAmount).textContent = numberWithCommas(sliceValue);
+    document.getElementById(textIdAmount).setAttribute("x", textX - 5);
+    document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
+    if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
+        var fontSize = slicePercentage < 20 ? "2" : "2.4";  // Adjust font size if percentage is under 20%
+        document.getElementById(textIdPercent).textContent = slicePercentage + "%";
+        document.getElementById(textIdPercent).setAttribute("x", percentX - 2);
+        document.getElementById(textIdPercent).setAttribute("y", percentY - 0.5);
+        document.getElementById(textIdPercent).setAttribute("font-size", fontSize);
+    }
+}
+
 		
 	function redirectToToolkitHome() {
     window.location.href = "https://www.cramerphilanthropy.com/campaign-toolkit-home/";
@@ -4980,23 +5048,28 @@ $output = '
   width: 91%;
   
 }
-
 .tabbed-menu {
-margin-top: 15px;
-margin-bottom: 10px;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  position: sticky;
+  bottom: 10px;
+  width: 100%;
+  z-index: 100; /* Ensure it stays above other content */
 }
 
 .tabbed-menu ul {
-list-style: none;
-margin: 0;
-padding: 0;
-display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center; /* Center the tabs horizontally */
 }
 
 .tabbed-menu li {
-margin-right: 5px;
+  margin-right: 5px;
   padding: 10px 15px;
   cursor: pointer;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.3);
   margin-left: 5px;
   text-transform: uppercase;
   font-size: 12px;
@@ -5004,44 +5077,44 @@ margin-right: 5px;
   letter-spacing: 1px;
   transition: background-color 0.2s ease-in-out;
   border-radius: 15px;
-
 }
 
 .tabbed-menu li.active {
-background-color: #F78D2D;
-color: white;
-font-weight: bold;
+  background-color: #F78D2D;
+  color: white;
+  font-weight: bold;
 }
 
 .tabbed-menu li.active a {
-color: white;
-font-weight: bold;
+  color: white;
+  font-weight: bold;
 }
 
 .tabbed-menu li:not(.active) a {
-color: black;
-font-weight: bold;
+  color: black;
+  font-weight: bold;
 }
 
 .tabbed-menu li:not(.active) {
-background-color: rgb(231,231,231);
-color: black;
-font-weight: bold;
+  background-color: rgb(231,231,231);
+  color: black;
+  font-weight: bold;
 }
 
 .tabbed-content .tab {
-display: none;
+  display: none;
 }
 
 .tabbed-content .tab.active {
-display: block;
-animation: fade-in 0.5s;
+  display: block;
+  animation: fade-in 0.5s;
 }
 
 @keyframes fade-in {
-from { opacity: 0; }
-to { opacity: 1; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
+
 
 .donation-table thead{
  border-radius: 10px;
@@ -5086,10 +5159,20 @@ to { opacity: 1; }
 .attach-button, .download-button {
   padding: 7px 7px !important;
   border-radius: 4px !important;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px; /* Adjust width as needed */
+  height: 30px; /* Adjust height as needed */
+  margin-right: 5px; /* Space between buttons */
+}
+
+.attach-download-container {
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 
   .table-container {
     display: flex;
@@ -5123,8 +5206,9 @@ to { opacity: 1; }
 }
 
 .delete-button img {
-    width: 50%;
+    width: 50%;          /* Adjusted width for better appearance */
     height: auto;
+    display: block;      /* Ensure the image is block level for proper centering */
 }
 
 
@@ -5528,7 +5612,7 @@ tfoot td {
   background-color: #F78D2D;
   border-radius: 10px;
   padding: 10px;
-  width: 230px;
+  width: 280px;
   position: absolute; 
   top: 175px;
   left: 30px;
@@ -5539,7 +5623,7 @@ tfoot td {
 .copyright-box h2 {
   color: white;
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
 }
 
@@ -5605,12 +5689,12 @@ tfoot td {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1; /* High z-index to cover everything else */
+    z-index: 1000; /* High z-index to cover everything else */
 } 
 
 .combined-total-bar {
-  position: sticky; /* Stick to the bottom of the viewport */
-  bottom: 5px; /* Align the bar at the bottom of the tab */
+  position: relative; /* Stick to the bottom of the viewport */
+  bottom: 0; /* Align the bar at the bottom of the tab */
   width: 100%;
   z-index: 10; /* Make sure it sits above other content */
   box-shadow: 0 -2px 5px rgba(0,0,0,0.05); /* Optional: adds a slight shadow to the top of the totals bar */
@@ -5641,19 +5725,19 @@ tfoot td {
 <div class="full-page-overlay" id="navigation-overlay">
   <div class="button-container">
     <div class="button-background" data-tab="donation-pyramid">
-      <img src="https://i.ibb.co/3sfgsM3/cramer-pyra-1.png" alt="Gift Pyramid" class="button-img">
+      <img src="https://i.imgur.com/10CJZqj.png" alt="Gift Pyramid" class="button-img">
       <button class="navigation-button tab-link" data-tab="donation-pyramid">Gift Pyramid</button>
     </div>
     <div class="button-background" data-tab="pledges-pending">
-      <img src="https://i.ibb.co/BtN0Pmn/cramer-ppp.png" alt="Pledges Pending" class="button-img">
+      <img src="https://i.imgur.com/wjgi1nu.png" alt="Pledges Pending" class="button-img">
       <button class="navigation-button tab-link" data-tab="pledges-pending">Pledges, Pending, Pipeline</button>
     </div>
     <div class="button-background" data-tab="moves-management">
-      <img src="https://i.ibb.co/v4P9MvF/cramer-moves-1.png" alt="Relationship Action Plans" class="button-img">
+      <img src="https://i.imgur.com/knEDbjo.png" alt="Relationship Action Plans" class="button-img">
       <button class="navigation-button tab-link" data-tab="moves-management">Relationship Action Plans</button>
     </div>
     <div class="button-background" data-tab="dashboard">
-      <img src="https://i.ibb.co/dJj5mpq/dash-cramer.png" alt="Dashboard" class="button-img">
+      <img src="https://i.imgur.com/Voj9MeM.png" alt="Dashboard" class="button-img">
       <button class="navigation-button tab-link" data-tab="dashboard">Dashboard</button>
     </div> 
   </div>
@@ -5716,14 +5800,14 @@ tfoot td {
   <div class="logo-container" style="text-align:center; margin-top: 30px;">
     <img src="' . $imgurl . '" alt="Client Logo" style="width: 70%; display: block; margin: 0 auto;">
 	<p style="font-size: 14px;">Produced and Powered by:</p>
-    <img src="https://i.ibb.co/cD1ZLYz/cramer-logo.png" alt="Cramer Logo" style="width: 100%; display: block; margin-top: 0px;">
+    <img src="https://i.imgur.com/lXDtYC1.png" alt="Cramer Logo" style="width: 100%; display: block; margin-top: 0px;">
   </div>
   
   
 </div>
 <div class="copyright-box">
-<h2>Campaign Toolkit</h2>
-<p>© Cramer & Associates, Inc., 2024</p>
+<h2>Campaign Toolkit - PATENT PENDING</h2>
+<p>Cramer & Associates, Inc., 2024</p>
 </div> 
 
 <div class="tabbed-container">
@@ -5830,6 +5914,7 @@ tfoot td {
         <th>Next Step</th>
         <th>Recent Involvement</th>
         <th>Notes</th>
+		<th>Lead</th>
         <th>Documents</th>
         <th></th>
       </tr>
@@ -5972,4 +6057,4 @@ add_filter( 'the_title', function( $title ) {
     return $title;
 } );
 
-add_shortcode('campaign-toolkit', 'donation_toolkit_shortcode');
+add_shortcode('campaign-toolkit', 'donation_toolkit_shortcode'); 
