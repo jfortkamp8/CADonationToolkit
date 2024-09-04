@@ -10,7 +10,7 @@ Color Codes:
 
 Fonts: Warnock Pro, Noto Sans, and Noto Serif.
 
-Image Hosting: https://jfortkamp.imgbb.com/
+Image Hosting: https://imgur.com/a/assets-28WqdHj
 
 Toolkit TODO:
 
