@@ -1411,14 +1411,28 @@ document.body.removeChild(span);
   donationLabel.className = 'donation-label';
   box.appendChild(donationLabel);
 	
+// Reset previously red rows if needed
+    Array.from(tableBody.rows).forEach(function(row) {
+        row.classList.remove("red-row");  // Remove the red-row class from all rows
+    });
 
 } else {
     const modal = document.getElementById('alertModule1');
     modal.style.display = "block";
-
+newRow.classList.add("red-row"); 
+	
     const confirmButton = document.getElementById('confirmButton');
     const cancelButton = document.getElementById('cancelButton');
-
+	
+	
+            confirmButton.onclick = function() {
+				console.log("click");
+                modal.style.display = "none";
+			
+                //const modal1 = document.getElementById('alertModule');
+                //modal1.style.display = "block";
+            }
+/*
 	cancelButton.onclick = function() {
 		modal.style.display = "none";
         const modal1 = document.getElementById('alertModule');
@@ -1439,13 +1453,14 @@ document.body.removeChild(span);
     // If all boxes are filled in the current row, then create a new donation box
     if (filledRowBoxes === rowBoxes.length) {
       // Find the row in the DOM
-      const row = rowBoxes[0] ? rowBoxes[0].closest('.donation-row') : null;
+      //const row = rowBoxes[0] ? rowBoxes[0].closest('.donation-row') : null;
       
-      if (row) {
+      //if (row) {
         // Create and add a new donation box to this row
         
-        addDonationBox(row, rowIndex, donationName, donationAmount, donationColor);
-      }
+        //addDonationBox(row, rowIndex, donationName, donationAmount, donationColor);
+		  //savePyramidHTML();
+      //}
     }
         modal.style.display = "none";
 		    	
@@ -1700,7 +1715,7 @@ donorElement.innerHTML = `
     }
 		
 		}
-
+*/
 	return;
 }
 
@@ -2282,7 +2297,8 @@ function addDonorToTable(donor) {
 
     deleteButton.addEventListener("click", function handleDeleteButtonClick() {
         if (confirm("Are you sure you would like to delete this donor?")) {
-            const donorId = donor.donor_id;
+            isEditing = false;
+			const donorId = donor.donor_id;
 
             var donorData = {
                 action: 'delete_donor_info',
@@ -2314,8 +2330,10 @@ function addDonorToTable(donor) {
     newRow.appendChild(deleteButton);
 
     editButton.addEventListener("click", function handleEditButtonClick() {
+		  isEditing = true;
 		pollingEnabled = false; // Disable polling temporarily
         removeDonorFromTabs(donor);
+		updateTopDonors();
         deleteButton.style.display = 'flex';
         pledgePendingSelect.disabled = false;
         donationTypeSelect.disabled = false;
@@ -2387,7 +2405,9 @@ function addDonorToTable(donor) {
         cells[10].style.verticalAlign = "middle";
 
 		pollingEnabled = true;
+		
         saveButton.addEventListener("click", function handleSaveButtonClick() {
+			isEditing = false;
             const updatedDonor = {
                 donor_id: donor.donor_id,
                 status: pledgePendingSelect.value,
@@ -2469,25 +2489,33 @@ function addDonorToTable(donor) {
             deleteButton.style.display = 'none';
         });
     });
+	  
 }
 		
 function removeDonorFromTabs(donor) {
 	
     const parseName = donor.display_name.replace(/<br\s*\/?>/g, '').replace(/\s+/g, '');
 
-    // Remove the donor from the donation pyramid
-    console.log("Removing from pryamid");
-    const pyramidRows = document.querySelectorAll('.donation-row');
-    pyramidRows.forEach(row => {
-        const boxInner = row.querySelector('.donation-box-inner');
-        const frontElement = row.querySelector('.donation-box-front');
-        const backElement = row.querySelector('.donation-box-back');
+  const pyramidRows = document.querySelectorAll('.donation-row');
+let donorFound = false;  // Track if the donor was found and removed
 
+pyramidRows.forEach(row => {
+    const boxInners = row.querySelectorAll('.donation-box-inner');
+    const frontElements = row.querySelectorAll('.donation-box-front');
+    const backElements = row.querySelectorAll('.donation-box-back');
+
+    boxInners.forEach((boxInner, index) => {
         if (boxInner) {
-            const boxDisplayName = frontElement.innerText.replace(/ /g, '');
-           
-            if (boxDisplayName === parseName) {
+            const frontElement = frontElements[index];
+            const backElement = backElements[index];
+            const boxDisplayName = frontElement.innerText.replace(/<br\s*\/?>/g, '').replace(/\s+/g, '');
 
+            console.log(boxDisplayName);
+            console.log(parseName);
+
+            // Compare display name and parseName
+            if (boxDisplayName === parseName) {
+                donorFound = true;  // Donor found
                 if (frontElement) {
                     frontElement.innerText = '';
                     frontElement.style.backgroundColor = "#d4d4d4";
@@ -2509,7 +2537,29 @@ function removeDonorFromTabs(donor) {
             }
         }
     });
+});
 
+// Logic to remove the donor from the top 5 list if they are already in it
+if (donorFound) {
+    // Find the donor in the donors array (top 5 donors) and remove them
+    donors = donors.filter(donor => donor.name !== parseName);
+}
+
+// Now populate the top 5 donors into the donorContainer
+const donorContainer = document.getElementById('donorContainer');
+donorContainer.innerHTML = '';  // Clear previous donors
+
+for (let i = 0; i < 5 && i < donors.length; i++) {
+    const donor = donors[i];
+    const donorElement = document.createElement('div');
+    donorElement.innerHTML = `
+        <div style="text-align: center; margin: 0 35px;">
+            <div style="color: #00758D; font-weight: bold; font-size: 20px;">${donor.name}</div>
+            <div style="font-size: 20px;"><span style="color: #00758D; font-weight: bold;">${numberWithCommas(Math.round(donor.amount))}</span></div>
+        </div>`;
+    donorContainer.appendChild(donorElement);
+}
+	
     // Remove the donor from the pledges table
     const pledgesTable = document.querySelector(".pledges-table tbody");
     const pledgesRows = pledgesTable.querySelectorAll("tr");
@@ -3180,14 +3230,23 @@ rowsType.forEach(row => {
             box.style.lineHeight = span.style.lineHeight;
 
             document.body.removeChild(span);
-        } else {
+        } else { 
             const modal = document.getElementById('alertModule1');
             modal.style.display = "block";
-
+			 
             const confirmButton = document.getElementById('confirmButton');
             const cancelButton = document.getElementById('cancelButton');
+			
+			
+            confirmButton.onclick = function() {
+				console.log("click");
+                modal.style.display = "none";
+			
+                //const modal1 = document.getElementById('alertModule');
+                //modal1.style.display = "block";
+            }
 
-            cancelButton.onclick = function() {
+            /*cancelButton.onclick = function() {
                 modal.style.display = "none";
                 const modal1 = document.getElementById('alertModule');
                 modal1.style.display = "block";
@@ -3206,10 +3265,11 @@ rowsType.forEach(row => {
                     const row = rowBoxes[0] ? rowBoxes[0].closest('.donation-row') : null;
                     if (row) {
                         addDonationBox(row, rowIndex, displayName, donationAmount, donationColor);
+						savePyramidHTML();
                     }
                 }
                 modal.style.display = "none";
-            }
+            }*/
         }
     }
 
@@ -3546,22 +3606,20 @@ function addDonationBox(row, rowIndex, donationName, donationAmount, donationCol
   const box = document.createElement('div');
   box.className = 'donation-box';
   box.setAttribute('data-amount', amount);
-  box.style.backgroundColor = donationColor;
-  box.style.color = "#fff"; // Set text color to white
-  box.style.fontWeight = "500";
-  box.style.textAlign = "center";
-  box.style.display = "flex";
-  box.style.justifyContent = "center";
-  box.style.alignItems = "center";
-  box.style.padding = "10px";
-  box.style.borderRadius = "7px"; // Match the border-radius from your image
 
   // Front side of the box
   const boxFront = document.createElement('div');
   boxFront.className = 'donation-box-front';
   boxFront.innerHTML = donationName;
-  boxFront.style.backgroundColor = donationColor;
+boxFront.style.backgroundColor = donationColor;
   boxFront.style.color = "#fff"; // Set text color to white
+  boxFront.style.fontWeight = "500";
+  boxFront.style.textAlign = "center";
+  boxFront.style.display = "flex";
+  boxFront.style.justifyContent = "center";
+  boxFront.style.alignItems = "center";
+  boxFront.style.padding = "10px";
+  boxFront.style.borderRadius = "7px"; // Match the border-radius from your image
 
   // Back side of the box
   const boxBack = document.createElement('div');
@@ -4730,13 +4788,90 @@ function formatCurrency(amount) {
     currency: 'USD',
   });
 }
+		
+		function sortTable(header, columnIndex) {
+    var table = document.getElementById("donation-table");
+    var rows = Array.from(table.querySelectorAll("tbody tr"));
+    var ascending = header.getAttribute("data-sort-asc") === "true"; // Check current sort direction
 
+    // Sort rows based on the clicked column
+    rows.sort(function(rowA, rowB) {
+      var cellA = rowA.cells[columnIndex].textContent.trim();
+      var cellB = rowB.cells[columnIndex].textContent.trim();
+
+      // Handle currency sorting by removing dollar signs and commas
+      if (columnIndex === 4) { // Assuming column index 4 is the "Amount" column
+        cellA = parseFloat(cellA.replace(/[$,]/g, '')) || 0;  // Remove $ and , and convert to number
+        cellB = parseFloat(cellB.replace(/[$,]/g, '')) || 0;
+      } else {
+        // Handle text sorting (lowercase for case-insensitive comparison)
+        cellA = cellA.toLowerCase();
+        cellB = cellB.toLowerCase();
+      }
+
+      if (ascending) {
+        return cellA > cellB ? 1 : -1;
+      } else {
+        return cellA < cellB ? 1 : -1;
+      }
+    });
+
+    // Re-append sorted rows in the correct order
+    rows.forEach(function(row) {
+      table.querySelector("tbody").appendChild(row);
+    });
+
+    // Reset all sort indicators, column highlights, and data highlights
+    var allHeaders = table.querySelectorAll("th");
+    allHeaders.forEach(function(th) {
+      var sortIndicator = th.querySelector(".sort-indicator");
+      if (sortIndicator) {
+        sortIndicator.textContent = ''; // Clear the indicator
+      }
+      th.classList.remove("active-sort"); // Remove highlight from all headers
+    });
+
+    // Clear column highlighting from all table data cells
+    var allCells = table.querySelectorAll("td");
+    allCells.forEach(function(cell) {
+      cell.classList.remove("active-column");
+    });
+
+    // Add sort indicator to the clicked header
+    var sortIndicator = header.querySelector(".sort-indicator");
+    if (ascending) {
+      sortIndicator.textContent = ' ▲'; // Ascending indicator
+    } else {
+      sortIndicator.textContent = ' ▼'; // Descending indicator
+    }
+
+    // Highlight the clicked header
+    header.classList.add("active-sort");
+
+    // Highlight the entire sorted column
+    rows.forEach(function(row) {
+      row.cells[columnIndex].classList.add("active-column");
+    });
+
+    // Toggle sort direction for the next click
+    header.setAttribute("data-sort-asc", !ascending);
+  }
+
+
+		
 	</script>
 	<?php
 	
 // Define the HTML and CSS output
 $output = '
 <style>
+
+/* Style to turn a specific row red */
+tr.red-row td {
+    background-color: #ffcccc !important; /* Light red background for the row */
+    color: #b30000 !important; /* Darker red text for contrast */
+}
+
 
 /* High Contrast Mode */
 .high-contrast {
@@ -4828,7 +4963,7 @@ $output = '
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 10000000;
     padding-top: 10%;
     left: 0;
     top: 0;
@@ -5717,6 +5852,27 @@ tfoot td {
   font-weight: bold; /* If you want the combined total to stand out */
 }
 
+/* Highlight column header when clicked */
+  th.active-sort {
+    background-color: #77C4D5 !important; /* Lighter blue for column header */
+  }
+
+  /* Highlight the entire sorted column */
+  td.active-column {
+    background-color: #f2f7ff !important; /* Darker blue for data cells */
+  }
+
+  /* Pointer cursor for clickable column headers */
+  th {
+    cursor: pointer;
+  }
+
+/* Styling for the sort indicators */
+.sort-indicator {
+  margin-left: 5px;
+}
+
+
 </style>
 
 <div class="toolkit-container">
@@ -5897,29 +6053,31 @@ tfoot td {
         </table>
     </div>
 </div>
+
 <div class="tab" id="moves-management">
   <h2>Relationship Action Plans</h2>
   <table id="donation-table">
     <thead>
       <tr>
-        <th>Status</th>
-        <th>Type</th>
-        <th>
-          <div>Full Name <span class="required-field">*</span></div>
+        <th onclick="sortTable(this, 0)">Status <span class="sort-indicator"></span></th>
+        <th onclick="sortTable(this, 1)">Type <span class="sort-indicator"></span></th>
+        <th onclick="sortTable(this, 2)">
+          <div>Full Name <span class="required-field">*</span><span class="sort-indicator"></span></div>
         </th>
-		<th>Organization</th>
-        <th>
-          <div>Amount <span class="required-field">*</span></div>
+        <th onclick="sortTable(this, 3)">Organization <span class="sort-indicator"></span></th>
+        <th onclick="sortTable(this, 4)">
+          <div>Amount <span class="required-field">*</span><span class="sort-indicator"></span></div>
         </th>
-        <th>Next Step</th>
-        <th>Recent Involvement</th>
-        <th>Notes</th>
-		<th>Lead</th>
+        <th onclick="sortTable(this, 5)">Next Step <span class="sort-indicator"></span></th>
+        <th onclick="sortTable(this, 6)">Recent Involvement <span class="sort-indicator"></span></th>
+        <th onclick="sortTable(this, 7)">Notes <span class="sort-indicator"></span></th>
+        <th onclick="sortTable(this, 8)">Lead <span class="sort-indicator"></span></th>
         <th>Documents</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
+      <!-- Add your table rows here -->
     </tbody>
   </table>
 </div>
@@ -6010,11 +6168,22 @@ tfoot td {
 </div>
 
 <!-- Custom modal -->
+<!--
+<div id="alertModule1Retired" class="modalretired">
+    <div class="modal-contentretired">
+        <p>This row is already full. Would you like to add an additional donator box and automatically repopulate the Gift Pyramid?</p>
+        <button id="confirmButtonRetired">Yes</button>
+        <button id="cancelButtonRetired">No</button>
+    </div>
+</div>
+-->
+
+<!-- Custom modal -->
 <div id="alertModule1" class="modal">
     <div class="modal-content">
-        <p>This row is already full. Would you like to add an additional donator box and automatically repopulate the Gift Pyramid?</p>
-        <button id="confirmButton">Yes</button>
-        <button id="cancelButton">No</button>
+        <p>This row is already full. Please manually add a new box to the pyramid row and re-save the donor.</p>
+        <button id="confirmButton">Okay</button>
+      
     </div>
 </div>
 
