@@ -18,7 +18,8 @@ Bugs:
 row not actually deleting when saving
 when editing a user it adds another user thinking you are adding another, one so it is not removing the user when the edit button is pressed??
 
-**SORTING OF RAP based on largest to smallest and vice versa for amount and then alphabetically for everything else.**
+Features to add:
+* Shaded blue box to indicate the 70% of the top donors
 
 1. Pyramid Algorithm for smaller goals, not creating perfect triangle ✅
 2. patent pending ✅
