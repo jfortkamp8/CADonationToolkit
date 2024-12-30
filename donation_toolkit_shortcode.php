@@ -122,7 +122,8 @@ document.body.addEventListener('click', function(event) {
 flipBox();
 		
 
-	
+
+		
 		// This dictionary will store the removal dates indexed by displayName
 let removalDates = {};
 	var clientLogoURL = '<?php echo $imgurl; ?>';
@@ -787,19 +788,19 @@ rowsType.forEach(row => {
         <path id="endowmentSlice1" d="" fill="#00758D"></path>
         <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
         <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
+	
 
         <!-- Capital slice -->
         <path id="capitalSlice1" d="" fill="#7866A1"></path>
         <text id="capitalTextName1" font-size="2" fill="#635387"></text>
         <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
+
 
         <!-- Operating slice -->
         <path id="operatingSlice1" d="" fill="#FF8C00"></path>
         <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
         <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
+		
     </svg>
 </div>
    </div>
@@ -848,9 +849,11 @@ rowsType.forEach(row => {
     `;
     
 	// Update pie chart slices
-			createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
-	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
-	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
+			
+createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
 
@@ -1415,28 +1418,24 @@ document.body.removeChild(span);
     Array.from(tableBody.rows).forEach(function(row) {
         row.classList.remove("red-row");  // Remove the red-row class from all rows
     });
+	// Remove the block on leaving the page after saving
+    window.removeEventListener('beforeunload', blockPageUnload);
 
 } else {
     const modal = document.getElementById('alertModule1');
     modal.style.display = "block";
-newRow.classList.add("red-row"); 
 	
     const confirmButton = document.getElementById('confirmButton');
     const cancelButton = document.getElementById('cancelButton');
 	
-	
-            confirmButton.onclick = function() {
-				console.log("click");
-                modal.style.display = "none";
-			
-                //const modal1 = document.getElementById('alertModule');
-                //modal1.style.display = "block";
-            }
-/*
+
 	cancelButton.onclick = function() {
 		modal.style.display = "none";
         const modal1 = document.getElementById('alertModule');
     	modal1.style.display = "block";
+		// Block the user from leaving the page
+    	window.addEventListener('beforeunload', blockPageUnload);
+		newRow.classList.add("red-row"); 
     }
 	
     confirmButton.onclick = function() {
@@ -1453,14 +1452,14 @@ newRow.classList.add("red-row");
     // If all boxes are filled in the current row, then create a new donation box
     if (filledRowBoxes === rowBoxes.length) {
       // Find the row in the DOM
-      //const row = rowBoxes[0] ? rowBoxes[0].closest('.donation-row') : null;
+      const row = rowBoxes[0] ? rowBoxes[0].closest('.donation-row') : null;
       
-      //if (row) {
+      if (row) {
         // Create and add a new donation box to this row
         
-        //addDonationBox(row, rowIndex, donationName, donationAmount, donationColor);
-		  //savePyramidHTML();
-      //}
+        addDonationBox(row, rowIndex, donationName, donationAmount, donationColor);
+		  savePyramidHTML();
+      }
     }
         modal.style.display = "none";
 		    	
@@ -1634,19 +1633,16 @@ rowsType1.forEach(row => {
         <path id="endowmentSlice1" d="" fill="#00758D"></path>
         <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
         <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
-
+		
         <!-- Capital slice -->
         <path id="capitalSlice1" d="" fill="#7866A1"></path>
         <text id="capitalTextName1" font-size="2" fill="#635387"></text>
         <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
 
         <!-- Operating slice -->
         <path id="operatingSlice1" d="" fill="#FF8C00"></path>
         <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
         <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
     </svg>
 </div>
    </div>
@@ -1693,9 +1689,11 @@ rowsType1.forEach(row => {
 
         </div>
     `;
-			createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
-	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
-	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
+			
+			createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
 
@@ -1715,7 +1713,7 @@ donorElement.innerHTML = `
     }
 		
 		}
-*/
+
 	return;
 }
 
@@ -1888,19 +1886,17 @@ rowsType2.forEach(row => {
         <path id="endowmentSlice1" d="" fill="#00758D"></path>
         <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
         <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
-
+	
         <!-- Capital slice -->
         <path id="capitalSlice1" d="" fill="#7866A1"></path>
         <text id="capitalTextName1" font-size="2" fill="#635387"></text>
         <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
+		
 
         <!-- Operating slice -->
         <path id="operatingSlice1" d="" fill="#FF8C00"></path>
         <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
         <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
     </svg>
 </div>
    </div>
@@ -1948,10 +1944,10 @@ rowsType2.forEach(row => {
         </div>
     `;
     
-	// Update pie chart slices
-		createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
-	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
-	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
+		createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+
 		// Sort donorArray in descending order based on donation amount
     donors.sort((a, b) => b.amount - a.amount);
 
@@ -1982,6 +1978,21 @@ document.addEventListener("DOMContentLoaded", function() {
     const campaignId = <?php echo $campaign_id; ?>;
     let donors = [];
 
+	
+    // Select all donation rows
+    let rows = document.querySelectorAll('.donation-row');
+
+    // Loop through the first three rows (if they exist)
+    for (let i = 0; i < 3 && i < rows.length; i++) {
+        let boxes = rows[i].querySelectorAll('.donation-box');
+
+        // Add the 'top-donor-box' class to each box in the row
+        boxes.forEach(box => {
+            box.classList.add('top-donor-box');
+        });
+	}
+
+		
     // Fetch donors for the campaign and add them to the table
     fetchDonorsByCampaign(campaignId);
 
@@ -2832,19 +2843,16 @@ rowsType.forEach(row => {
         <path id="endowmentSlice1" d="" fill="#00758D"></path>
         <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
         <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
-
+		
         <!-- Capital slice -->
         <path id="capitalSlice1" d="" fill="#7866A1"></path>
         <text id="capitalTextName1" font-size="2" fill="#635387"></text>
         <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
-
+		
         <!-- Operating slice -->
         <path id="operatingSlice1" d="" fill="#FF8C00"></path>
         <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
         <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
     </svg>
 </div>
    </div>
@@ -2892,10 +2900,10 @@ rowsType.forEach(row => {
         </div>
     `;
     
-	// Update pie chart slices
-			createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
-	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
-	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
+		createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+
 		// Sort donorArray in descending order based on donation amount
     updateTopDonors();
      
@@ -3047,19 +3055,19 @@ rowsType.forEach(row => {
         <path id="endowmentSlice1" d="" fill="#00758D"></path>
         <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
         <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
+	
 
         <!-- Capital slice -->
         <path id="capitalSlice1" d="" fill="#7866A1"></path>
         <text id="capitalTextName1" font-size="2" fill="#635387"></text>
         <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
+	
 
         <!-- Operating slice -->
         <path id="operatingSlice1" d="" fill="#FF8C00"></path>
         <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
         <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
+		
     </svg>
 </div>
                         </div>
@@ -3100,12 +3108,11 @@ rowsType.forEach(row => {
         `;
 		
 		
-	// Update pie chart slices
-			createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
-	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
-	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
-	
-		updateTopDonors();
+	createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
+		
+updateTopDonors();
 		
     }
 
@@ -3237,19 +3244,13 @@ rowsType.forEach(row => {
             const confirmButton = document.getElementById('confirmButton');
             const cancelButton = document.getElementById('cancelButton');
 			
-			
-            confirmButton.onclick = function() {
-				console.log("click");
-                modal.style.display = "none";
-			
-                //const modal1 = document.getElementById('alertModule');
-                //modal1.style.display = "block";
-            }
 
-            /*cancelButton.onclick = function() {
+            cancelButton.onclick = function() {
                 modal.style.display = "none";
+		
                 const modal1 = document.getElementById('alertModule');
                 modal1.style.display = "block";
+				
             }
 
             confirmButton.onclick = function() {
@@ -3269,7 +3270,7 @@ rowsType.forEach(row => {
                     }
                 }
                 modal.style.display = "none";
-            }*/
+            }
         }
     }
 
@@ -3424,19 +3425,19 @@ function validateForm() {
         <path id="endowmentSlice1" d="" fill="#00758D"></path>
         <text id="endowmentTextName1" font-size="2" fill="#005D70"></text>
         <text id="endowmentTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="endowmentTextPercent1" font-size="2.4" fill="#D2E5E9" font-weight="bold"></text>
+		
 
         <!-- Capital slice -->
         <path id="capitalSlice1" d="" fill="#7866A1"></path>
         <text id="capitalTextName1" font-size="2" fill="#635387"></text>
         <text id="capitalTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="capitalTextPercent1" font-size="2.4" fill="#E0DAEF" font-weight="bold"></text>
+		
 
         <!-- Operating slice -->
         <path id="operatingSlice1" d="" fill="#FF8C00"></path>
         <text id="operatingTextName1" font-size="2" fill="#D17607"></text>
         <text id="operatingTextAmount1" font-size="1.7" fill="rgb(0,0,0)"></text>
-		<text id="operatingTextPercent1" font-size="2.4" fill="#F8E7D4" font-weight="bold"></text>
+		
     </svg>
 </div>
 
@@ -3482,9 +3483,9 @@ function validateForm() {
     `;
 		
 		// Update pie chart slices
-		createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent1");
-	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent1");
-	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent1");
+		createSlice1("endowmentSlice1", "endowmentTextName1", "endowmentTextAmount1", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice1("capitalSlice1", "capitalTextName1", "capitalTextAmount1", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice1("operatingSlice1", "operatingTextName1", "operatingTextAmount1", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
 
 	});
 function generatePDF() {
@@ -3589,8 +3590,6 @@ function generatePDF() {
     });
 }
 
-	
-
 // Add new donation box 
 function addDonationBox(row, rowIndex, donationName, donationAmount, donationColor) {
   const rowLabel = row.querySelector('.donation-row-label');
@@ -3600,18 +3599,17 @@ function addDonationBox(row, rowIndex, donationName, donationAmount, donationCol
   numBoxes += 1;
   rowLabel.innerText = numBoxes + ' x ' + rowLabel.innerText.split(' ')[2];
   rowLabel.style.display = numBoxes === 0 ? "none" : "";  // Show or hide the label
-	
-	const amount = parseInt(rowLabel.innerText.split('$')[1].replace(/[^0-9.-]+/g, ''));
 
+  // Create the box container
   const box = document.createElement('div');
   box.className = 'donation-box';
-  box.setAttribute('data-amount', amount);
+  box.setAttribute('data-amount', donationAmount);
 
   // Front side of the box
   const boxFront = document.createElement('div');
   boxFront.className = 'donation-box-front';
   boxFront.innerHTML = donationName;
-boxFront.style.backgroundColor = donationColor;
+  boxFront.style.backgroundColor = donationColor;
   boxFront.style.color = "#fff"; // Set text color to white
   boxFront.style.fontWeight = "500";
   boxFront.style.textAlign = "center";
@@ -3620,81 +3618,80 @@ boxFront.style.backgroundColor = donationColor;
   boxFront.style.alignItems = "center";
   boxFront.style.padding = "10px";
   boxFront.style.borderRadius = "7px"; // Match the border-radius from your image
+boxFront.setAttribute('data-row', rowIndex);
 
   // Back side of the box
   const boxBack = document.createElement('div');
   boxBack.className = 'donation-box-back';
-	  boxBack.style.fontWeight = "400";
-	  boxBack.style.fontSize = "17px";
   boxBack.innerHTML = numberWithCommas(donationAmount);
-  boxBack.style.backgroundColor = makeDarker(donationColor, 30);
+  boxBack.style.backgroundColor = makeDarker(donationColor, 30); // Darker color for the back
   boxBack.style.color = "#fff"; // Set text color to white
-  boxBack.style.display = "none";  // Hide the back initially
+  boxBack.style.fontWeight = "400";
+  boxBack.style.fontSize = "17px";
+  boxBack.style.textAlign = "center";
+  boxBack.style.display = "none";  // Initially hide the back
 
-  // Append both sides to the inner container
+  // Create the inner container and append front and back sides
   const boxInner = document.createElement('div');
   boxInner.className = 'donation-box-inner';
-	
-	const donationBox = box.closest('.donation-box');
+  boxInner.appendChild(boxFront);
+  boxInner.appendChild(boxBack);
 
-// Assuming 'box' is the DOM element reference of your box
-const computedStyle = window.getComputedStyle(box);
+  // Append the inner container to the box
+  box.appendChild(boxInner);
+  
+  // Add the new box to the row
+  row.appendChild(box);
 
-const boxWidth = parseFloat(computedStyle.width);
-const boxHeight = parseFloat(computedStyle.height);
-
-const span = document.createElement("span");
-span.style.display = 'inline-block';
-document.body.appendChild(span);
-
-let fontSize = 20; // Start from a larger font size for better readability
-
-const adjustFontSize = () => {
-    while ((span.offsetHeight > boxHeight || span.offsetWidth > boxWidth) && fontSize > 10) { // Ensuring font size doesn't go below 10px for readability
-        fontSize--;
-        span.style.fontSize = fontSize + "px";
-    }
-}
- 
-// Initially set the displayName without breaks
-span.innerHTML = donationName;
-span.style.fontSize = fontSize + "px";
-adjustFontSize();
-
-// If the text still doesn't fit, start adding breaks between words to stack them.
-const words = donationName.split(" ");
-if (fontSize < 30) {  // Adjust this threshold as per your design
-    for (let i = 1; i < words.length && (span.offsetHeight > boxHeight || span.offsetWidth > boxWidth); i++) {
-        span.innerHTML = words.slice(0, i).join(" ") + "<br>" + words.slice(i).join(" ");
-        adjustFontSize();
-    }
-    span.style.lineHeight = "0.9"; // Setting line-height to 0.8 (without units)
-}
-
-box.style.fontSize = fontSize + "px";
-box.style.padding = "10px";
-box.innerHTML = span.innerHTML;
-box.style.lineHeight = span.style.lineHeight;
-
-document.body.removeChild(span);
-	
-
-  		boxInner.appendChild(boxFront);
-  		boxInner.appendChild(boxBack);
-  		box.appendChild(boxInner);
-  		row.appendChild(box);
-	
-	const remainingAmount = removeDonationBoxes(amount);
-		if (remainingAmount > 0) {
-  			return;
-		}
-	
-  // Update the total donations amount
+  // Automatically adjust font size if necessary
+  adjustFontSizeToFit(boxFront, donationName);
+  
+  // Update the total donations amount (assuming you have a function for this)
   const totalDonationsLabel = document.querySelector('.donation-row-label b');
   const totalDonations = calculateTotalDonations();
   totalDonationsLabel.innerText = 'Total: ' + numberWithCommas(totalDonations);
-
 }
+
+// Function to adjust the font size of the donation name to fit the box
+function adjustFontSizeToFit(box, donationName) {
+  const span = document.createElement("span");
+  span.style.display = 'inline-block';
+  document.body.appendChild(span);
+
+  const boxWidth = parseFloat(window.getComputedStyle(box).width);
+  const boxHeight = parseFloat(window.getComputedStyle(box).height);
+  
+  let fontSize = 20; // Start from a larger font size for better readability
+  
+  span.innerHTML = donationName;
+  span.style.fontSize = fontSize + "px";
+  
+  const adjustFontSize = () => {
+    while ((span.offsetHeight > boxHeight || span.offsetWidth > boxWidth) && fontSize > 10) {
+      fontSize--;
+      span.style.fontSize = fontSize + "px";
+    }
+  };
+
+  // Adjust the font size to fit within the box
+  adjustFontSize();
+
+  const words = donationName.split(" ");
+  if (fontSize < 30) {  // Adjust this threshold as per your design
+    for (let i = 1; i < words.length && (span.offsetHeight > boxHeight || span.offsetWidth > boxWidth); i++) {
+      span.innerHTML = words.slice(0, i).join(" ") + "<br>" + words.slice(i).join(" ");
+      adjustFontSize();
+    }
+    span.style.lineHeight = "0.9"; // Set a reasonable line-height
+  }
+
+  box.style.fontSize = fontSize + "px";
+  box.style.lineHeight = span.style.lineHeight;
+  box.innerHTML = span.innerHTML;
+  
+  document.body.removeChild(span);
+}
+
 	
 	//DONATION PYRAMID EDIT ROWS
 	function editNumBoxes(element) {
@@ -4620,12 +4617,12 @@ if (numBoxes == 0) {
 	var slice3Proportion = (slice3Amount / totalBudget);
 
 	// Update pie chart slices
-	createSlice("endowmentSlice", "endowmentTextName", "endowmentTextAmount", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount, "endowmentTextPercent");
-	createSlice("capitalSlice", "capitalTextName", "capitalTextAmount", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount, "capitalTextPercent");
-	createSlice("operatingSlice", "operatingTextName", "operatingTextAmount", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount, "operatingTextPercent");
+	createSlice("endowmentSlice", "endowmentTextName", "endowmentTextAmount", "#00758D", 0, slice1Proportion, slice1Value, slice1Amount);
+	createSlice("capitalSlice", "capitalTextName", "capitalTextAmount", "#7866A1", slice1Proportion, slice1Proportion + slice2Proportion, 		slice2Value, slice2Amount);
+	createSlice("operatingSlice", "operatingTextName", "operatingTextAmount", "#FF8C00", slice1Proportion + slice2Proportion, 1, slice3Value, slice3Amount);
 
 // Function to create a path description for a pie chart slice
-function createSlice(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue, textIdPercent) {
+function createSlice(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue) {
     var radius = 11;
     var centerX = -8;  // was 21
     var centerY = -15;  // was 21
@@ -4689,17 +4686,12 @@ function createSlice(sliceId, textIdName, textIdAmount, fillColor, startProporti
     document.getElementById(textIdAmount).textContent = numberWithCommas(sliceValue);
     document.getElementById(textIdAmount).setAttribute("x", textX - 5);
     document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
-    if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
-        var fontSize = slicePercentage < 20 ? "2" : "2.4";  // Adjust font size if percentage is under 20%
-        document.getElementById(textIdPercent).textContent = slicePercentage + "%";
-        document.getElementById(textIdPercent).setAttribute("x", percentX - 2);
-        document.getElementById(textIdPercent).setAttribute("y", percentY - 0.5);
-        document.getElementById(textIdPercent).setAttribute("font-size", fontSize);
-    }
+    
+    
 }
 
 // Function to create a path description for a pie chart slice
-function createSlice1(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue, textIdPercent) {
+function createSlice1(sliceId, textIdName, textIdAmount, fillColor, startProportion, endProportion, sliceName, sliceValue) {
     var radius = 11;
     var centerX = -8;  // was 21
     var centerY = -15;  // was 21
@@ -4763,13 +4755,7 @@ function createSlice1(sliceId, textIdName, textIdAmount, fillColor, startProport
     document.getElementById(textIdAmount).textContent = numberWithCommas(sliceValue);
     document.getElementById(textIdAmount).setAttribute("x", textX - 5);
     document.getElementById(textIdAmount).setAttribute("y", textY + 1);  // Adjusted Y position for amount to be below name
-    if (slicePercentage >= 10) {  // Only show percentage if it's 10% or more
-        var fontSize = slicePercentage < 20 ? "2" : "2.4";  // Adjust font size if percentage is under 20%
-        document.getElementById(textIdPercent).textContent = slicePercentage + "%";
-        document.getElementById(textIdPercent).setAttribute("x", percentX - 2);
-        document.getElementById(textIdPercent).setAttribute("y", percentY - 0.5);
-        document.getElementById(textIdPercent).setAttribute("font-size", fontSize);
-    }
+    
 }
 
 		
@@ -4857,6 +4843,12 @@ function formatCurrency(amount) {
     header.setAttribute("data-sort-asc", !ascending);
   }
 
+		
+		// Function to handle the beforeunload event
+function blockPageUnload(event) {
+    event.preventDefault(); // Some browsers require this
+    event.returnValue = ''; // Required for Chrome to show the confirmation dialog
+}
 
 		
 	</script>
@@ -5872,6 +5864,12 @@ tfoot td {
   margin-left: 5px;
 }
 
+ 
+/* Light blue styling for top donor boxes */
+.top-donor-box {
+	box-shadow: 0 0 15px 4px #77C4D5;    
+}
+ 
 
 </style>
 
@@ -6181,9 +6179,9 @@ tfoot td {
 <!-- Custom modal -->
 <div id="alertModule1" class="modal">
     <div class="modal-content">
-        <p>This row is already full. Please manually add a new box to the pyramid row and re-save the donor.</p>
-        <button id="confirmButton">Okay</button>
-      
+        <p>This row is already full. Would you like to add an additional donator box and automatically repopulate the Gift Pyramid?</p>
+        <button id="confirmButton">Yes</button>
+        <button id="cancelButton">No</button>
     </div>
 </div>
 
